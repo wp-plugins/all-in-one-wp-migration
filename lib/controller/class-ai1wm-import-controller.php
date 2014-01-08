@@ -26,8 +26,29 @@ class Ai1wm_Import_Controller
 		$result = array();
 
 		if ( isset( $_FILES['input_file'] ) && ( $input_file = $_FILES['input_file'] ) ) {
+			$options = array(
+				'chunk'  => 0,
+				'chunks' => 0,
+				'name'   => null,
+			);
+
+			// Ordinal number of the current chunk in the set (starts with zero)
+			if ( isset( $_REQUEST['chunk'] ) ) {
+				$options['chunk'] = intval( $_REQUEST['chunk'] );
+			}
+
+			// Total number of chunks in the file
+			if ( isset( $_REQUEST['chunks'] ) ) {
+				$options['chunks'] = intval( $_REQUEST['chunks'] );
+			}
+
+			// Name of partial file
+			if ( isset( $_REQUEST['name'] ) ) {
+				$options['name'] = $_REQUEST['name'];
+			}
+
 			$model = new Ai1wm_Import;
-			$result = $model->import( $input_file );
+			$result = $model->import( $input_file, $options );
 		}
 
 		echo json_encode( $result );

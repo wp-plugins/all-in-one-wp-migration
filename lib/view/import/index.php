@@ -47,7 +47,7 @@
 
 					<p class="max-upload-size">
 						<?php _e( 'Maximum upload file size:' ); ?>
-						<strong><?php _e( wp_max_upload_size() / 1024 / 1024 ); ?> <?php _e( 'MB' ); ?></strong>
+						<strong><?php echo Ai1wm_Import::MAX_FILE_SIZE; ?></strong>
 					</p>
 				</form>
 			</div>

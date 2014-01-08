@@ -291,7 +291,9 @@ class Ai1wm_Main_Controller
 			'drop_element'        => 'ai1wm-drag-drop-area',
 			'file_data_name'      => 'input_file',
 			'multiple_queues'     => false,
-			'max_file_size'       => wp_max_upload_size() . 'b',
+			'max_file_size'       => Ai1wm_Import::MAX_FILE_SIZE,
+			'chunk_size'          => Ai1wm_Import::MAX_CHUNK_SIZE,
+			'max_retries'         => Ai1wm_Import::MAX_CHUNK_RETRIES,
 			'url'                 => admin_url( 'admin-ajax.php' ),
 			'flash_swf_url'       => includes_url(
 				'js/plupload/plupload.flash.swf'
@@ -309,6 +311,7 @@ class Ai1wm_Main_Controller
 			'urlstream_upload'    => true,
 			'multipart_params'    => array(
 				'action' => 'upload_file',
+				'name'   => uniqid() . '.part',
 			),
 		);
 		wp_localize_script( 'ai1wm-js-import', 'ai1wm_uploader', $plupload_init );

@@ -18,6 +18,11 @@
 
 class Ai1wm_Import
 {
+	const MAX_FILE_SIZE = '128MB';
+
+	const MAX_CHUNK_SIZE = '1MB';
+
+	const MAX_CHUNK_RETRIES = 10;
 
 	public function __construct() {
 	    $this->connection = new Mysqldump( DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, 'mysql' );
@@ -27,116 +32,158 @@ class Ai1wm_Import
 	 * Import archive file (database, media, package.json)
 	 *
 	 * @param  array $input_file Upload file parameters
+	 * @param  array $options    Additional upload settings
 	 * @return array             List of messages
 	 */
-	public function import( $input_file ) {
+	public function import( $input_file, $options = array() ) {
 		$errors = array();
 
 		if ( empty( $input_file['error'] ) ) {
-			// Create temporary directory
-			$extract_to = sys_get_temp_dir() . DIRECTORY_SEPARATOR
-											 . uniqid()
-											 . DIRECTORY_SEPARATOR;
-			if ( ! is_dir( $extract_to ) ) {
-				mkdir( $extract_to );
+			// Partial file path
+			$uploadfile = sys_get_temp_dir() . DIRECTORY_SEPARATOR
+											 . $options['name'];
+
+			// Open partial file
+			$out = fopen( $uploadfile, $options['chunk'] == 0 ? 'wb' : 'ab' );
+			if ( $out ) {
+				// Read binary input stream and append it to temp file
+				$in = fopen( $input_file['tmp_name'], 'rb' );
+				if ( $in ) {
+					while ( $buff = fread( $in, 4096 ) ) {
+						fwrite( $out, $buff );
+					}
+				}
+
+				fclose( $in );
+				fclose( $out );
+
+				// Remove temporary uploaded file
+				unlink( $input_file['tmp_name'] );
 			}
 
-			// Extract archive to a temporary directory
-			$archive = new Zipper( $input_file['tmp_name'] );
-			$archive->extractTo( $extract_to );
-			$archive->close();
-
-			// Verify whether this arhive is valid
-			if ( $this->is_valid( $extract_to ) ) {
-				// Enable maintenance mode
-				$this->maintenance_mode( true );
-
-				// Media base directory
-				$upload_dir = wp_upload_dir();
-				$upload_basedir = $upload_dir['basedir'] . DIRECTORY_SEPARATOR;
-				if ( ! is_dir( $upload_basedir ) ) {
-					mkdir( $upload_basedir );
+			// Check if file has been uploaded
+			if ( ! $options['chunks'] || $options['chunk'] == $options['chunks'] - 1 ) {
+				// Create temporary directory
+				$extract_to = sys_get_temp_dir() . DIRECTORY_SEPARATOR
+												 . uniqid()
+												 . DIRECTORY_SEPARATOR;
+				if ( ! is_dir( $extract_to ) ) {
+					mkdir( $extract_to );
 				}
 
-				// Themes base directory
-				$themes_dir = get_theme_root();
-				$themes_basedir = $themes_dir . DIRECTORY_SEPARATOR;
-				if ( ! is_dir( $themes_basedir ) ) {
-					mkdir( $themes_basedir );
+				// Extract archive to a temporary directory
+				$archive = new Zipper( $uploadfile );
+				$archive->extractTo( $extract_to );
+				$archive->close();
+
+				// Verify whether this arhive is valid
+				if ( $this->is_valid( $extract_to ) ) {
+					// Enable maintenance mode
+					$this->maintenance_mode( true );
+
+					// Media base directory
+					$upload_dir     = wp_upload_dir();
+					$upload_basedir = $upload_dir['basedir'] . DIRECTORY_SEPARATOR;
+					if ( ! is_dir( $upload_basedir ) ) {
+						mkdir( $upload_basedir );
+					}
+
+					// Themes base directory
+					$themes_dir     = get_theme_root();
+					$themes_basedir = $themes_dir . DIRECTORY_SEPARATOR;
+					if ( ! is_dir( $themes_basedir ) ) {
+						mkdir( $themes_basedir );
+					}
+
+					if ( file_exists( $extract_to . Ai1wm_Export::EXPORT_DATABASE_NAME ) ) {
+						// Backup database
+						$model = new Ai1wm_Export;
+						$database_file = tmpfile();
+						$options = array( 'add-drop-table' => true, 'export-single-transaction' => true );
+						$model->prepare_database( $database_file, $options );
+
+						// Truncate database
+						$this->connection->truncateDatabase();
+
+						// Import database
+						$this->connection->importFromFile( $extract_to . Ai1wm_Export::EXPORT_DATABASE_NAME );
+					}
+
+					// Check if media files are present
+					if ( file_exists( $extract_to . Ai1wm_Export::EXPORT_MEDIA_NAME ) ) {
+						// Backup media files
+						$backup_media_to = sys_get_temp_dir() . DIRECTORY_SEPARATOR
+															  . uniqid()
+															  . DIRECTORY_SEPARATOR;
+						if ( ! is_dir( $backup_media_to ) ) {
+							mkdir( $backup_media_to );
+						}
+
+						$this->copy_dir( $upload_basedir, $backup_media_to );
+
+						// Truncate media files
+						$this->truncate_dir( $upload_basedir );
+
+						// Import media files
+						$this->copy_dir( $extract_to . Ai1wm_Export::EXPORT_MEDIA_NAME, $upload_basedir );
+					}
+
+					if ( file_exists( $extract_to . Ai1wm_Export::EXPORT_THEMES_NAME ) ) {
+						// Backup themes files
+						$backup_themes_to = sys_get_temp_dir() . DIRECTORY_SEPARATOR
+															   . uniqid()
+															   . DIRECTORY_SEPARATOR;
+						if ( ! is_dir( $backup_themes_to ) ) {
+							mkdir( $backup_themes_to );
+						}
+
+						$this->copy_dir( $themes_basedir, $backup_themes_to );
+
+						// Truncate themes files
+						$this->truncate_dir( $themes_basedir );
+
+						// Import themes files
+						$this->copy_dir( $extract_to . Ai1wm_Export::EXPORT_THEMES_NAME, $themes_basedir );
+					}
+
+					if ( file_exists( $extract_to . Ai1wm_Export::EXPORT_PACKAGE_NAME ) ) {
+
+						// Install selected plugins
+						$this->install_plugins( $extract_to . Ai1wm_Export::EXPORT_PACKAGE_NAME );
+					}
+
+					// Test website
+					if ( ! $this->test_website( get_option( 'siteurl' ) ) ) {
+						if ( file_exists( $extract_to . Ai1wm_Export::EXPORT_DATABASE_NAME ) ) {
+							// Truncate database
+							$this->connection->truncateDatabase();
+
+							// Import "OLD" database
+							$this->connection->importFromFile( $database_file );
+						}
+
+						if ( file_exists( $extract_to . Ai1wm_Export::EXPORT_MEDIA_NAME ) ) {
+							// Truncate media files
+							$this->truncate_dir( $upload_basedir );
+
+							// Import "OLD" media files
+							$this->copy_dir( $backup_media_to, $upload_basedir );
+						}
+
+						if ( file_exists( $extract_to . Ai1wm_Export::EXPORT_THEMES_NAME ) ) {
+							// Truncate themes files
+							$this->truncate_dir( $themes_basedir );
+
+							// Import "OLD" themes files
+							$this->copy_dir( $backup_themes_to, $themes_basedir );
+						}
+					}
+
+					// Disable maintenance mode
+					$this->maintenance_mode( false );
+				} else {
+					$errors[] = _( 'File is not compatible with "All In One WP Migration" plugin! Please verify your archive file.' );
 				}
-
-				// Backup database
-				$model = new Ai1wm_Export;
-				$database_file = tmpfile();
-				$options = array( 'add-drop-table' => true, 'export-single-transaction' => true );
-				$model->prepare_database( $database_file, $options );
-
-				// Truncate database
-				$this->connection->truncateDatabase();
-
-				// Import database
-				$this->connection->importFromFile( $extract_to . Ai1wm_Export::EXPORT_DATABASE_NAME );
-
-				// Backup media files
-				$backup_media_to = sys_get_temp_dir() . DIRECTORY_SEPARATOR
-												 	  . uniqid()
-												 	  . DIRECTORY_SEPARATOR;
-				if ( ! is_dir( $backup_media_to ) ) {
-					mkdir( $backup_media_to );
-				}
-
-				$this->copy_dir( $upload_basedir, $backup_media_to );
-
-				// Truncate media files
-				$this->truncate_dir( $upload_basedir );
-
-				// Import media files
-				$this->copy_dir( $extract_to . Ai1wm_Export::EXPORT_MEDIA_NAME, $upload_basedir );
-
-				// Backup themes files
-				$backup_themes_to = sys_get_temp_dir() . DIRECTORY_SEPARATOR
-												 	  . uniqid()
-												 	  . DIRECTORY_SEPARATOR;
-				if ( ! is_dir( $backup_themes_to ) ) {
-					mkdir( $backup_themes_to );
-				}
-
-				$this->copy_dir( $themes_basedir, $backup_themes_to );
-
-				// Truncate themes files
-				$this->truncate_dir( $themes_basedir );
-
-				// Import themes files
-				$this->copy_dir( $extract_to . Ai1wm_Export::EXPORT_THEMES_NAME, $themes_basedir );
-
-				// Install selected plugins
-				$this->install_plugins( $extract_to . Ai1wm_Export::EXPORT_PACKAGE_NAME );
-
-				// Test website
-				if ( ! $this->test_website( get_option( 'siteurl' ) ) ) {
-					// Truncate database
-					$this->connection->truncateDatabase();
-
-					// Import "OLD" database
-					$this->connection->importFromFile( $database_file );
-
-					// Truncate media files
-					$this->truncate_dir( $upload_basedir );
-
-					// Import "OLD" media files
-					$this->copy_dir( $backup_media_to, $upload_basedir );
-
-					// Truncate themes files
-					$this->truncate_dir( $themes_basedir );
-
-					// Import "OLD" themes files
-					$this->copy_dir( $backup_themes_to, $themes_basedir );
-				}
-
-				// Disable maintenance mode
-				$this->maintenance_mode( false );
-			} else {
-				$errors[] = _( 'File is not compatible with "All In One WP Migration" plugin! Please verify your archive file.' );
 			}
 		} else {
 			$errors[] = $this->code_to_message( $input_file['error'] );
