@@ -93,6 +93,9 @@
 									<input type="checkbox" id="export-plugins" name="options[export-plugins]" />
 									<label for="export-plugins"><?php _e( 'Do not export plugins (files)' ); ?></label>
 								</div>
+								<?php foreach ( $list_plugins as $key => $plugin ): ?>
+									<input type="hidden" name="options[include-plugins][<?php _e( $key ); ?>]" value="<?php _e( $plugin['Name'] ); ?>" />
+								<?php endforeach; ?>
 							</div>
 
 							<div class="ai1wm-field">
@@ -104,14 +107,13 @@
 
 							<div class="ai1wm-field">
 								<div class="ai1wm-checkbox">
-									<input type="checkbox" id="export-table-data" name="options[export-table-data]" />
-									<label for="export-table-data"><?php _e( 'Do not export table data' ); ?></label>
+									<input type="checkbox" id="no-table-data" name="options[no-table-data]" />
+									<label for="no-table-data"><?php _e( 'Do not export table data' ); ?></label>
 								</div>
 							</div>
 						</div>
 					</div>
 
-	    			<?php if ( class_exists( 'Zipper' ) ): ?>
 					<div class="ai1wm-field">
 						<div class="ai1wm-buttons">
 							<button type="submit" name="options[action]" value="export" class="ai1wm-button-green">
@@ -120,11 +122,6 @@
 							</button>
 						</div>
 					</div>
-					<?php else : ?>
-					<div class="ai1wm-message ai1wm-red-message">
-	      				<p><?php _e( 'Please enable zlib library in your php.ini configuration file in order to be able to export database and media library (files).' ); ?></p>
-	    			</div>
-					<?php endif; ?>
 				</form>
 			</div>
 		</div>

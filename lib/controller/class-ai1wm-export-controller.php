@@ -20,7 +20,10 @@ class Ai1wm_Export_Controller
 {
 	public static function index() {
 		$model = new Ai1wm_Export;
-		Ai1wm_Template::render( 'export/index' );
+		Ai1wm_Template::render( 'export/index', array(
+			'list_plugins' => get_plugins(),
+			)
+		);
 	}
 
 	public static function export() {

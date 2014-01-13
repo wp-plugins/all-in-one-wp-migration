@@ -56,9 +56,9 @@ define( 'BANDAR_TEMPLATES_PATH', AI1WM_LIB_PATH . DIRECTORY_SEPARATOR . 'view' )
 // ==================
 define( 'AI1WM_EXCEPTION_PATH', AI1WM_LIB_PATH . DIRECTORY_SEPARATOR . 'exception' );
 
-// ===================
+// ===============
 // = Vendor Path =
-// ===================
+// ===============
 define( 'AI1WM_VENDOR_PATH', AI1WM_LIB_PATH . DIRECTORY_SEPARATOR . 'vendor' );
 
 // ==============
@@ -70,3 +70,16 @@ define( 'AI1WM_URL', plugins_url( '', __FILE__ ) );
 // = ServMask Feedback Url =
 // ==============
 define( 'AI1WM_FEEDBACK_URL', 'https://servmask.com/ai1wm/feedback/create' );
+
+// ===========================
+// = WP_CONTENT_DIR Constant =
+// ===========================
+if ( ! defined( 'WP_CONTENT_DIR' ) )
+	define( 'WP_CONTENT_DIR', ABSPATH . 'wp-content' );
+
+// ==========================
+// = WP_PLUGIN_DIR Constant =
+// ==========================
+if ( ! defined( 'WP_PLUGIN_DIR' ) )
+	define( 'WP_PLUGIN_DIR', WP_CONTENT_DIR . '/plugins' );
+

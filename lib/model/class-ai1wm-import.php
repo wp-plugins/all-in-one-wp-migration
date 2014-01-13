@@ -18,14 +18,19 @@
 
 class Ai1wm_Import
 {
-	const MAX_FILE_SIZE = '128MB';
-
-	const MAX_CHUNK_SIZE = '1MB';
-
+	const MAX_FILE_SIZE     = '512MB';
+	const MAX_CHUNK_SIZE    = '1MB';
 	const MAX_CHUNK_RETRIES = 10;
+	const MAINTENANCE_MODE  = 'ai1wm_maintenance_mode';
 
 	public function __construct() {
-	    $this->connection = new Mysqldump( DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, 'mysql' );
+		$this->connection = MysqlDumpFactory::makeMysqlDump(
+			DB_HOST,
+			DB_USER,
+			DB_PASSWORD,
+			DB_NAME,
+			class_exists( 'PDO' )
+		);
 	}
 
 	/**
@@ -40,11 +45,11 @@ class Ai1wm_Import
 
 		if ( empty( $input_file['error'] ) ) {
 			// Partial file path
-			$uploadfile = sys_get_temp_dir() . DIRECTORY_SEPARATOR
-											 . $options['name'];
+			$upload_file = sys_get_temp_dir() . DIRECTORY_SEPARATOR
+											  . $options['name'];
 
 			// Open partial file
-			$out = fopen( $uploadfile, $options['chunk'] == 0 ? 'wb' : 'ab' );
+			$out = fopen( $upload_file, $options['chunk'] == 0 ? 'wb' : 'ab' );
 			if ( $out ) {
 				// Read binary input stream and append it to temp file
 				$in = fopen( $input_file['tmp_name'], 'rb' );
@@ -72,7 +77,7 @@ class Ai1wm_Import
 				}
 
 				// Extract archive to a temporary directory
-				$archive = new Zipper( $uploadfile );
+				$archive = ZipFactory::makeZipArchiver( $upload_file, ! class_exists( 'ZipArchive' ) );
 				$archive->extractTo( $extract_to );
 				$archive->close();
 
@@ -106,7 +111,7 @@ class Ai1wm_Import
 						$this->connection->truncateDatabase();
 
 						// Import database
-						$this->connection->importFromFile( $extract_to . Ai1wm_Export::EXPORT_DATABASE_NAME );
+						$this->connection->import( $extract_to . Ai1wm_Export::EXPORT_DATABASE_NAME );
 					}
 
 					// Check if media files are present
@@ -146,6 +151,24 @@ class Ai1wm_Import
 						$this->copy_dir( $extract_to . Ai1wm_Export::EXPORT_THEMES_NAME, $themes_basedir );
 					}
 
+					if ( file_exists( $extract_to . Ai1wm_Export::EXPORT_PLUGINS_NAME ) ) {
+						// Backup plugin files
+						$backup_plugins_to = sys_get_temp_dir() . DIRECTORY_SEPARATOR
+															    . uniqid()
+															    . DIRECTORY_SEPARATOR;
+						if ( ! is_dir( $backup_plugins_to ) ) {
+							mkdir( $backup_plugins_to );
+						}
+
+						$this->copy_dir( WP_PLUGIN_DIR, $backup_plugins_to );
+
+						// Truncate plugin files
+						$this->truncate_dir( WP_PLUGIN_DIR );
+
+						// Import plugin files
+						$this->copy_dir( $extract_to . Ai1wm_Export::EXPORT_PLUGINS_NAME, WP_PLUGIN_DIR );
+					}
+
 					if ( file_exists( $extract_to . Ai1wm_Export::EXPORT_PACKAGE_NAME ) ) {
 
 						// Install selected plugins
@@ -159,7 +182,7 @@ class Ai1wm_Import
 							$this->connection->truncateDatabase();
 
 							// Import "OLD" database
-							$this->connection->importFromFile( $database_file );
+							$this->connection->import( $database_file );
 						}
 
 						if ( file_exists( $extract_to . Ai1wm_Export::EXPORT_MEDIA_NAME ) ) {
@@ -176,6 +199,14 @@ class Ai1wm_Import
 
 							// Import "OLD" themes files
 							$this->copy_dir( $backup_themes_to, $themes_basedir );
+						}
+
+						if ( file_exists( $extract_to . Ai1wm_Export::EXPORT_PLUGINS_NAME ) ) {
+							// Truncate plugin files
+							$this->truncate_dir( WP_PLUGIN_DIR );
+
+							// Import "OLD" plugin files
+							$this->copy_dir( $backup_plugins_to, WP_PLUGIN_DIR );
 						}
 					}
 
@@ -194,13 +225,13 @@ class Ai1wm_Import
 
 
 	/**
-	 * Enable or disable Wordpress maintenance mode
+	 * Enable or disable WordPress maintenance mode
 	 *
 	 * @param  boolean $enabled Enable or disable maintenance mode
 	 * @return boolean          True if option value has changed, false if not or if update failed
 	 */
 	public function maintenance_mode( $enabled = true ) {
-		return update_option( 'maintenance_mode', $enabled );
+		return update_option( self::MAINTENANCE_MODE, $enabled );
 	}
 
 	/**
@@ -211,12 +242,18 @@ class Ai1wm_Import
 	 * @return void
 	 */
 	public function copy_dir( $from, $to ) {
+		$from = trailingslashit( $from );
+		$to   = trailingslashit( $to );
+
 		$iterator = new RecursiveIteratorIterator(
-			new RecursiveDirectoryIterator( $from, RecursiveDirectoryIterator::SKIP_DOTS ),
+			$rdi = new RecursiveDirectoryIterator( $from ),
 			RecursiveIteratorIterator::SELF_FIRST
 		);
 
 		foreach ( $iterator as $item ) {
+			// Skip dots
+			if ( $iterator->isDot() ) continue;
+
 			if ( $item->isDir() ) {
 				mkdir( $to . $iterator->getSubPathName() );
 			} else {
@@ -232,14 +269,18 @@ class Ai1wm_Import
 	 * @return void
 	 */
 	public function truncate_dir( $dir ) {
+		$dir = trailingslashit( $dir );
 		$iterator = new RecursiveIteratorIterator(
-			new RecursiveDirectoryIterator( $dir, RecursiveDirectoryIterator::SKIP_DOTS ),
+			$rdi = new RecursiveDirectoryIterator( $dir ),
 			RecursiveIteratorIterator::CHILD_FIRST
 		);
 
 		foreach ( $iterator as $item ) {
+			// Skip dots
+			if ( $iterator->isDot() ) continue;
+
 			if ( $item->isDir() ) {
-				rmdir ( $dir . $iterator->getSubPathName() );
+				rmdir( $dir . $iterator->getSubPathName() );
 			} else {
 				unlink( $dir . $iterator->getSubPathName() );
 			}
@@ -253,7 +294,7 @@ class Ai1wm_Import
 	 * @return void
 	 */
 	public function install_plugins( $path ) {
-		$file = file_get_contents( $path );
+		$file    = file_get_contents( $path );
 		$package = json_decode( $file, true );
 
 		// For Plugins API
@@ -300,7 +341,6 @@ class Ai1wm_Import
 	 */
 	public function is_valid( $path ) {
 		$required_objects = array(
-			Ai1wm_Export::EXPORT_DATABASE_NAME,
 			Ai1wm_Export::EXPORT_PACKAGE_NAME,
 		);
 

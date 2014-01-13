@@ -18,20 +18,24 @@
 
 class Ai1wm_Export
 {
-	const EXPORT_ARCHIVE_NAME = 'dump';
-
+	const EXPORT_ARCHIVE_NAME  = 'dump';
 	const EXPORT_DATABASE_NAME = 'database.sql';
-
-	const EXPORT_PACKAGE_NAME = 'package.json';
-
-	const EXPORT_MEDIA_NAME = 'media';
-
-	const EXPORT_THEMES_NAME = 'themes';
+	const EXPORT_PACKAGE_NAME  = 'package.json';
+	const EXPORT_MEDIA_NAME    = 'media';
+	const EXPORT_PLUGINS_NAME  = 'plugins';
+	const EXPORT_THEMES_NAME   = 'themes';
+	const EXPORT_LAST_OPTIONS  = 'ai1wm_export_last_options';
 
 	protected $connection = null;
 
 	public function __construct() {
-		$this->connection = new Mysqldump( DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, 'mysql' );
+		$this->connection = MysqlDumpFactory::makeMysqlDump(
+			DB_HOST,
+			DB_USER,
+			DB_PASSWORD,
+			DB_NAME,
+			class_exists( 'PDO' )
+		);
 	}
 
 	/**
@@ -42,7 +46,11 @@ class Ai1wm_Export
 	 * @return string                Absolute file path
 	 */
 	public function export( $output_file, array $options = array() ) {
-		$archive = new Zipper( $output_file );
+		// Export last options
+		update_option( self::EXPORT_LAST_OPTIONS, json_encode( $options ) );
+
+		// Make archive
+		$archive = ZipFactory::makeZipArchiver( $output_file, ! class_exists( 'ZipArchive' ) );
 
 		// Should we export database?
 		if ( ! isset( $options['export-database' ] ) ) {
@@ -69,6 +77,14 @@ class Ai1wm_Export
 			);
 		}
 
+		// Should we export plugins?
+		if ( ! isset( $options['export-plugins'] ) ) {
+			$archive->addDir(
+				$this->prepare_plugins( $options ),
+				self::EXPORT_PLUGINS_NAME
+			);
+		}
+
 		// Add package
 		$archive->addFromString(
 			self::EXPORT_PACKAGE_NAME,
@@ -88,17 +104,23 @@ class Ai1wm_Export
 	public function prepare_database( $output_file, array $options = array() ) {
 		global $wpdb;
 
-		$settings = array(
-			'include-tables'     => isset( $options['include-tables'] ) ? $options['include-tables'] : array(),
-			'exclude-tables'     => isset( $options['exclude-tables'] ) ? $options['exclude-tables'] : array(),
-			'compress'           => 'None',
-			'no-data'            => isset( $options['export-table-data'] ),
-			'add-drop-table'     => isset( $options['add-drop-table'] ),
-			'single-transaction' => isset( $options['export-single-transaction'] ),
-			'lock-tables'        => isset( $options['export-lock-tables'] ),
-			'add-locks'          => true,
-			'extended-insert'    => true,
-		);
+		// Set include tables
+		$includeTables = array();
+		if ( isset( $options['include-tables'] ) ) {
+			$includeTables = $options['include-tables'];
+		}
+
+		// Set exclude tables
+		$excludeTables = array();
+		if ( isset( $options['exclude-tables' ] ) ) {
+			$excludeTables = $options['exclude-tables'];
+		}
+
+		// Set no table data
+		$noTableData = false;
+		if ( isset( $options['no-table-data'] ) ) {
+			$noTableData = true;
+		}
 
 		$clauses = array();
 
@@ -125,9 +147,16 @@ class Ai1wm_Export
 
 		$output_meta = stream_get_meta_data( $output_file );
 
-		// Export Database
-		$this->connection->set( $settings );
-		$this->connection->start( $output_meta['uri'], $clauses );
+		// Set dump options
+		$this->connection
+			->setFileName( $output_meta['uri'] )
+			->setIncludeTables( $includeTables )
+			->setExcludeTables( $excludeTables )
+			->setNoTableData( $noTableData )
+			->setQueryClauses( $clauses );
+
+		// Make dump
+		$this->connection->dump();
 
 		// Replace Old/New Values
 		if (
@@ -158,7 +187,20 @@ class Ai1wm_Export
 				// Replace serialized string values
 				$data = preg_replace(
 					'!s:(\d+):([\\\\]?"[\\\\]?"|[\\\\]?"((.*?)[^\\\\])[\\\\]?");!e',
-					"'s:'.strlen( $this->unescape_mysql( '$3' ) ).':\"'. $this->unescape_quotes( '$3' ) .'\";'",
+					"'s:'.strlen( Ai1wm_Export::unescape_mysql( '$3' ) ).':\"'. Ai1wm_Export::unescape_quotes( '$3' ) .'\";'",
+					$data
+				);
+				if ( $data ) {
+					ftruncate( $output_file, 0 );
+					rewind( $output_file );
+					fwrite( $output_file, $data );
+				}
+			} else {
+				$data = stream_get_contents( $output_file );
+				// Replace serialized string values
+				$data = preg_replace(
+					'!s:(\d+):([\\\\]?"[\\\\]?"|[\\\\]?"((.*?)[^\\\\])[\\\\]?");!e',
+					"'s:'.strlen( Ai1wm_Export::unescape_mysql( '$3' ) ).':\"'. Ai1wm_Export::unescape_quotes( '$3' ) .'\";'",
 					$data
 				);
 				if ( $data ) {
@@ -169,7 +211,6 @@ class Ai1wm_Export
 			}
 		}
 
-
 		return $output_meta['uri'];
 	}
 
@@ -179,7 +220,7 @@ class Ai1wm_Export
 	 * @param  [type] $value [description]
 	 * @return [type]        [description]
 	 */
-	public function unescape_mysql( $value ) {
+	public static function unescape_mysql( $value ) {
 		return str_replace(
 			array( '\\\\', '\\0', "\\n", "\\r", '\Z', "\'", '\"', ),
 			array( '\\', '\0', "\n", "\r", "\x1a", "'", '"', ),
@@ -193,7 +234,7 @@ class Ai1wm_Export
 	 * @param  [type] $value [description]
 	 * @return [type]        [description]
 	 */
-	public function unescape_quotes( $value ) {
+	public static function unescape_quotes( $value ) {
 		return str_replace( '\"', '"', $value );
 	}
 
@@ -222,6 +263,19 @@ class Ai1wm_Export
 			$themes_dir = get_theme_root();
 
 			return $themes_dir;
+		}
+	}
+
+	/**
+	 * Export plugins root directory
+	 *
+	 * @param  array  $options Export settings
+	 * @return string          Plugins root directory
+	 */
+	public function prepare_plugins( array $options = array() ) {
+		if ( ! isset( $options['export-plugins'] ) ) {
+
+			return WP_PLUGIN_DIR;
 		}
 	}
 

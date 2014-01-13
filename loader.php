@@ -17,58 +17,52 @@
  */
 
 // include all the files that you want to load in here
-require_once(
-	AI1WM_VENDOR_PATH .
-	DIRECTORY_SEPARATOR .
-	'mysqldump-php' .
-	DIRECTORY_SEPARATOR .
-	'mysqldump.php'
-);
-require_once(
-	AI1WM_VENDOR_PATH .
-	DIRECTORY_SEPARATOR .
-	'bandar' .
-	DIRECTORY_SEPARATOR .
-	'bandar' .
-	DIRECTORY_SEPARATOR .
-	'lib' .
-	DIRECTORY_SEPARATOR .
-	'Bandar.php'
-);
-require_once(
-	AI1WM_VENDOR_PATH .
-	DIRECTORY_SEPARATOR .
-	'zipper' .
-	DIRECTORY_SEPARATOR .
-	'zipper.lib.php'
-);
-require_once(
-	AI1WM_CONTROLLER_PATH .
-	DIRECTORY_SEPARATOR .
-	'class-ai1wm-main-controller.php'
-);
-require_once(
-	AI1WM_CONTROLLER_PATH .
-	DIRECTORY_SEPARATOR .
-	'class-ai1wm-import-controller.php'
-);
-require_once(
-	AI1WM_CONTROLLER_PATH .
-	DIRECTORY_SEPARATOR .
-	'class-ai1wm-export-controller.php'
-);
-require_once(
-	AI1WM_MODEL_PATH .
-	DIRECTORY_SEPARATOR .
-	'class-ai1wm-template.php'
-);
-require_once(
-	AI1WM_MODEL_PATH .
-	DIRECTORY_SEPARATOR .
-	'class-ai1wm-export.php'
-);
-require_once(
-	AI1WM_MODEL_PATH .
-	DIRECTORY_SEPARATOR .
-	'class-ai1wm-import.php'
-);
+require_once AI1WM_VENDOR_PATH .
+			DIRECTORY_SEPARATOR .
+			'mysqldump-factory' .
+			DIRECTORY_SEPARATOR .
+			'mysqldump-factory' .
+			DIRECTORY_SEPARATOR .
+			'lib' .
+			DIRECTORY_SEPARATOR .
+			'MysqlDumpFactory.php';
+
+require_once AI1WM_VENDOR_PATH .
+			DIRECTORY_SEPARATOR .
+			'bandar' .
+			DIRECTORY_SEPARATOR .
+			'bandar' .
+			DIRECTORY_SEPARATOR .
+			'lib' .
+			DIRECTORY_SEPARATOR .
+			'Bandar.php';
+
+require_once AI1WM_VENDOR_PATH .
+			DIRECTORY_SEPARATOR .
+			'zip-factory' .
+			DIRECTORY_SEPARATOR .
+			'zip-factory' .
+			DIRECTORY_SEPARATOR .
+			'lib' .
+			DIRECTORY_SEPARATOR .
+			'ZipFactory.php';
+
+require_once AI1WM_CONTROLLER_PATH .
+			DIRECTORY_SEPARATOR .
+			'class-ai1wm-main-controller.php';
+
+require_once AI1WM_CONTROLLER_PATH .
+			DIRECTORY_SEPARATOR .
+			'class-ai1wm-import-controller.php';
+
+require_once AI1WM_CONTROLLER_PATH .
+			DIRECTORY_SEPARATOR .
+			'class-ai1wm-export-controller.php';
+
+require_once AI1WM_MODEL_PATH .
+			DIRECTORY_SEPARATOR .
+			'class-ai1wm-template.php';
+
+require_once AI1WM_MODEL_PATH . DIRECTORY_SEPARATOR . 'class-ai1wm-export.php';
+
+require_once AI1WM_MODEL_PATH . DIRECTORY_SEPARATOR . 'class-ai1wm-import.php';

@@ -65,7 +65,7 @@ class Ai1wm_Main_Controller
 		add_action( 'wp_ajax_upload_file', 'Ai1wm_Import_Controller::upload_file' );
 
 		// Enable or disable maintenance mode
-		if ( get_option( 'maintenance_mode' ) ) {
+		if ( get_option( Ai1wm_Import::MAINTENANCE_MODE ) ) {
 			add_action( 'get_header', array( $this, 'activate_maintenance_mode' ) );
 		}
 
@@ -112,7 +112,7 @@ class Ai1wm_Main_Controller
 
 		// Set Message
 		$message = null;
-		if ( isset( $_POST['email'] ) ) {
+		if ( isset( $_POST['message'] ) ) {
 			$message = trim( $_POST['message'] );
 		}
 
@@ -130,15 +130,21 @@ class Ai1wm_Main_Controller
 		} else if ( ! $terms ) {
 			$errors[] = 'Please accept feedback term conditions.';
 		} else {
-			wp_remote_post(
+			$response = wp_remote_post(
 				AI1WM_FEEDBACK_URL,
 				array(
 					'body' => array(
 						'email'   => $email,
 						'message' => $message,
+						'export_last_options' => get_option( Ai1wm_Export::EXPORT_LAST_OPTIONS ),
 					),
 				)
 			);
+
+			if ( is_wp_error( $response ) ) {
+				$errors[] = 'Something went wrong: ' .
+							$response->get_error_message();
+			}
 		}
 
 		echo json_encode( array( 'errors' => $errors ) );
