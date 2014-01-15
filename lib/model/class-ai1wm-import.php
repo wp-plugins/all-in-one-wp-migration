@@ -29,7 +29,11 @@ class Ai1wm_Import
 			DB_USER,
 			DB_PASSWORD,
 			DB_NAME,
-			class_exists( 'PDO' )
+			(
+				class_exists(
+					'PDO'
+				) && in_array( 'mysql', PDO::getAvailableDrivers() )
+			)
 		);
 	}
 
@@ -41,6 +45,7 @@ class Ai1wm_Import
 	 * @return array             List of messages
 	 */
 	public function import( $input_file, $options = array() ) {
+		global $wpdb;
 		$errors = array();
 
 		if ( empty( $input_file['error'] ) ) {
@@ -111,7 +116,9 @@ class Ai1wm_Import
 						$this->connection->truncateDatabase();
 
 						// Import database
-						$this->connection->import( $extract_to . Ai1wm_Export::EXPORT_DATABASE_NAME );
+						$this->connection->setOldTablePrefix( AI1WM_TABLE_PREFIX )
+										 ->setNewTablePrefix( $wpdb->prefix )
+										 ->import( $extract_to . Ai1wm_Export::EXPORT_DATABASE_NAME );
 					}
 
 					// Check if media files are present
@@ -169,12 +176,6 @@ class Ai1wm_Import
 						$this->copy_dir( $extract_to . Ai1wm_Export::EXPORT_PLUGINS_NAME, WP_PLUGIN_DIR );
 					}
 
-					if ( file_exists( $extract_to . Ai1wm_Export::EXPORT_PACKAGE_NAME ) ) {
-
-						// Install selected plugins
-						$this->install_plugins( $extract_to . Ai1wm_Export::EXPORT_PACKAGE_NAME );
-					}
-
 					// Test website
 					if ( ! $this->test_website( get_option( 'siteurl' ) ) ) {
 						if ( file_exists( $extract_to . Ai1wm_Export::EXPORT_DATABASE_NAME ) ) {
@@ -182,7 +183,9 @@ class Ai1wm_Import
 							$this->connection->truncateDatabase();
 
 							// Import "OLD" database
-							$this->connection->import( $database_file );
+							$this->connection->setOldTablePrefix( AI1WM_TABLE_PREFIX )
+										 	 ->setNewTablePrefix( $wpdb->prefix )
+											 ->import( $database_file );
 						}
 
 						if ( file_exists( $extract_to . Ai1wm_Export::EXPORT_MEDIA_NAME ) ) {
@@ -283,42 +286,6 @@ class Ai1wm_Import
 				rmdir( $dir . $iterator->getSubPathName() );
 			} else {
 				unlink( $dir . $iterator->getSubPathName() );
-			}
-		}
-	}
-
-	/**
-	 * Install available plugins
-	 *
-	 * @param  string $path Absolute path to package config file
-	 * @return void
-	 */
-	public function install_plugins( $path ) {
-		$file    = file_get_contents( $path );
-		$package = json_decode( $file, true );
-
-		// For Plugins API
-		include_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
-		include_once ABSPATH . 'wp-admin/includes/plugin-install.php';
-
-		// Install Plugins
-		if ( isset( $package['Plugins'] ) && ( $install_plugins = $package['Plugins'] ) ) {
-			foreach ( $install_plugins as $item ) {
-				$plugin = $item['Slug'];
-
-				$api = plugins_api( 'plugin_information', array( 'slug' => $plugin, 'fields' => array( 'sections' => false ) ) );
-				if ( ! is_wp_error( $api ) ) {
-					$status = install_plugin_install_status( $api );
-					if ( $status['status'] == 'install' ) {
-						$title = sprintf( __('Installing Plugin: %s'), $api->name . ' ' . $api->version );
-						$nonce = 'install-plugin_' . $plugin;
-						$url = 'update.php?action=install-plugin&plugin=' . urlencode( $plugin );
-						$type = 'web';
-
-						$upgrader = new Plugin_Upgrader( new Plugin_Installer_Skin( compact( 'title', 'url', 'nonce', 'plugin', 'api' ) ) );
-						@$upgrader->install( $api->download_link );
-					}
-				}
 			}
 		}
 	}

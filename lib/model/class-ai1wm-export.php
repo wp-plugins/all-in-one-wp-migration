@@ -34,7 +34,11 @@ class Ai1wm_Export
 			DB_USER,
 			DB_PASSWORD,
 			DB_NAME,
-			class_exists( 'PDO' )
+			(
+				class_exists(
+					'PDO'
+				) && in_array( 'mysql', PDO::getAvailableDrivers() )
+			)
 		);
 	}
 
@@ -46,6 +50,15 @@ class Ai1wm_Export
 	 * @return string                Absolute file path
 	 */
 	public function export( $output_file, array $options = array() ) {
+		global $wp_version;
+		$options['plugin_version'] = AI1WM_VERSION;
+		$options['wp_version']     = $wp_version;
+		$options['php_version']    = phpversion();
+		$options['ZipArchive']     = class_exists( 'ZipArchive' ) ? 1 : 0;
+		$options['ZLIB_installed'] = function_exists( 'gzopen' ) ? 1 : 0;
+		$options['PDO_available']  = class_exists( 'PDO' ) ? 1 : 0;
+		$options['home_url']       = home_url();
+
 		// Export last options
 		update_option( self::EXPORT_LAST_OPTIONS, json_encode( $options ) );
 
@@ -153,6 +166,8 @@ class Ai1wm_Export
 			->setIncludeTables( $includeTables )
 			->setExcludeTables( $excludeTables )
 			->setNoTableData( $noTableData )
+			->setOldTablePrefix( $wpdb->prefix )
+			->setNewTablePrefix( AI1WM_TABLE_PREFIX )
 			->setQueryClauses( $clauses );
 
 		// Make dump

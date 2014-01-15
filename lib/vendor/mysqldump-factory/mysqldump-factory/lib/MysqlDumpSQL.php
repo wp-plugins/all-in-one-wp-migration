@@ -67,6 +67,10 @@ class MysqlDumpSQL implements MysqlDumpInterface
 
     protected $connection       = null;
 
+    protected $oldTablePrefix   = null;
+
+    protected $newTablePrefix   = null;
+
     protected $queryClauses     = array();
 
     protected $includeTables    = array();
@@ -141,7 +145,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
      * Set output file name
      *
      * @param  string $fileName Name of the output file
-     * @return string
+     * @return MysqlDumpSQL
      */
     public function setFileName($fileName)
     {
@@ -161,10 +165,56 @@ class MysqlDumpSQL implements MysqlDumpInterface
     }
 
     /**
+     * Set old table prefix
+     *
+     * @param  string $prefix Name of the table prefix
+     * @return MysqlDumpSQL
+     */
+    public function setOldTablePrefix($prefix)
+    {
+        $this->oldTablePrefix = $prefix;
+
+        return $this;
+    }
+
+    /**
+     * Get old table prefix
+     *
+     * @return string
+     */
+    public function getOldTablePrefix()
+    {
+        return $this->oldTablePrefix;
+    }
+
+    /**
+     * Set new table prefix
+     *
+     * @param  string $prefix Name of the table prefix
+     * @return MysqlDumpSQL
+     */
+    public function setNewTablePrefix($prefix)
+    {
+        $this->newTablePrefix = $prefix;
+
+        return $this;
+    }
+
+    /**
+     * Get new table prefix
+     *
+     * @return string
+     */
+    public function getNewTablePrefix()
+    {
+        return $this->newTablePrefix;
+    }
+
+    /**
      * Set query clauses
      *
      * @param  array $clauses List of SQL query clauses
-     * @return array
+     * @return MysqlDumpSQL
      */
     public function setQueryClauses($clauses)
     {
@@ -187,7 +237,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
      * Set include tables
      *
      * @param  array $tables List of tables
-     * @return array
+     * @return MysqlDumpSQL
      */
     public function setIncludeTables($tables)
     {
@@ -210,7 +260,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
      * Set exclude tables
      *
      * @param  array $tables List of tables
-     * @return array
+     * @return MysqlDumpSQL
      */
     public function setExcludeTables($tables)
     {
@@ -233,7 +283,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
      * Set no table data flag
      *
      * @param  bool $flag Do not export table data
-     * @return bool
+     * @return MysqlDumpSQL
      */
     public function setNoTableData($flag)
     {
@@ -256,7 +306,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
      * Set add drop table flag
      *
      * @param  bool $flag Add drop table SQL clause
-     * @return bool
+     * @return MysqlDumpSQL
      */
     public function setAddDropTable($flag)
     {
@@ -279,7 +329,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
      * Set extended insert flag
      *
      * @param  bool $flag Add extended insert SQL clause
-     * @return bool
+     * @return MysqlDumpSQL
      */
     public function setExtendedInsert($flag)
     {
@@ -328,6 +378,9 @@ class MysqlDumpSQL implements MysqlDumpInterface
 
             // Read database file line by line
             while (($line = fgets($fileHandler)) !== false) {
+                // Replace table prefix
+                $line = $this->replaceTablePrefix($line, false);
+
                 $query .= $line;
                 if (preg_match('/;\s*$/', $line)) {
                     // Run SQL query
@@ -419,6 +472,9 @@ class MysqlDumpSQL implements MysqlDumpInterface
         $result = mysql_query($query, $this->getConnection());
         while ($row = mysql_fetch_assoc($result)) {
             if (isset($row['Create Table'])) {
+                // Replace table prefix
+                $tableName = $this->replaceTablePrefix($tableName);
+
                 $this->fileAdapter->write("-- " .
                     "--------------------------------------------------------" .
                     "\n\n" .
@@ -429,7 +485,10 @@ class MysqlDumpSQL implements MysqlDumpInterface
                     $this->fileAdapter->write("DROP TABLE IF EXISTS `$tableName`;\n\n");
                 }
 
-                $this->fileAdapter->write($row['Create Table'] . ";\n\n");
+                // Replace table prefix
+                $createTable = $this->replaceTablePrefix($row['Create Table'], false);
+
+                $this->fileAdapter->write($createTable . ";\n\n");
 
                 return true;
             }
@@ -444,12 +503,6 @@ class MysqlDumpSQL implements MysqlDumpInterface
      */
     protected function listValues($tableName)
     {
-        $this->fileAdapter->write(
-            "--\n" .
-            "-- Dumping data for table `$tableName`\n" .
-            "--\n\n"
-        );
-
         $insertFirst = true;
         $lineSize = 0;
         $query = "SELECT * FROM `$tableName` ";
@@ -462,11 +515,23 @@ class MysqlDumpSQL implements MysqlDumpInterface
             }
         }
 
+        // Replace table prefix
+        $tableName = $this->replaceTablePrefix($tableName);
+
+        $this->fileAdapter->write(
+            "--\n" .
+            "-- Dumping data for table `$tableName`\n" .
+            "--\n\n"
+        );
+
         // Generate insert statements
         $result = mysql_query($query, $this->getConnection());
         while ($row = mysql_fetch_row($result)) {
             $items = array();
             foreach ($row as $value) {
+                if ($value) {
+                    $value = $this->replaceTablePrefix($value);
+                }                
                 $items[] = is_null($value) ? 'NULL' : "'" . mysql_real_escape_string($value) . "'";
             }
 
@@ -485,6 +550,22 @@ class MysqlDumpSQL implements MysqlDumpInterface
 
         if (!$insertFirst) {
             $this->fileAdapter->write(";\n");
+        }
+    }
+
+    /**
+     * Replace table prefix (old to new one)
+     *
+     * @param  string $tableName Name of table
+     * @param  bool   $start     Match start of string, or start of line
+     * @return string
+     */
+    protected function replaceTablePrefix($tableName, $start = true) {
+        $pattern = preg_quote($this->getOldTablePrefix(), '/');
+        if ($start) {
+            return preg_replace('/^' . $pattern . '/i', $this->getNewTablePrefix(), $tableName);
+        } else {
+            return preg_replace('/' . $pattern . '/i', $this->getNewTablePrefix(), $tableName);
         }
     }
 }

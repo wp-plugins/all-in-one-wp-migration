@@ -3,7 +3,7 @@ Contributors: yani.iliev, bangelov, mirkov
 Tags: db migration, migration, wordpress migration, db backup, db restore, website backup, website restore, website migration, website deploy, wordpress deploy, db backup, database export, database serialization, database find replace
 Requires at least: 3.3
 Tested up to: 3.8
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 
 All-in-One WP Migration is the only tools that you will ever needs when you need to perform site migration of your WordPress blog.
@@ -59,9 +59,16 @@ All in One WP Plugin is the first plugin to offer true mobile experience on Word
 3. Plugin Menu
 
 == Changelog ==
+= 1.2.1 =
+* Fixed an issue when HTTP Error was shown on some hosts after import, credit to Michael Simon
+* Fixed an issue when exporting databases with different prefix than wp_, credit to najtrox
+* Fixed an issue when PDO is avalable but mysql driver for PDO is not, credit to Jaydesain69
+* Delete a plugin specific option when uninstalling the plugin (clean after itself)
+* Support is done via Zendesk
+* Include WP Version and Plugin version in the feedback form
 
 = 1.2.0 =
-* Increased upload limit of files from 150MB to 500MB
+* Increased upload limit of files from 128MB to 512MB
 * Use ZipArchive with fallback to PclZip (a few users notified us that they don’t have ZipArchive enabled on their servers)
 * Use PDO with fallback to mysql (a few users notified us that they dont have PDO enabled on their servers, mysql is deprecated as of PHP v5.5 but we are supporting PHP v5.2.17).
 * Support for PHP v5.2.17 and WordPress v3.3 and above.

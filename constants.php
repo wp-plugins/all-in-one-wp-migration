@@ -16,6 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// ==================
+// = Plugin VERSION =
+// ==================
+define( 'AI1WM_VERSION', '1.2.1' );
+
 // ===============
 // = Plugin Name =
 // ===============
@@ -70,6 +75,11 @@ define( 'AI1WM_URL', plugins_url( '', __FILE__ ) );
 // = ServMask Feedback Url =
 // ==============
 define( 'AI1WM_FEEDBACK_URL', 'https://servmask.com/ai1wm/feedback/create' );
+
+// ==============
+// = ServMask Table Prefix =
+// ==============
+define( 'AI1WM_TABLE_PREFIX', 'SERVMASK_PREFIX_' );
 
 // ===========================
 // = WP_CONTENT_DIR Constant =

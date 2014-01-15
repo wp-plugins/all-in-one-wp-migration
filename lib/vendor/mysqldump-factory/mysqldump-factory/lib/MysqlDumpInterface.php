@@ -71,7 +71,7 @@ interface MysqlDumpInterface
      * Set output file name
      *
      * @param  string $fileName Name of the output file
-     * @return string
+     * @return MysqlDumpInterface
      */
     public function setFileName($fileName);
 
@@ -83,10 +83,40 @@ interface MysqlDumpInterface
     public function getFileName();
 
     /**
+     * Set old table prefix
+     *
+     * @param  string $prefix Name of the table prefix
+     * @return MysqlDumpInterface
+     */
+    public function setOldTablePrefix($prefix);
+
+    /**
+     * Get old table prefix
+     *
+     * @return string
+     */
+    public function getOldTablePrefix();
+
+    /**
+     * Set new table prefix
+     *
+     * @param  string $prefix Name of the table prefix
+     * @return MysqlDumpInterface
+     */
+    public function setNewTablePrefix($prefix);
+
+    /**
+     * Get new table prefix
+     *
+     * @return string
+     */
+    public function getNewTablePrefix();
+
+    /**
      * Set query clauses
      *
      * @param  array $clauses List of SQL query clauses
-     * @return array
+     * @return MysqlDumpInterface
      */
     public function setQueryClauses($clauses);
 
@@ -101,7 +131,7 @@ interface MysqlDumpInterface
      * Set include tables
      *
      * @param  array $tables List of tables
-     * @return array
+     * @return MysqlDumpInterface
      */
     public function setIncludeTables($tables);
 
@@ -116,7 +146,7 @@ interface MysqlDumpInterface
      * Set exclude tables
      *
      * @param  array $tables List of tables
-     * @return array
+     * @return MysqlDumpInterface
      */
     public function setExcludeTables($tables);
 
@@ -131,7 +161,7 @@ interface MysqlDumpInterface
      * Set no table data flag
      *
      * @param  bool $flag Do not export table data
-     * @return bool
+     * @return MysqlDumpInterface
      */
     public function setNoTableData($flag);
 
@@ -146,7 +176,7 @@ interface MysqlDumpInterface
      * Set add drop table flag
      *
      * @param  bool $flag Add drop table SQL clause
-     * @return bool
+     * @return MysqlDumpInterface
      */
     public function setAddDropTable($flag);
 
@@ -161,7 +191,7 @@ interface MysqlDumpInterface
      * Set extended insert flag
      *
      * @param  bool $flag Add extended insert SQL clause
-     * @return bool
+     * @return MysqlDumpInterface
      */
     public function setExtendedInsert($flag);
 

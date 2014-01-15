@@ -5,7 +5,7 @@
  * Description: Migration tool for all your blog data
  * Author: ServMask
  * Author URI: http://servmask.com/
- * Version: 1.2.0
+ * Version: 1.2.1
  *
  * Copyright (C) 2013 ServMask LLC
  *
@@ -26,10 +26,10 @@
 @ini_set( 'max_input_time', '-1' );
 
 // include constants
-require_once( dirname( __FILE__ ) . DIRECTORY_SEPARATOR . 'constants.php' );
+require_once dirname( __FILE__ ) . DIRECTORY_SEPARATOR . 'constants.php';
 
 // include loader
-require_once( dirname( __FILE__ ) . DIRECTORY_SEPARATOR . 'loader.php' );
+require_once dirname( __FILE__ ) . DIRECTORY_SEPARATOR . 'loader.php';
 
 // ==========================================================================
 // = All app initialization is done in Ai1wm_Main_Controller __constructor. =
