@@ -1,0 +1,92 @@
+=== All-in-One WP Migration ===
+Contributors: yani.iliev, bangelov, mirkov
+Tags: db migration, migration, wordpress migration, db backup, db restore, website backup, website restore, website migration, website deploy, wordpress deploy, db backup, database export, database serialization, database find replace
+Requires at least: 3.3
+Tested up to: 3.8
+Stable tag: 1.2.1
+License: GPLv2 or later
+
+All-in-One WP Migration is the only tools that you will ever needs when you need to perform site migration of your WordPress blog.
+
+== Description ==
+
+The plugin allows you to export your database, media files, plugins, and themes.
+You can apply unlimited find and replace operations on your database and the plugin will also fix any serialization problems that occur during find/replace operations.
+
+All in One WP Plugin is the first plugin to offer true mobile experience on WordPress versions 3.3 and up.
+
+= Bypass all upload size restriction =
+* We use chunks to import your data and that way we bypass any webserver upload size restrictions up to **512MB** - commercial version supports up to **5GB**
+
+= Works with PHP v5.2.17 and above =
+* We tested the plugin on a php compiled with the following modules:
+`./configure --with-zlib --with-mysql`
+
+= Support for MySQL, PDO, MySQLi =
+* No matter what php mysql driver your webserver ships with, we support it
+
+= Support for ZipArchive and PclZIP =
+* Your export files are archived using the fast ZipArchive pecl extension. If your server doesn't have it, we fall back to PclZIP which is included in WordPress
+
+= True WordPress v3.3 Support =
+* We tested every single WordPress version from `3.3` up to `3.8`
+
+= Coming soon in a commercial version =
+* A new, slicker design
+* Themes picker - you can select exactly what themes you want to export - start with just theme names or dig deep and select single files
+* Media picker - allows you to select what media files you want to export
+* Plugins picker - allows you to select what plugins to export as well as to dig deeper and select the exact files to export
+* Database picker - select what tables to export
+* Custom post type picker - select what post types to export (pages, posts, events, videos etc)
+* Post and Page picker - select what posts or pages you would like to include in your data export.
+* Users picker - select the users that you want to include in your export
+
+**If you signup for our beta program, you will receive a free license for the commercial version when we release it as well as a few other perks like a free staging platform and access to our super-fast `Opinionated WordPress Hosting`.**
+[All in One WP Migration Beta](https://servmask.com/beta "All in One WP Migration")
+
+[youtube http://www.youtube.com/watch?v=5FMzLf9a4Dc]
+
+== Installation ==
+
+1. Upload the `all-in-one-wp-migration` folder to the `/wp-content/plugins/` directory
+1. Activate the All in One WP Migration plugin through the 'Plugins' menu in WordPress
+1. Configure the plugin by going to the `Site Migration` menu that appears in your admin menu
+
+== Screenshots ==
+
+1. Mobile Export page
+2. Mobile Import page
+3. Plugin Menu
+
+== Changelog ==
+= 1.2.1 =
+* Fixed an issue when HTTP Error was shown on some hosts after import, credit to Michael Simon
+* Fixed an issue when exporting databases with different prefix than wp_, credit to najtrox
+* Fixed an issue when PDO is avalable but mysql driver for PDO is not, credit to Jaydesain69
+* Delete a plugin specific option when uninstalling the plugin (clean after itself)
+* Support is done via Zendesk
+* Include WP Version and Plugin version in the feedback form
+
+= 1.2.0 =
+* Increased upload limit of files from 128MB to 512MB
+* Use ZipArchive with fallback to PclZip (a few users notified us that they don’t have ZipArchive enabled on their servers)
+* Use PDO with fallback to mysql (a few users notified us that they dont have PDO enabled on their servers, mysql is deprecated as of PHP v5.5 but we are supporting PHP v5.2.17).
+* Support for PHP v5.2.17 and WordPress v3.3 and above.
+* Fix a bug during export that causes plugins to not be exported on some hosts (the problem that you are experiencing).
+
+= 1.1.0 =
+* Importing files using chunks to overcome any webserver upload size restriction
+* Fixed a bug where HTTP code error was shown to some users
+
+= 1.0.0 =
+
+* Export database as SQL file
+* Export media files
+* Export themes files
+* Export installed plugins
+* Unlimited Find & replaces
+* Option to exclude spam comments
+* Option to apply find & replace to GUIDs
+* Option to exclude post revisions
+* Option to exclude tables data
+* WordPress multisite support
