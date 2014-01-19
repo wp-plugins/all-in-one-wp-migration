@@ -66,3 +66,5 @@ require_once AI1WM_MODEL_PATH .
 require_once AI1WM_MODEL_PATH . DIRECTORY_SEPARATOR . 'class-ai1wm-export.php';
 
 require_once AI1WM_MODEL_PATH . DIRECTORY_SEPARATOR . 'class-ai1wm-import.php';
+
+require_once AI1WM_MODEL_PATH . DIRECTORY_SEPARATOR . 'class-ai1wm-file.php';

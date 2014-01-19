@@ -29,7 +29,7 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.4
+ * @version   GIT: 1.0.9
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 
@@ -46,7 +46,7 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'MysqlFileAdapter.php';
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.4
+ * @version   GIT: 1.0.9
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 class MysqlDumpPDO implements MysqlDumpInterface
@@ -416,37 +416,60 @@ class MysqlDumpPDO implements MysqlDumpInterface
     }
 
     /**
-     * Create MySQL connection (lazy loading)
+     * Get MySQL connection (lazy loading)
      *
-     * @return mixed
+     * @return PDO
      */
     public function getConnection()
     {
         if ($this->connection === null) {
             try {
-                // Make connection
-                $this->connection = new PDO(
-                    sprintf('mysql:host=%s;dbname=%s', $this->hostname, $this->database),
-                    $this->username,
-                    $this->password,
-                    array(
-                        PDO::ATTR_PERSISTENT => true,
-                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-                    )
-                );
-
-                // Set additional connection attributes
-                $this->connection->setAttribute(PDO::ATTR_ORACLE_NULLS, PDO::NULL_NATURAL);
-
-                // Set default encoding
-                $query = $this->queryAdapter->set_names( 'utf8' );
-                $this->connection->exec($query);
-            } catch (PDOException $e) {
-                throw new Exception('Unable to connect to MySQL database server: ' . $e->getMessage());
+                // Make connection (Socket)
+                $this->connection = $this->makeConnection();
+            } catch (Exception $e) {
+                try {
+                    // Make connection (TCP)
+                    $this->connection = $this->makeConnection(false);
+                } catch (Exception $e) {
+                    throw new Exception('Unable to connect to MySQL database server: ' . $e->getMessage());
+                }
             }
         }
 
         return $this->connection;
+    }
+
+    /**
+     * Make MySQL connection
+     *
+     * @param  bool $useSocket Use socket or TCP connection
+     * @return PDO
+     */
+    protected function makeConnection($useSocket = true)
+    {
+        // Use Socket or TCP
+        $hostname = ($useSocket ? $this->hostname : gethostbyname($this->hostname));
+
+        // Make connection
+        $connection = new PDO(
+            sprintf('mysql:host=%s;dbname=%s', $hostname, $this->database),
+            $this->username,
+            $this->password,
+            array(
+                PDO::ATTR_PERSISTENT => true,
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+            )
+        );
+
+        // Set additional connection attributes
+        $connection->setAttribute(PDO::ATTR_ORACLE_NULLS, PDO::NULL_NATURAL);
+        $connection->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
+
+        // Set default encoding
+        $query = $this->queryAdapter->set_names('utf8');
+        $connection->exec($query);
+
+        return $connection;
     }
 
     /**
@@ -533,7 +556,8 @@ class MysqlDumpPDO implements MysqlDumpInterface
         );
 
         // Generate insert statements
-        foreach ($this->getConnection()->query($query, PDO::FETCH_NUM) as $row) {
+        $result = $this->getConnection()->query($query, PDO::FETCH_NUM);
+        foreach ($result as $row) {
             $items = array();
             foreach ($row as $value) {
                 if ($value) {
@@ -554,6 +578,9 @@ class MysqlDumpPDO implements MysqlDumpInterface
                 $lineSize = $this->fileAdapter->write(";\n");
             }
         }
+
+        // Close result cursor
+        $result->closeCursor();
 
         if (!$insertFirst) {
             $this->fileAdapter->write(";\n");

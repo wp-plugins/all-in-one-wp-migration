@@ -58,8 +58,12 @@ class Ai1wm_Main_Controller
 	 * @return Object Instance of this class
 	 */
 	private function activate_actions() {
+		if ( is_multisite() ) {
+			add_action( 'network_admin_menu', array( $this, 'admin_menu' ) );
+		} else {
+			add_action( 'admin_menu', array( $this, 'admin_menu' ) );
+		}
 		add_action( 'admin_head', array( $this, 'admin_head' ) );
-		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 		add_action( 'init', array( $this, 'router' ) );
 		add_action( 'wp_ajax_leave_feedback', array( $this, 'leave_feedback' ) );
 		add_action( 'wp_ajax_upload_file', 'Ai1wm_Import_Controller::upload_file' );

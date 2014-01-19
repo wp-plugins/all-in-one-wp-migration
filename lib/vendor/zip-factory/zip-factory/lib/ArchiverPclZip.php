@@ -28,7 +28,7 @@
  * @author    Yani Iliev <yani@iliev.me>
  * @copyright 2014 Yani Iliev
  * @license   https://raw.github.com/yani-/zip-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.0
+ * @version   GIT: 1.0.3
  * @link      https://github.com/yani-/zip-factory/
  */
 
@@ -105,11 +105,15 @@ if (function_exists('gzopen')) {
             $start = null,
             $length = null
         ) {
+            if (is_resource($filepath)) {
+                $meta     = stream_get_meta_data($filepath);
+                $filepath = $meta['uri'];
+            }
             $this->pclzip->add(
                 array(
                     array(
-                        PCLZIP_ATT_FILE_NAME    => $entryname,
-                        PCLZIP_ATT_FILE_CONTENT => file_get_contents($filepath)
+                        PCLZIP_ATT_FILE_NAME          => $filepath,
+                        PCLZIP_ATT_FILE_NEW_FULL_NAME => $entryname
                     )
                 )
             );

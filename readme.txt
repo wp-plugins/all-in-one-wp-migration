@@ -3,7 +3,7 @@ Contributors: yani.iliev, bangelov, mirkov
 Tags: db migration, migration, wordpress migration, db backup, db restore, website backup, website restore, website migration, website deploy, wordpress deploy, db backup, database export, database serialization, database find replace
 Requires at least: 3.3
 Tested up to: 3.8
-Stable tag: 1.2.1
+Stable tag: 1.3.0
 License: GPLv2 or later
 
 All-in-One WP Migration is the only tools that you will ever needs when you need to perform site migration of your WordPress blog.
@@ -14,6 +14,17 @@ The plugin allows you to export your database, media files, plugins, and themes.
 You can apply unlimited find and replace operations on your database and the plugin will also fix any serialization problems that occur during find/replace operations.
 
 All in One WP Plugin is the first plugin to offer true mobile experience on WordPress versions 3.3 and up.
+
+= Multisite compatible =
+* The plugin menu is available for the network administrator only `wp-admin/network/admin.php?page=site-migration-export`
+
+= Works on Windows OS and IIS =
+* Tested the plugin on Windows 7 and Windows Server 2012 with the default available IIS
+* You will need to make sure that Windows\TEMP folder has write permissions for the IIS user
+
+= memory_limit requirement of only 32MB =
+* The plugin handles archiving of files by using 2048 bytes of chunks
+* The plugin processes database find/replacement in chunks of 1MB
 
 = Bypass all upload size restriction =
 * We use chunks to import your data and that way we bypass any webserver upload size restrictions up to **512MB** - commercial version supports up to **5GB**
@@ -59,6 +70,18 @@ All in One WP Plugin is the first plugin to offer true mobile experience on Word
 3. Plugin Menu
 
 == Changelog ==
+= 1.3.0 =
+* Added support for mysql connection to happen over sockets or TCP
+* Added support for Windows OS and fully tested the plugin on IIS
+* Added support for limited memory_limit - 1MB - The plugin now requires only 1MB to operate properly
+* Added support for multisite
+* Use mysql_unbuffered_query instead of mysql_query to overcome any memory problems
+* Fixed a deprecated warning for mysql_pconnect when php 5.5 and above is used
+* Fixed memory_limit problem with PCLZIP library
+* Fixed a bug when the archive is exported with zero size when using PCLZIP
+* Fixed a bug when the archive was exported broken on some servers
+* Fixed a deprecated usage of preg_replace \e in php v5.5 and above
+
 = 1.2.1 =
 * Fixed an issue when HTTP Error was shown on some hosts after import, credit to Michael Simon
 * Fixed an issue when exporting databases with different prefix than wp_, credit to najtrox

@@ -29,7 +29,7 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.4
+ * @version   GIT: 1.0.9
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 
@@ -46,7 +46,7 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'MysqlFileAdapter.php';
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.4
+ * @version   GIT: 1.0.9
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 class MysqlDumpSQL implements MysqlDumpInterface
@@ -356,11 +356,14 @@ class MysqlDumpSQL implements MysqlDumpInterface
     public function truncateDatabase()
     {
         $query = $this->queryAdapter->show_tables($this->database);
-        $result = mysql_query($query, $this->getConnection());
+        $result = mysql_unbuffered_query($query, $this->getConnection());
+        $_deleteTables = array();
         while ($row = mysql_fetch_assoc($result)) {
             // Drop table
-            $delete = $this->queryAdapter->drop_table($row['table_name']);
-            mysql_query($delete, $this->getConnection());
+            $_deleteTables []= $this->queryAdapter->drop_table($row['table_name']);
+        }
+        foreach ($_deleteTables as $delete) {
+            mysql_unbuffered_query($delete, $this->getConnection());
         }
     }
 
@@ -384,7 +387,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
                 $query .= $line;
                 if (preg_match('/;\s*$/', $line)) {
                     // Run SQL query
-                    $result = mysql_query($query, $this->getConnection());
+                    $result = mysql_unbuffered_query($query, $this->getConnection());
                     if ($result) {
                         $query = null;
                     }
@@ -405,7 +408,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
         $tables = array();
 
         $query = $this->queryAdapter->show_tables($this->database);
-        $result = mysql_query($query, $this->getConnection());
+        $result = mysql_unbuffered_query($query, $this->getConnection());
         while ($row = mysql_fetch_assoc($result)) {
             $tables[] = $row['table_name'];
         }
@@ -414,30 +417,55 @@ class MysqlDumpSQL implements MysqlDumpInterface
     }
 
     /**
-     * Create MySQL connection (lazy loading)
+     * Get MySQL connection (lazy loading)
      *
-     * @return mixed
+     * @return resource
      */
     protected function getConnection()
     {
         if ($this->connection === null) {
-            // Make connection
-            $this->connection = mysql_pconnect($this->hostname, $this->username, $this->password);
+            // Make connection (Socket)
+            $this->connection = $this->makeConnection();
 
-            // Select database and set default encoding
-            if ($this->connection) {
-                if (mysql_select_db($this->database, $this->connection)) {
-                    $query = $this->queryAdapter->set_names( 'utf8' );
-                    mysql_query($query, $this->connection);
-                } else {
-                    throw new Exception('Could not select MySQL database: ' . mysql_error($this->connection));
+            if ($this->connection === false) {
+                // Make connection (TCP)
+                $this->connection = $this->makeConnection(false);
+
+                // Unable to connect to MySQL database server
+                if ($this->connection === false) {
+                    throw new Exception('Unable to connect to MySQL database server: ' . mysql_error($this->connection));
                 }
-            } else {
-                throw new Exception('Unable to connect to MySQL database server: ' . mysql_error($this->connection));
             }
         }
 
         return $this->connection;
+    }
+
+    /**
+     * Make MySQL connection
+     *
+     * @param  bool $useSocket Use socket or TCP connection
+     * @return resource
+     */
+    protected function makeConnection($useSocket = true)
+    {
+        // Use Socket or TCP
+        $hostname = ($useSocket ? $this->hostname : gethostbyname($this->hostname));
+
+        // Make connection
+        $connection = @mysql_pconnect($hostname, $this->username, $this->password);
+
+        // Select database and set default encoding
+        if ($connection) {
+            if (mysql_select_db($this->database, $connection)) {
+                $query = $this->queryAdapter->set_names('utf8');
+                mysql_unbuffered_query($query, $connection);
+            } else {
+                throw new Exception('Could not select MySQL database: ' . mysql_error($connection));
+            }
+        }
+
+        return $connection;
     }
 
     /**
@@ -469,7 +497,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
     protected function getTableStructure($tableName)
     {
         $query = $this->queryAdapter->show_create_table($tableName);
-        $result = mysql_query($query, $this->getConnection());
+        $result = mysql_unbuffered_query($query, $this->getConnection());
         while ($row = mysql_fetch_assoc($result)) {
             if (isset($row['Create Table'])) {
                 // Replace table prefix
@@ -525,13 +553,13 @@ class MysqlDumpSQL implements MysqlDumpInterface
         );
 
         // Generate insert statements
-        $result = mysql_query($query, $this->getConnection());
+        $result = mysql_unbuffered_query($query, $this->getConnection());
         while ($row = mysql_fetch_row($result)) {
             $items = array();
             foreach ($row as $value) {
                 if ($value) {
                     $value = $this->replaceTablePrefix($value);
-                }                
+                }
                 $items[] = is_null($value) ? 'NULL' : "'" . mysql_real_escape_string($value) . "'";
             }
 

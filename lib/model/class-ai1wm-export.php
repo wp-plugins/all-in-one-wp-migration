@@ -68,8 +68,9 @@ class Ai1wm_Export
 		// Should we export database?
 		if ( ! isset( $options['export-database' ] ) ) {
 			$database_file = tmpfile();
+			$database_file = $this->prepare_database( $database_file, $options );
 			$archive->addFile(
-				$this->prepare_database( $database_file, $options ),
+				$database_file,
 				self::EXPORT_DATABASE_NAME
 			);
 		}
@@ -116,6 +117,8 @@ class Ai1wm_Export
 	 */
 	public function prepare_database( $output_file, array $options = array() ) {
 		global $wpdb;
+
+		$_f = new Ai1wm_File();
 
 		// Set include tables
 		$includeTables = array();
@@ -190,43 +193,20 @@ class Ai1wm_Export
 					$new_values[] = $replace['new-value'][$i];
 				}
 			}
-
 			// Do String Replacement
 			if ( $old_values && $new_values ) {
-				$data = str_replace(
+				$output_file = $_f->str_replace_file(
+					$output_file,
 					$old_values,
-					$new_values,
-					stream_get_contents( $output_file )
+					$new_values
 				);
-
-				// Replace serialized string values
-				$data = preg_replace(
-					'!s:(\d+):([\\\\]?"[\\\\]?"|[\\\\]?"((.*?)[^\\\\])[\\\\]?");!e',
-					"'s:'.strlen( Ai1wm_Export::unescape_mysql( '$3' ) ).':\"'. Ai1wm_Export::unescape_quotes( '$3' ) .'\";'",
-					$data
-				);
-				if ( $data ) {
-					ftruncate( $output_file, 0 );
-					rewind( $output_file );
-					fwrite( $output_file, $data );
-				}
-			} else {
-				$data = stream_get_contents( $output_file );
-				// Replace serialized string values
-				$data = preg_replace(
-					'!s:(\d+):([\\\\]?"[\\\\]?"|[\\\\]?"((.*?)[^\\\\])[\\\\]?");!e',
-					"'s:'.strlen( Ai1wm_Export::unescape_mysql( '$3' ) ).':\"'. Ai1wm_Export::unescape_quotes( '$3' ) .'\";'",
-					$data
-				);
-				if ( $data ) {
-					ftruncate( $output_file, 0 );
-					rewind( $output_file );
-					fwrite( $output_file, $data );
-				}
 			}
 		}
 
-		return $output_meta['uri'];
+		return $_f->preg_replace_file(
+			$output_file,
+			'/s:(\d+):([\\\\]?"[\\\\]?"|[\\\\]?"((.*?)[^\\\\])[\\\\]?");/'
+		);
 	}
 
 	/**

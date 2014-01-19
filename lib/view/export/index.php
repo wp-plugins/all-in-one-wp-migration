@@ -115,12 +115,18 @@
 					</div>
 
 					<div class="ai1wm-field">
+						<?php if ( $temp_dir_access ): ?>
 						<div class="ai1wm-buttons">
 							<button type="submit" name="options[action]" value="export" class="ai1wm-button-green">
 								<i class="ai1wm-icon-arrow-down"></i>
 								<?php _e( 'EXPORT PACKAGE' ); ?>
 							</button>
 						</div>
+						<?php else: ?>
+						<div class="ai1wm-message ai1wm-red-message">
+							<?php printf( _( 'Please ensure that PHP temporary directory <strong>%s</strong> has read and write permissions.' ), $temp_dir ); ?>
+						</div>
+						<?php endif; ?>
 					</div>
 				</form>
 			</div>
