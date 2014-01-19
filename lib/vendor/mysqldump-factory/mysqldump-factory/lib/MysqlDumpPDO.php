@@ -29,7 +29,7 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.9
+ * @version   GIT: 1.0.10
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 
@@ -46,7 +46,7 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'MysqlFileAdapter.php';
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.9
+ * @version   GIT: 1.0.10
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 class MysqlDumpPDO implements MysqlDumpInterface
@@ -356,9 +356,13 @@ class MysqlDumpPDO implements MysqlDumpInterface
     public function truncateDatabase()
     {
         $query = $this->queryAdapter->show_tables($this->database);
-        foreach ($this->getConnection()->query($query) as $row) {
+        $result = $this->getConnection()->query($query);
+        $_deleteTables = array();
+        foreach ($result as $row) {
             // Drop table
-            $delete = $this->queryAdapter->drop_table($row['table_name']);
+            $_deleteTables[] = $this->queryAdapter->drop_table($row['table_name']);
+        }
+        foreach ($_deleteTables as $delete) {
             $this->getConnection()->query($delete);
         }
     }
