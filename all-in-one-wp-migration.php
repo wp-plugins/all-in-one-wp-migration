@@ -5,7 +5,7 @@
  * Description: Migration tool for all your blog data
  * Author: ServMask
  * Author URI: http://servmask.com/
- * Version: 1.3.1
+ * Version: 1.4.0
  *
  * Copyright (C) 2013 ServMask LLC
  *
