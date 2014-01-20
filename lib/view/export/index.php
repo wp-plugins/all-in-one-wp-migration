@@ -134,6 +134,11 @@
 		<div class="ai1wm-right">
 			<div class="ai1wm-sidebar">
 				<div class="ai1wm-segment">
+					<div class="ai1wm-divider"><?php _e( 'Share' ); ?></div>
+					<div class="ai1wm-share-button-container">
+						<a class="ai1wm-share-button" target="_blank" href="https://www.twitter.com/intent/tweet?url=https://servmask.com/&text=Check+out+this+epic+WordPress+Migration+plugin+at&via=servmask"><i class="ai1wm-icon-twitter"></i></a>
+						<a class="ai1wm-share-button" target="_blank" href="https://www.facebook.com/sharer/sharer.php?p%5Burl%5D=https%3A%2F%2Fservmask.com&p%5Bimage%5D=https%3A%2F%2Fassets.servmask.com%2Fimg%2Ffavicon.png&s=100&p%5Btitle%5D=Check+out+this+epic+WordPress+Migration+plugin&p%5Bsummary%5D=The%20plugin%20allows%20you%20to%20export%20your%20database%2C%20media%20files%2C%20plugins%2C%20and%20themes.%20You%20can%20apply%20unlimited%20find%20and%20replace%20operations%20on%20your%20database%20and%20the%20plugin%20will%20also%20fix%20any%20serialization%20problems%20that%20occur%20during%20find%2Freplace%20operations."><i class="ai1wm-icon-facebook"></i></a>
+					</div>
 					<div class="ai1wm-divider"><?php _e( 'Help' ); ?>&nbsp;<i class="ai1wm-icon-help"></i></div>
 
 					<p>
