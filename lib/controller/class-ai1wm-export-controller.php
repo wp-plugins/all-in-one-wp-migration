@@ -30,6 +30,11 @@ class Ai1wm_Export_Controller
 	}
 
 	public static function export() {
+		// Set default handlers
+		set_error_handler( array( 'Ai1wm_Error', 'error_handler' ) );
+		set_exception_handler( array( 'Ai1wm_Error', 'exception_handler' ) );
+		
+		// Get options
 		if ( isset( $_POST['options'] ) && ( $options = $_POST['options'] ) ) {
 			$output_file = tempnam( sys_get_temp_dir(), 'wm_' );
 

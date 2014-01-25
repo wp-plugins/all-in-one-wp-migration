@@ -19,7 +19,7 @@
 // ==================
 // = Plugin VERSION =
 // ==================
-define( 'AI1WM_VERSION', '1.4.0' );
+define( 'AI1WM_VERSION', '1.5.0' );
 
 // ===============
 // = Plugin Name =
@@ -75,6 +75,11 @@ define( 'AI1WM_URL', plugins_url( '', __FILE__ ) );
 // = ServMask Feedback Url =
 // ==============
 define( 'AI1WM_FEEDBACK_URL', 'https://servmask.com/ai1wm/feedback/create' );
+
+// ==============
+// = ServMask Report Url =
+// ==============
+define( 'AI1WM_REPORT_URL', 'https://servmask.com/ai1wm/report/create' );
 
 // ==============
 // = ServMask Table Prefix =

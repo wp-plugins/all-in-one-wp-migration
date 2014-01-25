@@ -23,8 +23,13 @@ class Ai1wm_Import_Controller
 	}
 
 	public static function upload_file() {
+		// Set default handlers
+		set_error_handler( array( 'Ai1wm_Error', 'error_handler' ) );
+		set_exception_handler( array( 'Ai1wm_Error', 'exception_handler' ) );
+		
 		$result = array();
 
+		// Get options
 		if ( isset( $_FILES['input_file'] ) && ( $input_file = $_FILES['input_file'] ) ) {
 			$options = array(
 				'chunk'  => 0,
