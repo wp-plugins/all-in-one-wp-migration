@@ -20,8 +20,9 @@ class Ai1wm_Main_Controller
 {
 
 	/**
-	 * [init description]
-	 * @return [type] [description]
+	 * Main Application Controller
+	 *
+	 * @return Ai1wm_Main_Controller
 	 */
 	public function __construct() {
 		register_activation_hook(
@@ -65,7 +66,8 @@ class Ai1wm_Main_Controller
 		}
 		add_action( 'admin_head', array( $this, 'admin_head' ) );
 		add_action( 'init', array( $this, 'router' ) );
-		add_action( 'wp_ajax_leave_feedback', array( $this, 'leave_feedback' ) );
+		add_action( 'wp_ajax_leave_feedback', 'Ai1wm_Feedback_Controller::leave_feedback' );
+		add_action( 'wp_ajax_report_problem', 'Ai1wm_Report_Controller::report_problem' );
 		add_action( 'wp_ajax_upload_file', 'Ai1wm_Import_Controller::upload_file' );
 
 		// Enable or disable maintenance mode
@@ -99,60 +101,6 @@ class Ai1wm_Main_Controller
 		);
 
 		wp_die( $body, $title );
-	}
-
-	/**
-	 * Submit customer feedback to ServMask.com
-	 * @return void
-	 */
-	public function leave_feedback() {
-		$errors = array();
-
-		// Set E-mail
-		$email = null;
-		if ( isset( $_POST['email'] ) ) {
-			$email = trim( $_POST['email'] );
-		}
-
-		// Set Message
-		$message = null;
-		if ( isset( $_POST['message'] ) ) {
-			$message = trim( $_POST['message'] );
-		}
-
-		// Set Terms
-		$terms = false;
-		if ( isset( $_POST['terms'] ) ) {
-			$terms = (bool) $_POST['terms'];
-		}
-
-		// Submit feedback to ServMask
-		if ( ! filter_var( $email, FILTER_VALIDATE_EMAIL ) ) {
-			$errors[] = 'Your email is not valid.';
-		} else if ( empty( $message ) ) {
-			$errors[] = 'Please enter comments in the text area.';
-		} else if ( ! $terms ) {
-			$errors[] = 'Please accept feedback term conditions.';
-		} else {
-			$response = wp_remote_post(
-				AI1WM_FEEDBACK_URL,
-				array(
-					'body' => array(
-						'email'   => $email,
-						'message' => $message,
-						'export_last_options' => get_option( Ai1wm_Export::EXPORT_LAST_OPTIONS ),
-					),
-				)
-			);
-
-			if ( is_wp_error( $response ) ) {
-				$errors[] = 'Something went wrong: ' .
-							$response->get_error_message();
-			}
-		}
-
-		echo json_encode( array( 'errors' => $errors ) );
-		exit;
 	}
 
 	/**
@@ -279,6 +227,12 @@ class Ai1wm_Main_Controller
 			),
 		);
 		wp_localize_script( 'ai1wm-js-export', 'ai1wm_feedback', $feedback_init );
+		$report_init = array(
+			'ajax' => array(
+				'url' => admin_url( 'admin-ajax.php' ) . '?action=report_problem',
+			),
+		);
+		wp_localize_script( 'ai1wm-js-export', 'ai1wm_report', $report_init );
 	}
 
 	/**
@@ -331,6 +285,12 @@ class Ai1wm_Main_Controller
 			),
 		);
 		wp_localize_script( 'ai1wm-js-import', 'ai1wm_feedback', $feedback_init );
+		$report_init = array(
+			'ajax' => array(
+				'url' => admin_url( 'admin-ajax.php' ) . '?action=report_problem',
+			),
+		);
+		wp_localize_script( 'ai1wm-js-import', 'ai1wm_report', $report_init );
 	}
 
 	/**

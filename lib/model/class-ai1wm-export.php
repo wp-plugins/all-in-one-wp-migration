@@ -60,7 +60,7 @@ class Ai1wm_Export
 		$options['home_url']       = home_url();
 
 		// Export last options
-		update_option( self::EXPORT_LAST_OPTIONS, json_encode( $options ) );
+		update_option( self::EXPORT_LAST_OPTIONS, $options );
 
 		// Make archive
 		$archive = ZipFactory::makeZipArchiver( $output_file, ! class_exists( 'ZipArchive' ) );

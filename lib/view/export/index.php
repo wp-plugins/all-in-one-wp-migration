@@ -21,10 +21,37 @@
 		<div class="ai1wm-left">
 			<div class="ai1wm-holder">
 				<h1><?php _e( 'Export Site Data' ); ?></h1>
+				<div class="ai1wm-report-problem">
+					<a href="#" id="ai1wm-report-problem-button" class="ai1wm-report-problem-button">
+						<i class="ai1wm-icon-exclamation"></i> <?php _e( 'Report a problem' ); ?>
+					</a>
+					<div class="ai1wm-report-problem-dialog">
+						<div class="ai1wm-field">
+							<input placeholder="<?php _e( 'Enter your email address..' ); ?>" type="text" id="ai1wm-report-email" class="ai1wm-report-email" name="" value="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>" />
+						</div>
+						<div class="ai1wm-field">
+							<textarea rows="3" id="ai1wm-report-message" class="ai1wm-report-message" placeholder="<?php _e( 'Please describe your problem here..' ); ?>"></textarea>
+						</div>
+						<div class="ai1wm-field ai1wm-report-terms-segment">
+							<input type="checkbox" class="ai1wm-report-terms" id="ai1wm-report-terms" />
+							<label for="ai1wm-report-terms"><?php _e( 'I agree to send my email address, comments and error logs to a ServMask server.' ); ?></label>
+						</div>
+						<div class="ai1wm-field">
+							<div class="ai1wm-buttons">
+								<button type="submit" id="ai1wm-report-submit" class="ai1wm-button-gray">
+									<i class="ai1wm-icon-paperplane"></i>
+									<?php _e( 'SEND' ); ?>
+								</button>
+								<a href="#" id="ai1wm-report-cancel" class="ai1wm-report-cancel"><?php _e( 'Cancel' ); ?></a>
+							</div>
+						</div>
+					</div>
+				</div>
 				<p>
-				<?php _e( 'Use the form below to replace any data from the current database.' ); ?><br />
-				<?php _e( 'In the first field, enter a string that you want to search for, in the second field enter another string to replace the first string with.' ); ?>
+					<?php _e( 'Use the form below to replace any data from the current database.' ); ?><br />
+					<?php _e( 'In the first field, enter a string that you want to search for, in the second field enter another string to replace the first string with.' ); ?>
 				</p>
+
 				<form action="" method="post" id="ai1wm-export-form">
 
 					<div class="ai1wm-replace-row">
@@ -161,7 +188,7 @@
 
 					<div class="ai1wm-divider"><?php _e( 'Feedback' ); ?></div>
 
-					<div id="ai1wm-feedback">
+					<div class="ai1wm-feedback">
 						<div class="ai1wm-field">
 							<input placeholder="<?php _e( 'Enter your email address..' ); ?>" type="text" id="ai1wm-feedback-email" class="ai1wm-feedback-email" name="" value="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>" />
 						</div>
