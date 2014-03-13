@@ -28,7 +28,7 @@
  * @author    Yani Iliev <yani@iliev.me>
  * @copyright 2014 Yani Iliev
  * @license   https://raw.github.com/yani-/zip-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.3
+ * @version   GIT: 1.0.4
  * @link      https://github.com/yani-/zip-factory/
  */
 
@@ -45,13 +45,14 @@
 interface ArchiverInterface
 {
     /**
-     * [__construct description]
+     * Create instance of Zip or Pcl archiver
      *
-     * @param [type] $file [description]
+     * @param string  $file  Path to file
+     * @param boolean $write Open archive for write
      *
-     * @return [type]       [description]
+     * @return void
      */
-    public function __construct($file);
+    public function __construct($file, $write = false);
 
     /**
      * [addFile description]

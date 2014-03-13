@@ -14,19 +14,34 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * ███████╗███████╗██████╗ ██╗   ██╗███╗   ███╗ █████╗ ███████╗██╗  ██╗
+ * ██╔════╝██╔════╝██╔══██╗██║   ██║████╗ ████║██╔══██╗██╔════╝██║ ██╔╝
+ * ███████╗█████╗  ██████╔╝██║   ██║██╔████╔██║███████║███████╗█████╔╝
+ * ╚════██║██╔══╝  ██╔══██╗╚██╗ ██╔╝██║╚██╔╝██║██╔══██║╚════██║██╔═██╗
+ * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
+ * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 
 class Ai1wm_Import_Controller
 {
 	public static function index() {
-		Ai1wm_Template::render( 'import/index' );
+		$temp_dir = sys_get_temp_dir();
+		Ai1wm_Template::render(
+			'import/index',
+			array(
+				'temp_dir' => is_readable( $temp_dir ) && is_writable( $temp_dir ),
+			)
+		);
 	}
 
 	public static function upload_file() {
+		global $wp_rewrite;
+
 		// Set default handlers
 		set_error_handler( array( 'Ai1wm_Error', 'error_handler' ) );
 		set_exception_handler( array( 'Ai1wm_Error', 'exception_handler' ) );
-		
+
 		$result = array();
 
 		// Get options
@@ -54,6 +69,9 @@ class Ai1wm_Import_Controller
 
 			$model = new Ai1wm_Import;
 			$result = $model->import( $input_file, $options );
+
+			// Regenerate permalinks
+			$wp_rewrite->flush_rules( true );
 		}
 
 		echo json_encode( $result );

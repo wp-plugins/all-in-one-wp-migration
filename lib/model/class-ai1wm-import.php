@@ -14,6 +14,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * ███████╗███████╗██████╗ ██╗   ██╗███╗   ███╗ █████╗ ███████╗██╗  ██╗
+ * ██╔════╝██╔════╝██╔══██╗██║   ██║████╗ ████║██╔══██╗██╔════╝██║ ██╔╝
+ * ███████╗█████╗  ██████╔╝██║   ██║██╔████╔██║███████║███████╗█████╔╝
+ * ╚════██║██╔══╝  ██╔══██╗╚██╗ ██╔╝██║╚██╔╝██║██╔══██║╚════██║██╔═██╗
+ * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
+ * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 
 class Ai1wm_Import
@@ -69,10 +76,19 @@ class Ai1wm_Import
 
 				// Remove temporary uploaded file
 				unlink( $input_file['tmp_name'] );
+			} else {
+				$errors[] = sprintf(
+					_(
+						'File could not be imported!<br />
+						Please make sure that PHP temporary directory <strong>%s</strong> has read and write permissions.
+						<a href="https://servmask.com/blog/setting-permissions-for-temp-folder-on-windows" target="_blank">See how?</a>'
+					),
+					sys_get_temp_dir()
+				);
 			}
 
 			// Check if file has been uploaded
-			if ( ! $options['chunks'] || $options['chunk'] == $options['chunks'] - 1 ) {
+			if ( empty( $errors ) && ( ! $options['chunks'] || $options['chunk'] == $options['chunks'] - 1 ) ) {
 				// Create temporary directory
 				$extract_to = sys_get_temp_dir() . DIRECTORY_SEPARATOR
 												 . uniqid()

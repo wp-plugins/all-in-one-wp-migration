@@ -14,17 +14,24 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * ███████╗███████╗██████╗ ██╗   ██╗███╗   ███╗ █████╗ ███████╗██╗  ██╗
+ * ██╔════╝██╔════╝██╔══██╗██║   ██║████╗ ████║██╔══██╗██╔════╝██║ ██╔╝
+ * ███████╗█████╗  ██████╔╝██║   ██║██╔████╔██║███████║███████╗█████╔╝
+ * ╚════██║██╔══╝  ██╔══██╗╚██╗ ██╔╝██║╚██╔╝██║██╔══██║╚════██║██╔═██╗
+ * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
+ * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 
 class Ai1wm_Export_Controller
 {
 	public static function index() {
-		$model    = new Ai1wm_Export;
 		$temp_dir = sys_get_temp_dir();
-		Ai1wm_Template::render( 'export/index', array(
-				'list_plugins'    => get_plugins(),
-				'temp_dir'        => $temp_dir,
-				'temp_dir_access' => is_readable( $temp_dir ) && is_writable( $temp_dir ),
+		Ai1wm_Template::render(
+			'export/index',
+			array(
+				'list_plugins' => get_plugins(),
+				'temp_dir'     => is_readable( $temp_dir ) && is_writable( $temp_dir ),
 			)
 		);
 	}
@@ -33,7 +40,7 @@ class Ai1wm_Export_Controller
 		// Set default handlers
 		set_error_handler( array( 'Ai1wm_Error', 'error_handler' ) );
 		set_exception_handler( array( 'Ai1wm_Error', 'exception_handler' ) );
-		
+
 		// Get options
 		if ( isset( $_POST['options'] ) && ( $options = $_POST['options'] ) ) {
 			$output_file = tempnam( sys_get_temp_dir(), 'wm_' );
@@ -60,7 +67,9 @@ class Ai1wm_Export_Controller
 			header( 'Content-Length: ' . filesize( $file ) );
 
 			// Clear output buffering and read file content
-			@ob_end_flush();
+			if ( ob_get_length() > 0 ) {
+				@ob_end_clean();
+			}
 			readfile( $file );
 			@unlink( $file );
 			exit;

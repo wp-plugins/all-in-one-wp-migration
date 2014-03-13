@@ -28,7 +28,7 @@
  * @author    Yani Iliev <yani@iliev.me>
  * @copyright 2014 Yani Iliev
  * @license   https://raw.github.com/yani-/zip-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.3
+ * @version   GIT: 1.1.0
  * @link      https://github.com/yani-/zip-factory/
  */
 
@@ -71,13 +71,14 @@ if (function_exists('gzopen')) {
         protected $pclzip  = null;
 
         /**
-         * [__construct description]
+         * Create instance of Pcl archiver
          *
-         * @param [type] $file [description]
+         * @param string  $file  Path to file
+         * @param boolean $write Open archive for write
          *
-         * @return [type]       [description]
+         * @return void
          */
-        public function __construct($file)
+        public function __construct($file, $write = false)
         {
             if (is_resource($file)) {
                 $meta = stream_get_meta_data($file);

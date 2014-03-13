@@ -28,7 +28,7 @@
  * @author    Yani Iliev <yani@iliev.me>
  * @copyright 2014 Yani Iliev
  * @license   https://raw.github.com/yani-/zip-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.3
+ * @version   GIT: 1.1.0
  * @link      https://github.com/yani-/zip-factory/
  */
 
@@ -45,25 +45,26 @@
 class ZipFactory
 {
     /**
-     * [makeZip description]
+     * Create instance of Zip or Pcl archiver
      *
-     * @param [type] $file   [description]
-     * @param [type] $pclZip [description]
+     * @param string  $file   Path to file
+     * @param boolean $pclZip Use Pcl archiver library
+     * @param boolean $write  Open archive for write
      *
-     * @return [type] [description]
+     * @return mixed
      */
-    public static function makeZipArchiver($file, $pclZip = false)
+    public static function makeZipArchiver($file, $pclZip = false, $write = false)
     {
         if ($pclZip) {
             include_once dirname(__FILE__) .
                          DIRECTORY_SEPARATOR .
                          'ArchiverPclZip.php';
-            return new ArchiverPclZip($file);
+            return new ArchiverPclZip($file, $write);
         } else {
             include_once dirname(__FILE__) .
                          DIRECTORY_SEPARATOR .
                          'ArchiverZipArchive.php';
-            return new ArchiverZipArchive($file);
+            return new ArchiverZipArchive($file, $write);
         }
     }
 }
