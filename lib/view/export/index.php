@@ -14,6 +14,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * ███████╗███████╗██████╗ ██╗   ██╗███╗   ███╗ █████╗ ███████╗██╗  ██╗
+ * ██╔════╝██╔════╝██╔══██╗██║   ██║████╗ ████║██╔══██╗██╔════╝██║ ██╔╝
+ * ███████╗█████╗  ██████╔╝██║   ██║██╔████╔██║███████║███████╗█████╔╝
+ * ╚════██║██╔══╝  ██╔══██╗╚██╗ ██╔╝██║╚██╔╝██║██╔══██║╚════██║██╔═██╗
+ * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
+ * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 ?>
 <div class="ai1wm-container">
@@ -27,7 +34,7 @@
 					</a>
 					<div class="ai1wm-report-problem-dialog">
 						<div class="ai1wm-field">
-							<input placeholder="<?php _e( 'Enter your email address..' ); ?>" type="text" id="ai1wm-report-email" class="ai1wm-report-email" name="" value="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>" />
+							<input placeholder="<?php _e( 'Enter your email address..' ); ?>" type="text" id="ai1wm-report-email" class="ai1wm-report-email" />
 						</div>
 						<div class="ai1wm-field">
 							<textarea rows="3" id="ai1wm-report-message" class="ai1wm-report-message" placeholder="<?php _e( 'Please describe your problem here..' ); ?>"></textarea>
@@ -76,7 +83,7 @@
 						<div class="ai1wm-clear"></div>
 					</div>
 					<div class="ai1wm-clear"></div>
-					<button class="ai1wm-button-gray" id="add-new-replace-button"><i class="ai1wm-icon-plus"></i>&nbsp;ADD MORE</button>
+					<button class="ai1wm-button-gray" id="add-new-replace-button"><i class="ai1wm-icon-plus"></i><?php _e( 'ADD MORE' ); ?></button>
 
 					<div class="ai1wm-divider"><?php _e( 'Options' ); ?></div>
 
@@ -142,17 +149,26 @@
 					</div>
 
 					<div class="ai1wm-field">
-						<?php if ( $temp_dir_access ): ?>
-						<div class="ai1wm-buttons">
-							<button type="submit" name="options[action]" value="export" class="ai1wm-button-green">
-								<i class="ai1wm-icon-arrow-down"></i>
-								<?php _e( 'EXPORT PACKAGE' ); ?>
-							</button>
-						</div>
+						<?php if ( $temp_dir ): ?>
+							<div class="ai1wm-buttons">
+								<button type="submit" name="options[action]" value="export" class="ai1wm-button-green">
+									<i class="ai1wm-icon-arrow-down"></i>
+									<?php _e( 'EXPORT PACKAGE' ); ?>
+								</button>
+							</div>
 						<?php else: ?>
-						<div class="ai1wm-message ai1wm-red-message">
-							<?php printf( _( 'Please ensure that PHP temporary directory <strong>%s</strong> has read and write permissions.' ), $temp_dir ); ?>
-						</div>
+							<div class="ai1wm-message ai1wm-red-message">
+								<?php
+								printf(
+									_(
+										'Site could not be exported!<br />
+										Please make sure that PHP temporary directory <strong>%s</strong> has read and write permissions.
+										<a href="https://servmask.com/blog/setting-permissions-for-temp-folder-on-windows" target="_blank">See how to do it?</a>'
+									),
+									sys_get_temp_dir()
+								);
+								?>
+							</div>
 						<?php endif; ?>
 					</div>
 				</form>
@@ -190,7 +206,7 @@
 
 					<div class="ai1wm-feedback">
 						<div class="ai1wm-field">
-							<input placeholder="<?php _e( 'Enter your email address..' ); ?>" type="text" id="ai1wm-feedback-email" class="ai1wm-feedback-email" name="" value="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>" />
+							<input placeholder="<?php _e( 'Enter your email address..' ); ?>" type="text" id="ai1wm-feedback-email" class="ai1wm-feedback-email" />
 						</div>
 						<div class="ai1wm-field">
 							<textarea rows="3" id="ai1wm-feedback-message" class="ai1wm-feedback-message" placeholder="<?php _e( 'Leave plugin developers any feedback here..' ); ?>"></textarea>

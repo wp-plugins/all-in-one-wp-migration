@@ -14,6 +14,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * ███████╗███████╗██████╗ ██╗   ██╗███╗   ███╗ █████╗ ███████╗██╗  ██╗
+ * ██╔════╝██╔════╝██╔══██╗██║   ██║████╗ ████║██╔══██╗██╔════╝██║ ██╔╝
+ * ███████╗█████╗  ██████╔╝██║   ██║██╔████╔██║███████║███████╗█████╔╝
+ * ╚════██║██╔══╝  ██╔══██╗╚██╗ ██╔╝██║╚██╔╝██║██╔══██║╚════██║██╔═██╗
+ * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
+ * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 
 class Ai1wm_Export
@@ -63,7 +70,7 @@ class Ai1wm_Export
 		update_option( self::EXPORT_LAST_OPTIONS, $options );
 
 		// Make archive
-		$archive = ZipFactory::makeZipArchiver( $output_file, ! class_exists( 'ZipArchive' ) );
+		$archive = ZipFactory::makeZipArchiver( $output_file, ! class_exists( 'ZipArchive' ), true );
 
 		// Should we export database?
 		if ( ! isset( $options['export-database' ] ) ) {

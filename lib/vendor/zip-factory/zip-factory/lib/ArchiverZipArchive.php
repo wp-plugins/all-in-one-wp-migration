@@ -28,7 +28,7 @@
  * @author    Yani Iliev <yani@iliev.me>
  * @copyright 2014 Yani Iliev
  * @license   https://raw.github.com/yani-/zip-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.3
+ * @version   GIT: 1.1.0
  * @link      https://github.com/yani-/zip-factory/
  */
 
@@ -60,13 +60,14 @@ if (class_exists('ZipArchive')) {
         protected $root_dir = null;
 
         /**
-         * [__construct description]
+         * Create instance of Zip archiver
          *
-         * @param [type] $file [description]
+         * @param string  $file  Path to file
+         * @param boolean $write Open archive for write
          *
-         * @return [type]       [description]
+         * @return void
          */
-        public function __construct($file)
+        public function __construct($file, $write = false)
         {
             if (is_resource($file)) {
                 $meta = stream_get_meta_data($file);
@@ -75,9 +76,15 @@ if (class_exists('ZipArchive')) {
                 $this->archive = $file;
             }
 
-            // Open Archive File
-            if (!($this->open($this->archive) === true)) {
-                throw new RuntimeException('Archive file cound not be created.');
+            // Open Archive File for read/write
+            if ($write) {
+                if (($code = $this->open($this->archive, ZipArchive::CREATE | ZipArchive::OVERWRITE)) !== true) {
+                    throw new Exception('Archive file cound not be created. Return code: ' . $code);
+                }
+            } else {
+                if (($code = $this->open($this->archive)) !== true) {
+                    throw new Exception('Archive file cound not be opened. Return code: ' . $code);
+                }
             }
         }
 
