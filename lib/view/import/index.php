@@ -59,7 +59,7 @@
 					<?php _e( 'When the file is uploaded successfully it will be automatically restored on the current WordPress instance.' ); ?>
 				</p>
 
-				<?php if ( $temp_dir ): ?>
+				<?php if ( $is_accessible ): ?>
 					<div class="ai1wm-upload-file-message ai1wm-message"></div>
 
 					<form action=""  method="post" enctype="multipart/form-data">
@@ -89,10 +89,9 @@
 						printf(
 							_(
 								'Site could not be imported!<br />
-								Please make sure that PHP temporary directory <strong>%s</strong> has read and write permissions.
-								<a href="https://servmask.com/blog/setting-permissions-for-temp-folder-on-windows" target="_blank">See how to do it?</a>'
+								Please make sure that storage directory <strong>%s</strong> has read and write permissions.'
 							),
-							sys_get_temp_dir()
+							AI1WM_STORAGE_PATH
 						);
 						?>
 					</div>

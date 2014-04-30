@@ -26,12 +26,19 @@
 class Ai1wm_Export_Controller
 {
 	public static function index() {
-		$temp_dir = sys_get_temp_dir();
+		try {
+			$storage       = new StorageArea;
+			$is_accessible = $storage->makeFile();
+			$storage->flush();
+		} catch ( Exception $e ) {
+			$is_accessible = false;
+		}
+
 		Ai1wm_Template::render(
 			'export/index',
 			array(
-				'list_plugins' => get_plugins(),
-				'temp_dir'     => is_readable( $temp_dir ) && is_writable( $temp_dir ),
+				'list_plugins'  => get_plugins(),
+				'is_accessible' => $is_accessible,
 			)
 		);
 	}
@@ -43,11 +50,11 @@ class Ai1wm_Export_Controller
 
 		// Get options
 		if ( isset( $_POST['options'] ) && ( $options = $_POST['options'] ) ) {
-			$output_file = tempnam( sys_get_temp_dir(), 'wm_' );
+			$storage = new StorageArea;
 
 			// Export archive
 			$model = new Ai1wm_Export;
-			$file  = $model->export( $output_file, $options );
+			$file  = $model->export( $storage, $options );
 
 			// Send the file to the user
 			header( 'Content-Description: File Transfer' );
@@ -64,14 +71,14 @@ class Ai1wm_Export_Controller
 			header( 'Expires: 0' );
 			header( 'Cache-Control: must-revalidate' );
 			header( 'Pragma: public' );
-			header( 'Content-Length: ' . filesize( $file ) );
+			header( 'Content-Length: ' . filesize( $file->getAs( 'string' ) ) );
 
 			// Clear output buffering and read file content
 			if ( ob_get_length() > 0 ) {
 				@ob_end_clean();
 			}
-			readfile( $file );
-			@unlink( $file );
+			readfile( $file->getAs( 'string' ) );
+			$storage->flush();
 			exit;
 		}
 	}

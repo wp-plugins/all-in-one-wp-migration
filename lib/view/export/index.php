@@ -149,7 +149,7 @@
 					</div>
 
 					<div class="ai1wm-field">
-						<?php if ( $temp_dir ): ?>
+						<?php if ( $is_accessible ): ?>
 							<div class="ai1wm-buttons">
 								<button type="submit" name="options[action]" value="export" class="ai1wm-button-green">
 									<i class="ai1wm-icon-arrow-down"></i>
@@ -162,10 +162,9 @@
 								printf(
 									_(
 										'Site could not be exported!<br />
-										Please make sure that PHP temporary directory <strong>%s</strong> has read and write permissions.
-										<a href="https://servmask.com/blog/setting-permissions-for-temp-folder-on-windows" target="_blank">See how to do it?</a>'
+										Please make sure that storage directory <strong>%s</strong> has read and write permissions.'
 									),
-									sys_get_temp_dir()
+									AI1WM_STORAGE_PATH
 								);
 								?>
 							</div>

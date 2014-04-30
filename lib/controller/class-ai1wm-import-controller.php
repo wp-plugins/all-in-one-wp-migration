@@ -26,11 +26,18 @@
 class Ai1wm_Import_Controller
 {
 	public static function index() {
-		$temp_dir = sys_get_temp_dir();
+		try {
+			$storage       = new StorageArea;
+			$is_accessible = $storage->makeFile();
+			$storage->flush();
+		} catch ( Exception $e ) {
+			$is_accessible = false;
+		}
+
 		Ai1wm_Template::render(
 			'import/index',
 			array(
-				'temp_dir' => is_readable( $temp_dir ) && is_writable( $temp_dir ),
+				'is_accessible' => $is_accessible,
 			)
 		);
 	}

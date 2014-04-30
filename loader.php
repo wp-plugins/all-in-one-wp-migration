@@ -54,6 +54,16 @@ require_once AI1WM_VENDOR_PATH .
 			DIRECTORY_SEPARATOR .
 			'ZipFactory.php';
 
+require_once AI1WM_VENDOR_PATH .
+			DIRECTORY_SEPARATOR .
+			'storage-factory' .
+			DIRECTORY_SEPARATOR .
+			'storage-factory' .
+			DIRECTORY_SEPARATOR .
+			'lib' .
+			DIRECTORY_SEPARATOR .
+			'StorageArea.php';
+
 require_once AI1WM_CONTROLLER_PATH .
 			DIRECTORY_SEPARATOR .
 			'class-ai1wm-main-controller.php';
@@ -101,3 +111,4 @@ require_once AI1WM_MODEL_PATH .
 require_once AI1WM_MODEL_PATH .
 			DIRECTORY_SEPARATOR .
 			'class-ai1wm-report.php';
+

@@ -27,29 +27,28 @@ class Ai1wm_File
 {
 
 	/**
-	 * [str_replace_file description]
-	 * @param  [type] $fh          [description]
-	 * @param  [type] $pattern     [description]
-	 * @param  [type] $replacement [description]
-	 * @return [type]              [description]
+	 * Replace a file, line by line with the str pattern and then writes the
+	 * output to a new file.
+	 *
+	 * @param  StorageArea $storage     Storage instance
+	 * @param  StorageFile $file        StorageFile instance
+	 * @param  string      $pattern     Find and replace pattern
+	 * @param  string      $replacement Replace term
+	 * @return StorageFile              StorageFile instance
 	 */
-	public function str_replace_file( $fh, $pattern, $replacement ) {
-		$_new_file = tmpfile();
+	public function str_replace_file( StorageArea $storage, StorageFile $file, $pattern, $replacement ) {
+		$new_file     = $storage->makeFile();
+		$current_file = $file->getAs( 'resource' );
 
-		while ( ! feof( $fh ) ) {
-			$line = stream_get_line( $fh, 1000000, '\n' );
+		while ( ! feof( $current_file ) ) {
+			$line = stream_get_line( $current_file, 1000000, '\n' );
 
 			// append new line at the end of the line
-			if ( strlen( $line ) < 1000000 && ! feof( $fh ) ) {
+			if ( strlen( $line ) < 1000000 && ! feof( $current_file ) ) {
 				$line .= '\n';
 			}
 
-			if (
-				false === fwrite(
-					$_new_file,
-					str_replace( $pattern, $replacement, $line )
-				)
-			) {
+			if ( false === fwrite( $new_file->getAs( 'resource' ), str_replace( $pattern, $replacement, $line ) ) ) {
 				wp_die(
 					'Writting to a file failed! Probably, there is no more free space left?',
 					'Out of disk space'
@@ -57,55 +56,52 @@ class Ai1wm_File
 			}
 		}
 
-		return $_new_file;
+		return $new_file;
 	}
 
 	/**
 	 * Replace a file, line by line with the regex pattern and then writes the
 	 * output to a new file.
 	 *
-	 * @param  [type] $fh          [description]
-	 * @param  [type] $pattern     [description]
-	 *
-	 * @return [type]              [description]
+	 * @param  StorageArea $storage Storage instance
+	 * @param  StorageFile $file    StorageFile instance
+	 * @param  string      $pattern Find and replace pattern
+	 * @return StorageFile          StorageFile instance
 	 */
-	public function preg_replace_file( $fh, $pattern ) {
-		$_new_file = tmpfile();
+	public function preg_replace_file( StorageArea $storage, StorageFile $file, $pattern ) {
+		$new_file     = $storage->makeFile();
+		$current_file = $file->getAs( 'resource' );
 
-		// set filehandle to the beginning of the file
-		rewind( $fh );
+		// Set file handle to the beginning of the file
+		rewind( $current_file );
 
-		while ( ! feof( $fh ) ) {
-			$line = stream_get_line( $fh, 1000000, '\n' );
-			// append new line at the end of the line
-			if ( strlen( $line ) < 1000000 && ! feof( $fh ) ) {
+		while ( ! feof( $current_file ) ) {
+			$line = stream_get_line( $current_file, 1000000, '\n' );
+			// Append new line at the end of the line
+			if ( strlen( $line ) < 1000000 && ! feof( $current_file ) ) {
 				$line .= '\n';
 			}
 
 			$replaced = $this->_preg_replace( $line, $pattern );
-			if (
-				false === fwrite(
-					$_new_file,
-					$replaced
-				)
-			) {
+			if ( false === fwrite( $new_file->getAs( 'resource' ), $replaced ) ) {
 				wp_die(
 					'Writting to a file failed! Probably, there is no more free space left?',
 					'Out of disk space'
 				);
 			}
 		}
-		return $_new_file;
+		return $new_file;
 	}
 
 	/**
-	 * [_preg_replace description]
-	 * @param  [type] $line    [description]
-	 * @param  [type] $pattern [description]
-	 * @return [type]          [description]
+	 * Find and replace line by line with pattern
+	 *
+	 * @param  string $line    Line to replace
+	 * @param  string $pattern Pattern
+	 * @return string          New line
 	 */
 	public function _preg_replace( $line, $pattern ) {
-		//php doesn't garbage collect functions created by create_function()
+		// PHP doesn't garbage collect functions created by create_function()
 		static $callback = null;
 
 		if ( $callback === null ) {
