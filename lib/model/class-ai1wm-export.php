@@ -61,6 +61,7 @@ class Ai1wm_Export
 		$options['plugin_version'] = AI1WM_VERSION;
 		$options['wp_version']     = $wp_version;
 		$options['php_version']    = phpversion();
+		$options['php_uname']      = php_uname();
 		$options['ZipArchive']     = class_exists( 'ZipArchive' ) ? 1 : 0;
 		$options['ZLIB_installed'] = function_exists( 'gzopen' ) ? 1 : 0;
 		$options['PDO_available']  = class_exists( 'PDO' ) ? 1 : 0;
@@ -105,11 +106,13 @@ class Ai1wm_Export
 
 		// Should we export plugins?
 		if ( ! isset( $options['export-plugins'] ) ) {
-			$archive->addDir(
-				$this->prepare_plugins( $options ),
-				self::EXPORT_PLUGINS_NAME,
-				$this->get_plugins( array( AI1WM_PLUGIN_NAME ) )
-			);
+			if ( ( $include = $this->get_plugins( array( AI1WM_PLUGIN_NAME ) ) ) ) {
+				$archive->addDir(
+					$this->prepare_plugins( $options ),
+					self::EXPORT_PLUGINS_NAME,
+					$include
+				);
+			}
 		}
 
 		// Add package
