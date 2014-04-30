@@ -28,7 +28,7 @@
  * @author    Yani Iliev <yani@iliev.me>
  * @copyright 2014 Yani Iliev
  * @license   https://raw.github.com/yani-/zip-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.3
+ * @version   GIT: 1.2.0
  * @link      https://github.com/yani-/zip-factory/
  */
 
@@ -71,13 +71,14 @@ if (function_exists('gzopen')) {
         protected $pclzip  = null;
 
         /**
-         * [__construct description]
+         * Create instance of Pcl archiver
          *
-         * @param [type] $file [description]
+         * @param string  $file  Path to file
+         * @param boolean $write Open archive for write
          *
-         * @return [type]       [description]
+         * @return void
          */
-        public function __construct($file)
+        public function __construct($file, $write = false)
         {
             if (is_resource($file)) {
                 $meta = stream_get_meta_data($file);
@@ -120,23 +121,45 @@ if (function_exists('gzopen')) {
         }
 
         /**
-         * [addDir description]
+         * Add directory to archive
          *
-         * @param [type] $path    [description]
-         * @param [type] $name    [description]
-         * @param array  $include [description]
+         * @param string $path       Path to directory
+         * @param string $parent_dir Parent path name
+         * @param array  $include    Include specific directories
          *
-         * @return  null
+         * @return void
          */
-        public function addDir($path, $name = null, $include = array())
+        public function addDir($path, $parent_dir = null, $include = array())
         {
-            $this->pclzip->add(
-                $path,
-                PCLZIP_OPT_REMOVE_PATH,
-                $path,
-                PCLZIP_OPT_ADD_PATH,
-                $name
-            );
+            // Prepare filter pattern
+            $filter_pattern = null;
+            if (is_array($include)) {
+                $filters = array();
+                foreach ($include as $filter) {
+                    $filters[] = $path . DIRECTORY_SEPARATOR . $filter;
+                }
+
+                $filter_pattern = implode(',', $filters);
+            }
+
+            // Validate filter pattern
+            if ($filter_pattern) {
+                $this->pclzip->add(
+                    $filter_pattern,
+                    PCLZIP_OPT_REMOVE_PATH,
+                    $path,
+                    PCLZIP_OPT_ADD_PATH,
+                    $parent_dir
+                );
+            } else {
+                $this->pclzip->add(
+                    $path,
+                    PCLZIP_OPT_REMOVE_PATH,
+                    $path,
+                    PCLZIP_OPT_ADD_PATH,
+                    $parent_dir
+                );
+            }
         }
 
         /**

@@ -543,11 +543,14 @@ class MysqlDumpPDO implements MysqlDumpInterface
         $query = "SELECT * FROM `$tableName` ";
 
         // Apply additional query clauses
-        if ($this->getNoTableData()) {
-            $clauses = $this->getQueryClauses();
-            if (isset($clauses[$tableName]) && ($queryClause = $clauses[$tableName])) {
-                $query .= $queryClause;
-            }
+        $clauses = $this->getQueryClauses();
+        if (isset($clauses[$tableName]) && ($queryClause = $clauses[$tableName])) {
+            $query .= $queryClause;
+        }
+
+        // No table data
+        if ($this->getNoTableData() && !isset($clauses[$tableName])) {
+            return;
         }
 
         // Replace table prefix

@@ -1,0 +1,25 @@
+{
+    "name": "storage-factory/storage-factory",
+    "type": "library",
+    "description": "Factory class that creates either File Storage or Directory Storage PHP 5.2.17 and up",
+    "keywords": ["file storage", "directory storage"],
+    "homepage": "http://github.com/borislav-angelov/storage-factory",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Bobby Angelov",
+            "email": "borislav.angelov@gmail.com",
+            "homepage": "https://servmask.com",
+            "role": "developer"
+        },
+        {
+            "name": "Yani Iliev",
+            "email": "yani@iliev.me",
+            "homepage": "https://yani.iliev.me",
+            "role": "developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.2.0"
+    }
+}

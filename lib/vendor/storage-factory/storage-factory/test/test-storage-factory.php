@@ -2,7 +2,7 @@
 /* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
 /**
- * Zip Factory main file
+ * Bootstrap file for unit tests used in Storage Factory
  *
  * PHP version 5
  *
@@ -23,48 +23,45 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * @category  Utilities
- * @package   ZipFactory
+ * @category  FileSystem
+ * @package   StorageFactory
  * @author    Yani Iliev <yani@iliev.me>
- * @copyright 2014 Yani Iliev
- * @license   https://raw.github.com/yani-/zip-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.2.0
- * @link      https://github.com/yani-/zip-factory/
+ * @author    Bobby Angelov <bobby@servmask.com>
+ * @copyright 2014 Yani Iliev, Bobby Angelov
+ * @license   https://raw.github.com/borislav-angelov/storage-factory/master/LICENSE The MIT License (MIT)
+ * @version   GIT: 1.0.0
+ * @link      https://github.com/borislav-angelov/storage-factory/
  */
 
 /**
- * ZipFactory class
+ * Unit test class
  *
  * @category  Tests
  * @package   ZipFactory
  * @author    Yani Iliev <yani@iliev.me>
- * @copyright 2014 Yani Iliev
- * @license   https://raw.github.com/yani-/zip-factory/master/LICENSE The MIT License (MIT)
- * @link      https://github.com/yani-/zip-factory/
+ * @author    Bobby Angelov <bobby@servmask.com>
+ * @copyright 2014 Yani Iliev, Bobby Angelov
+ * @license   https://raw.github.com/borislav-angelov/storage-factory/master/LICENSE The MIT License (MIT)
+ * @version   GIT: 1.0.0
+ * @link      https://github.com/borislav-angelov/storage-factory/
  */
-class ZipFactory
+class StorageFactoryTest extends PHPUnit_Framework_TestCase
 {
     /**
-     * Create instance of Zip or Pcl archiver
-     *
-     * @param string  $file   Path to file
-     * @param boolean $pclZip Use Pcl archiver library
-     * @param boolean $write  Open archive for write
-     *
-     * @return mixed
+     * @return [type] [description]
      */
-    public static function makeZipArchiver($file, $pclZip = false, $write = false)
+    public function testMakeFileStorage()
     {
-        if ($pclZip) {
-            include_once dirname(__FILE__) .
-                         DIRECTORY_SEPARATOR .
-                         'ArchiverPclZip.php';
-            return new ArchiverPclZip($file, $write);
-        } else {
-            include_once dirname(__FILE__) .
-                         DIRECTORY_SEPARATOR .
-                         'ArchiverZipArchive.php';
-            return new ArchiverZipArchive($file, $write);
-        }
+        $fileStorage = StorageFactory::make();
+        $this->assertTrue($fileStorage instanceof StorageFile);
+    }
+
+    /**
+     * @return [type] [description]
+     */
+    public function testMakeDirectoryStorage()
+    {
+        $fileStorage = StorageFactory::make(true);
+        $this->assertTrue($fileStorage instanceof StorageDirectory);
     }
 }
