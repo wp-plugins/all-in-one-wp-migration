@@ -14,6 +14,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * ███████╗███████╗██████╗ ██╗   ██╗███╗   ███╗ █████╗ ███████╗██╗  ██╗
+ * ██╔════╝██╔════╝██╔══██╗██║   ██║████╗ ████║██╔══██╗██╔════╝██║ ██╔╝
+ * ███████╗█████╗  ██████╔╝██║   ██║██╔████╔██║███████║███████╗█████╔╝
+ * ╚════██║██╔══╝  ██╔══██╗╚██╗ ██╔╝██║╚██╔╝██║██╔══██║╚════██║██╔═██╗
+ * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
+ * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 
 class Ai1wm_Export
@@ -45,11 +52,11 @@ class Ai1wm_Export
 	/**
 	 * Export archive file (database, media, package.json)
 	 *
-	 * @param  resource $output_file Pointer to file resource
-	 * @param  array    $options     Export settings
-	 * @return string                Absolute file path
+	 * @param  StorageArea $storage Storage instance
+	 * @param  array       $options Export settings
+	 * @return StorageFile          StorageFile instance
 	 */
-	public function export( $output_file, array $options = array() ) {
+	public function export( StorageArea $storage, array $options = array() ) {
 		global $wp_version;
 		$options['plugin_version'] = AI1WM_VERSION;
 		$options['wp_version']     = $wp_version;
@@ -62,15 +69,20 @@ class Ai1wm_Export
 		// Export last options
 		update_option( self::EXPORT_LAST_OPTIONS, $options );
 
+		// Create output file
+		$output_file = $storage->makeFile();
+
 		// Make archive
-		$archive = ZipFactory::makeZipArchiver( $output_file, ! class_exists( 'ZipArchive' ) );
+		$archive = ZipFactory::makeZipArchiver( $output_file->getAs( 'resource' ), ! class_exists( 'ZipArchive' ), true );
 
 		// Should we export database?
-		if ( ! isset( $options['export-database' ] ) ) {
-			$database_file = tmpfile();
-			$database_file = $this->prepare_database( $database_file, $options );
+		if ( ! isset( $options['export-database'] ) ) {
+			// Prepare database file
+			$database_file = $this->prepare_database( $storage, $options );
+
+			// Add database to archive
 			$archive->addFile(
-				$database_file,
+				$database_file->getAs( 'resource' ),
 				self::EXPORT_DATABASE_NAME
 			);
 		}
@@ -95,7 +107,8 @@ class Ai1wm_Export
 		if ( ! isset( $options['export-plugins'] ) ) {
 			$archive->addDir(
 				$this->prepare_plugins( $options ),
-				self::EXPORT_PLUGINS_NAME
+				self::EXPORT_PLUGINS_NAME,
+				$this->get_plugins( array( AI1WM_PLUGIN_NAME ) )
 			);
 		}
 
@@ -105,20 +118,21 @@ class Ai1wm_Export
 			$this->prepare_package( $options )
 		);
 
-		return $archive->getArchive();
+		return $output_file;
 	}
 
 	/**
 	 * Export database in SQL format
 	 *
-	 * @param  resource $output_file Pointer to file resource
-	 * @param  array    $options     Export settings
-	 * @return string                Absolute file path
+	 * @param  StorageArea $storage Storage instance
+	 * @param  array       $options Export settings
+	 * @return StorageFile          StorageFile instance
 	 */
-	public function prepare_database( $output_file, array $options = array() ) {
+	public function prepare_database( StorageArea $storage, array $options = array() ) {
 		global $wpdb;
 
-		$_f = new Ai1wm_File();
+		$file        = new Ai1wm_File;
+		$output_file = $storage->makeFile();
 
 		// Set include tables
 		$includeTables = array();
@@ -156,16 +170,16 @@ class Ai1wm_Export
 		}
 
 		// No table data, but leave Administrator account unchanged
-		if ( isset( $options['export-table-data'] ) ) {
+		if ( $noTableData ) {
+			$clauses                    = array();
+			$clauses[ $wpdb->options ]  = ' ORDER BY option_id ASC ';
 			$clauses[ $wpdb->users ]    = ' WHERE id = 1 ';
 			$clauses[ $wpdb->usermeta ] = ' WHERE user_id = 1 ';
 		}
 
-		$output_meta = stream_get_meta_data( $output_file );
-
 		// Set dump options
 		$this->connection
-			->setFileName( $output_meta['uri'] )
+			->setFileName( $output_file->getAs( 'string' ) )
 			->setIncludeTables( $includeTables )
 			->setExcludeTables( $excludeTables )
 			->setNoTableData( $noTableData )
@@ -177,10 +191,7 @@ class Ai1wm_Export
 		$this->connection->dump();
 
 		// Replace Old/New Values
-		if (
-			isset( $options['replace'] ) &&
-			( $replace = $options['replace'] )
-		) {
+		if ( isset( $options['replace'] ) && ( $replace = $options['replace'] ) ) {
 			$old_values = array();
 			$new_values = array();
 			for ( $i = 0; $i < count( $replace['old-value'] ); $i++ ) {
@@ -195,7 +206,8 @@ class Ai1wm_Export
 			}
 			// Do String Replacement
 			if ( $old_values && $new_values ) {
-				$output_file = $_f->str_replace_file(
+				$output_file = $file->str_replace_file(
+					$storage,
 					$output_file,
 					$old_values,
 					$new_values
@@ -203,7 +215,9 @@ class Ai1wm_Export
 			}
 		}
 
-		return $_f->preg_replace_file(
+		// Do find and replace
+		return $file->preg_replace_file(
+			$storage,
 			$output_file,
 			'/s:(\d+):([\\\\]?"[\\\\]?"|[\\\\]?"((.*?)[^\\\\])[\\\\]?");/'
 		);
@@ -269,7 +283,6 @@ class Ai1wm_Export
 	 */
 	public function prepare_plugins( array $options = array() ) {
 		if ( ! isset( $options['export-plugins'] ) ) {
-
 			return WP_PLUGIN_DIR;
 		}
 	}
@@ -281,22 +294,32 @@ class Ai1wm_Export
 	 * @return string          Package config
 	 */
 	public function prepare_package( array $options = array() ) {
-		$config = array();
+		$config = array(
+			'Version' => AI1WM_VERSION,
+		);
 
-		$config['Plugins'] = array();
-		if ( ! isset( $options['export-plugins' ] ) ) {
-			if ( isset( $options['include-plugins'] ) && ( $include_plugins = $options['include-plugins'] ) ) {
-				foreach ( $include_plugins as $key => $plugin_name ) {
-					$slug = current( explode( DIRECTORY_SEPARATOR, $key ) );
+		return json_encode( $config );
+	}
 
-					$config['Plugins'][] = array(
-						'Name' => $plugin_name,
-						'Slug' => $slug,
-					);
-				}
+	/**
+	 * Get available plugins
+	 *
+	 * @param  array $exclude Exclude plugins
+	 * @return array          List of installed plugins
+	 */
+	public function get_plugins( $exclude = array() ) {
+		if ( ! function_exists( 'get_plugins' ) ) {
+			require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+		}
+
+		$plugins = array();
+		foreach ( get_plugins() as $key => $plugin ) {
+			$directory = current( explode( DIRECTORY_SEPARATOR, $key ) );
+			if ( ! in_array( $directory, $exclude ) ) {
+				$plugins[] = $directory;
 			}
 		}
 
-		return json_encode( $config );
+		return $plugins;
 	}
 }

@@ -14,12 +14,19 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * ███████╗███████╗██████╗ ██╗   ██╗███╗   ███╗ █████╗ ███████╗██╗  ██╗
+ * ██╔════╝██╔════╝██╔══██╗██║   ██║████╗ ████║██╔══██╗██╔════╝██║ ██╔╝
+ * ███████╗█████╗  ██████╔╝██║   ██║██╔████╔██║███████║███████╗█████╔╝
+ * ╚════██║██╔══╝  ██╔══██╗╚██╗ ██╔╝██║╚██╔╝██║██╔══██║╚════██║██╔═██╗
+ * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
+ * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 
 // ==================
 // = Plugin VERSION =
 // ==================
-define( 'AI1WM_VERSION', '1.5.0' );
+define( 'AI1WM_VERSION', '1.7.0' );
 
 // ===============
 // = Plugin Name =
@@ -35,6 +42,11 @@ define( 'AI1WM_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 // = Plugin Path =
 // ===============
 define( 'AI1WM_PATH', dirname( __FILE__ ) );
+
+// ===============
+// = Storage Path =
+// ===============
+define( 'AI1WM_STORAGE_PATH', AI1WM_PATH . DIRECTORY_SEPARATOR . 'storage' );
 
 // ============
 // = Lib Path =
@@ -85,6 +97,11 @@ define( 'AI1WM_REPORT_URL', 'https://servmask.com/ai1wm/report/create' );
 // = ServMask Table Prefix =
 // ==============
 define( 'AI1WM_TABLE_PREFIX', 'SERVMASK_PREFIX_' );
+
+// ==============
+// = ServMask Storage Prefix =
+// ==============
+define( 'AI1WM_STORAGE_PREFIX', 'wm_' );
 
 // ===========================
 // = WP_CONTENT_DIR Constant =
