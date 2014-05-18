@@ -30,20 +30,6 @@ class Ai1wm_Import
 	const MAX_CHUNK_RETRIES = 10;
 	const MAINTENANCE_MODE  = 'ai1wm_maintenance_mode';
 
-	public function __construct() {
-		$this->connection = MysqlDumpFactory::makeMysqlDump(
-			DB_HOST,
-			DB_USER,
-			DB_PASSWORD,
-			DB_NAME,
-			(
-				class_exists(
-					'PDO'
-				) && in_array( 'mysql', PDO::getAvailableDrivers() )
-			)
-		);
-	}
-
 	/**
 	 * Import archive file (database, media, package.json)
 	 *
@@ -58,6 +44,11 @@ class Ai1wm_Import
 		if ( empty( $input_file['error'] ) ) {
 			try {
 				$storage = new StorageArea;
+
+				// Flush storage directory
+				if ( $options['chunk'] === 0 ) {
+					StorageDirectory::flush( AI1WM_STORAGE_PATH, array( '.gitignore' ) );
+				}
 
 				// Partial file path
 				$upload_file = $storage->makeFile( $options['name'] )->getAs( 'string' );
@@ -146,13 +137,31 @@ class Ai1wm_Import
 							$model         = new Ai1wm_Export;
 							$database_file = $model->prepare_database( $storage );
 
+							try {
+								$db = MysqlDumpFactory::makeMysqlDump(
+									DB_HOST,
+									DB_USER,
+									DB_PASSWORD,
+									DB_NAME,
+									(
+										class_exists(
+											'PDO'
+										) && in_array( 'mysql', PDO::getAvailableDrivers() )
+									)
+								);
+								$db->getConnection();
+							} catch (Exception $e) {
+								// Use "old" mysql adapter
+								$db = MysqlDumpFactory::makeMysqlDump( DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, false );
+							}
+
 							// Truncate database
-							$this->connection->truncateDatabase();
+							$db->truncateDatabase();
 
 							// Import database
-							$this->connection->setOldTablePrefix( AI1WM_TABLE_PREFIX )
-											 ->setNewTablePrefix( $wpdb->prefix )
-											 ->import( $extract_to . Ai1wm_Export::EXPORT_DATABASE_NAME );
+							$db->setOldTablePrefix( AI1WM_TABLE_PREFIX )
+							   ->setNewTablePrefix( $wpdb->prefix )
+							   ->import( $extract_to . Ai1wm_Export::EXPORT_DATABASE_NAME );
 						}
 
 						// Media import
@@ -160,13 +169,13 @@ class Ai1wm_Import
 							// Backup media files
 							$backup_media_to = $storage->makeDirectory()->getAs( 'string' );
 
-							$this->copy_dir( $upload_basedir, $backup_media_to );
+							StorageDirectory::copy( $upload_basedir, $backup_media_to );
 
-							// Truncate media files
-							$this->truncate_dir( $upload_basedir );
+							// Flush media files
+							StorageDirectory::flush( $upload_basedir );
 
 							// Import media files
-							$this->copy_dir( $extract_to . Ai1wm_Export::EXPORT_MEDIA_NAME, $upload_basedir );
+							StorageDirectory::copy( $extract_to . Ai1wm_Export::EXPORT_MEDIA_NAME, $upload_basedir );
 						}
 
 						// Themes import
@@ -174,13 +183,13 @@ class Ai1wm_Import
 							// Backup themes files
 							$backup_themes_to = $storage->makeDirectory()->getAs( 'string' );
 
-							$this->copy_dir( $themes_basedir, $backup_themes_to );
+							StorageDirectory::copy( $themes_basedir, $backup_themes_to );
 
-							// Truncate themes files
-							$this->truncate_dir( $themes_basedir );
+							// Flush themes files
+							StorageDirectory::flush( $themes_basedir );
 
 							// Import themes files
-							$this->copy_dir( $extract_to . Ai1wm_Export::EXPORT_THEMES_NAME, $themes_basedir );
+							StorageDirectory::copy( $extract_to . Ai1wm_Export::EXPORT_THEMES_NAME, $themes_basedir );
 						}
 
 						// Plugins import
@@ -188,55 +197,13 @@ class Ai1wm_Import
 							// Backup plugin files
 							$backup_plugins_to = $storage->makeDirectory()->getAs( 'string' );
 
-							$this->copy_dir( WP_PLUGIN_DIR, $backup_plugins_to, array( AI1WM_PLUGIN_NAME ) );
+							StorageDirectory::copy( WP_PLUGIN_DIR, $backup_plugins_to, array( AI1WM_PLUGIN_NAME ) );
 
-							// Truncate plugin files
-							$this->truncate_dir( WP_PLUGIN_DIR, array( AI1WM_PLUGIN_NAME ) );
+							// Flush plugin files
+							StorageDirectory::flush( WP_PLUGIN_DIR, array( AI1WM_PLUGIN_NAME ) );
 
 							// Import plugin files
-							$this->copy_dir( $extract_to . Ai1wm_Export::EXPORT_PLUGINS_NAME, WP_PLUGIN_DIR );
-						}
-
-						// Test website
-						if ( ! $this->test_website( get_option( 'siteurl' ) ) ) {
-
-							// Database import
-							if ( file_exists( $extract_to . Ai1wm_Export::EXPORT_DATABASE_NAME ) ) {
-								// Truncate database
-								$this->connection->truncateDatabase();
-
-								// Import "OLD" database
-								$this->connection->setOldTablePrefix( AI1WM_TABLE_PREFIX )
-												 ->setNewTablePrefix( $wpdb->prefix )
-												 ->import( $database_file->getAs( 'string' ) );
-							}
-
-							// Media import
-							if ( is_dir( $extract_to . Ai1wm_Export::EXPORT_MEDIA_NAME ) ) {
-								// Truncate media files
-								$this->truncate_dir( $upload_basedir );
-
-								// Import "OLD" media files
-								$this->copy_dir( $backup_media_to, $upload_basedir );
-							}
-
-							// Themes import
-							if ( is_dir( $extract_to . Ai1wm_Export::EXPORT_THEMES_NAME ) ) {
-								// Truncate themes files
-								$this->truncate_dir( $themes_basedir );
-
-								// Import "OLD" themes files
-								$this->copy_dir( $backup_themes_to, $themes_basedir );
-							}
-
-							// Plugins import
-							if ( is_dir( $extract_to . Ai1wm_Export::EXPORT_PLUGINS_NAME ) ) {
-								// Truncate plugin files
-								$this->truncate_dir( WP_PLUGIN_DIR, array( AI1WM_PLUGIN_NAME ) );
-
-								// Import "OLD" plugin files
-								$this->copy_dir( $backup_plugins_to, WP_PLUGIN_DIR, array( AI1WM_PLUGIN_NAME ) );
-							}
+							StorageDirectory::copy( $extract_to . Ai1wm_Export::EXPORT_PLUGINS_NAME, WP_PLUGIN_DIR );
 						}
 
 						// Disable maintenance mode
@@ -265,119 +232,6 @@ class Ai1wm_Import
 	 */
 	public function maintenance_mode( $enabled = true ) {
 		return update_option( self::MAINTENANCE_MODE, $enabled );
-	}
-
-	/**
-	 * Copy files from directory to directory
-	 *
-	 * @param  string $from    Copy files and directories FROM
-	 * @param  string $to      Copy files and directories TO
-	 * @param  array  $exclude List of directories to exclude
-	 * @return void
-	 */
-	public function copy_dir( $from, $to, $exclude = array() ) {
-		$from = trailingslashit( $from );
-		$to   = trailingslashit( $to );
-
-		$iterator = new RecursiveIteratorIterator(
-			new RecursiveDirectoryIterator( $from ),
-			RecursiveIteratorIterator::SELF_FIRST
-		);
-
-		// Prepare filter pattern
-		$filter_pattern = null;
-		if ( is_array( $exclude ) ) {
-			$filters = array();
-			foreach ( $exclude as $filter ) {
-				$filters[] = sprintf(
-					'(%s(%s.*)?)',
-					preg_quote( $filter, '/' ),
-					preg_quote( DIRECTORY_SEPARATOR, '/' )
-				);
-			}
-
-			$filter_pattern = implode( '|', $filters );
-		}
-
-		foreach ( $iterator as $item ) {
-			// Skip dots
-			if ( $iterator->isDot() ) {
-				continue;
-			}
-
-			// Validate filter pattern
-			if ( $filter_pattern ) {
-				if ( preg_match( '/^' . $filter_pattern . '$/', $iterator->getSubPathName() ) ) {
-					continue;
-				}
-			}
-
-			if ( $item->isDir() ) {
-				mkdir( $to . $iterator->getSubPathName() );
-			} else {
-				copy( $item, $to . $iterator->getSubPathName() );
-			}
-		}
-	}
-
-	/**
-	 * Truncate all files from specific directory
-	 *
-	 * @param  string $dir     Path to directory
-	 * @param  array  $exclude List of directories to exclude
-	 * @return void
-	 */
-	public function truncate_dir( $dir, $exclude = array() ) {
-		$dir = trailingslashit( $dir );
-		$iterator = new RecursiveIteratorIterator(
-			new RecursiveDirectoryIterator( $dir ),
-			RecursiveIteratorIterator::CHILD_FIRST
-		);
-
-		// Prepare filter pattern
-		$filter_pattern = null;
-		if ( is_array( $exclude ) ) {
-			$filters = array();
-			foreach ( $exclude as $filter ) {
-				$filters[] = sprintf(
-					'(%s(%s.*)?)',
-					preg_quote( $filter, '/' ),
-					preg_quote( DIRECTORY_SEPARATOR, '/' )
-				);
-			}
-
-			$filter_pattern = implode( '|', $filters );
-		}
-
-		foreach ( $iterator as $item ) {
-			// Skip dots
-			if ( $iterator->isDot() ) {
-				continue;
-			}
-
-			// Validate filter pattern
-			if ( $filter_pattern ) {
-				if ( preg_match( '/^' . $filter_pattern . '$/', $iterator->getSubPathName() ) ) {
-					continue;
-				}
-			}
-
-			if ( $item->isDir() ) {
-				rmdir( $dir . $iterator->getSubPathName() );
-			} else {
-				unlink( $dir . $iterator->getSubPathName() );
-			}
-		}
-	}
-
-	/**
-	 * Test webside whether everything is installed properly (Not implemented yet)
-	 *
-	 * @param  string $url Current URL address
-	 * @return boolean     Pass or not pass website tests
-	 */
-	public function test_website( $url ) {
-		return true;
 	}
 
 	/**

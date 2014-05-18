@@ -29,7 +29,7 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/borislav-angelov/storage-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.0
+ * @version   GIT: 1.9.0
  * @link      https://github.com/borislav-angelov/storage-factory/
  */
 
@@ -42,7 +42,7 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/borislav-angelov/storage-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.0
+ * @version   GIT: 1.9.0
  * @link      https://github.com/borislav-angelov/storage-factory/
  */
 abstract class StorageAbstract
@@ -69,7 +69,7 @@ abstract class StorageAbstract
      */
     public function getRootPath() {
         if (defined('AI1WM_STORAGE_PATH') && self::isAccessible(AI1WM_STORAGE_PATH)) {
-            return AI1WM_STORAGE_PATH;
+            return realpath(AI1WM_STORAGE_PATH);
         } else if (self::isAccessible(sys_get_temp_dir())) {
             return sys_get_temp_dir();
         } else {

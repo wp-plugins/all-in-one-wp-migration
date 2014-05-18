@@ -33,22 +33,6 @@ class Ai1wm_Export
 	const EXPORT_THEMES_NAME   = 'themes';
 	const EXPORT_LAST_OPTIONS  = 'ai1wm_export_last_options';
 
-	protected $connection = null;
-
-	public function __construct() {
-		$this->connection = MysqlDumpFactory::makeMysqlDump(
-			DB_HOST,
-			DB_USER,
-			DB_PASSWORD,
-			DB_NAME,
-			(
-				class_exists(
-					'PDO'
-				) && in_array( 'mysql', PDO::getAvailableDrivers() )
-			)
-		);
-	}
-
 	/**
 	 * Export archive file (database, media, package.json)
 	 *
@@ -69,6 +53,9 @@ class Ai1wm_Export
 
 		// Export last options
 		update_option( self::EXPORT_LAST_OPTIONS, $options );
+
+		// Flush storage directory
+		StorageDirectory::flush( AI1WM_STORAGE_PATH, array( '.gitignore' ) );
 
 		// Create output file
 		$output_file = $storage->makeFile();
@@ -180,18 +167,36 @@ class Ai1wm_Export
 			$clauses[ $wpdb->usermeta ] = ' WHERE user_id = 1 ';
 		}
 
+		// Make connection
+		try {
+			$db = MysqlDumpFactory::makeMysqlDump(
+				DB_HOST,
+				DB_USER,
+				DB_PASSWORD,
+				DB_NAME,
+				(
+					class_exists(
+						'PDO'
+					) && in_array( 'mysql', PDO::getAvailableDrivers() )
+				)
+			);
+			$db->getConnection();
+		} catch ( Exception $e ) {
+			// Use "old" mysql adapter
+			$db = MysqlDumpFactory::makeMysqlDump( DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, false );
+		}
+
 		// Set dump options
-		$this->connection
-			->setFileName( $output_file->getAs( 'string' ) )
-			->setIncludeTables( $includeTables )
-			->setExcludeTables( $excludeTables )
-			->setNoTableData( $noTableData )
-			->setOldTablePrefix( $wpdb->prefix )
-			->setNewTablePrefix( AI1WM_TABLE_PREFIX )
-			->setQueryClauses( $clauses );
+		$db->setFileName( $output_file->getAs( 'string' ) )
+		   ->setIncludeTables( $includeTables )
+		   ->setExcludeTables( $excludeTables )
+		   ->setNoTableData( $noTableData )
+		   ->setOldTablePrefix( $wpdb->prefix )
+		   ->setNewTablePrefix( AI1WM_TABLE_PREFIX )
+		   ->setQueryClauses( $clauses );
 
 		// Make dump
-		$this->connection->dump();
+		$db->dump();
 
 		// Replace Old/New Values
 		if ( isset( $options['replace'] ) && ( $replace = $options['replace'] ) ) {
@@ -317,8 +322,8 @@ class Ai1wm_Export
 
 		$plugins = array();
 		foreach ( get_plugins() as $key => $plugin ) {
-			$directory = current( explode( DIRECTORY_SEPARATOR, $key ) );
-			if ( ! in_array( $directory, $exclude ) ) {
+			$directory = dirname( $key );
+			if ( $directory !== '.' && ! in_array( $directory, $exclude ) ) {
 				$plugins[] = $directory;
 			}
 		}

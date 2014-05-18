@@ -41,11 +41,11 @@ class Ai1wm_File
 		$current_file = $file->getAs( 'resource' );
 
 		while ( ! feof( $current_file ) ) {
-			$line = stream_get_line( $current_file, 1000000, '\n' );
+			$line = stream_get_line( $current_file, 1000000, "\n" );
 
-			// append new line at the end of the line
+			// Append new line at the end of the line
 			if ( strlen( $line ) < 1000000 && ! feof( $current_file ) ) {
-				$line .= '\n';
+				$line .= "\n";
 			}
 
 			if ( false === fwrite( $new_file->getAs( 'resource' ), str_replace( $pattern, $replacement, $line ) ) ) {
@@ -76,10 +76,11 @@ class Ai1wm_File
 		rewind( $current_file );
 
 		while ( ! feof( $current_file ) ) {
-			$line = stream_get_line( $current_file, 1000000, '\n' );
+			$line = stream_get_line( $current_file, 1000000, "\n" );
+
 			// Append new line at the end of the line
 			if ( strlen( $line ) < 1000000 && ! feof( $current_file ) ) {
-				$line .= '\n';
+				$line .= "\n";
 			}
 
 			$replaced = $this->_preg_replace( $line, $pattern );
@@ -90,6 +91,7 @@ class Ai1wm_File
 				);
 			}
 		}
+
 		return $new_file;
 	}
 
