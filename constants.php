@@ -26,22 +26,12 @@
 // ==================
 // = Plugin VERSION =
 // ==================
-define( 'AI1WM_VERSION', '1.8.0' );
+define( 'AI1WM_VERSION', '1.8.1' );
 
 // ===============
 // = Plugin Name =
 // ===============
 define( 'AI1WM_PLUGIN_NAME', 'all-in-one-wp-migration' );
-
-// ===================
-// = Plugin Basename =
-// ===================
-define( 'AI1WM_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
-
-// ===============
-// = Plugin Path =
-// ===============
-define( 'AI1WM_PATH', dirname( __FILE__ ) );
 
 // ===============
 // = Storage Path =
@@ -77,11 +67,6 @@ define( 'AI1WM_EXCEPTION_PATH', AI1WM_LIB_PATH . DIRECTORY_SEPARATOR . 'exceptio
 // = Vendor Path =
 // ===============
 define( 'AI1WM_VENDOR_PATH', AI1WM_LIB_PATH . DIRECTORY_SEPARATOR . 'vendor' );
-
-// ==============
-// = Plugin Url =
-// ==============
-define( 'AI1WM_URL', plugins_url( '', __FILE__ ) );
 
 // ==============
 // = ServMask Feedback Url =

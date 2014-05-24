@@ -82,7 +82,22 @@ class Ai1wm_Main_Controller
 			add_action( 'get_header', array( $this, 'activate_maintenance_mode' ) );
 		}
 
+		// Add a links to plugin list page
+		add_filter( 'plugin_row_meta', array( $this, 'plugin_row_meta' ), 10, 2 );
+
 		return $this;
+	}
+
+	/**
+	 * Add a links to plugin list page
+	 * @return void
+	 */
+	public 	function plugin_row_meta( $links, $file ) {
+		if ( $file == AI1WM_PLUGIN_BASENAME ) {
+			$links[] = sprintf( __( '<a href="%s" target="_blank">Get Support</a>', AI1WM_PLUGIN_NAME ), 'https://servmask.com/#contactModal' );
+		}
+
+		return $links;
 	}
 
 	/**
@@ -103,7 +118,7 @@ class Ai1wm_Main_Controller
 			'<h1>%s</h1><p>%s<br /><strong>%s%s</strong></p>',
 			_( 'Website Under Maintenance' ),
 			_( 'Hi, our Website is currently undergoing scheduled maintenance' ),
-			_( 'Please check back very soon.' ),
+			_( 'Please check back very soon. ' ),
 			_( 'Sorry for the inconvenience!' )
 		);
 
