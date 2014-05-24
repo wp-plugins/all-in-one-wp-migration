@@ -63,17 +63,6 @@
 
 					<div class="ai1wm-replace-row">
 						<div class="ai1wm-field-inline">
-							<input type="text" value="<?php echo get_bloginfo( 'url' ); ?>" placeholder="<?php _e( 'Current Site URL' ); ?>" name="options[replace][old-value][]" id="old-value-1" />
-						</div>
-
-						<div class="ai1wm-field-inline">
-							<input type="text" value="" placeholder="<?php _e( 'New Website URL (ex. https://servmask.com)' ); ?>" name="options[replace][new-value][]" id="new-value-1" />
-						</div>
-						<div class="ai1wm-clear"></div>
-					</div>
-
-					<div class="ai1wm-replace-row">
-						<div class="ai1wm-field-inline">
 							<input type="text" value="" placeholder="<?php _e( 'Find' ); ?>" name="options[replace][old-value][]" id="old-value-1" />
 						</div>
 

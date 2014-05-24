@@ -26,7 +26,7 @@
 class Ai1wm_Import
 {
 	const MAX_FILE_SIZE     = '512MB';
-	const MAX_CHUNK_SIZE    = '1MB';
+	const MAX_CHUNK_SIZE    = '500KB';
 	const MAX_CHUNK_RETRIES = 10;
 	const MAINTENANCE_MODE  = 'ai1wm_maintenance_mode';
 
@@ -117,22 +117,11 @@ class Ai1wm_Import
 						// Enable maintenance mode
 						$this->maintenance_mode( true );
 
-						// Media base directory
-						$upload_dir     = wp_upload_dir();
-						$upload_basedir = $upload_dir['basedir'] . DIRECTORY_SEPARATOR;
-						if ( ! is_dir( $upload_basedir ) ) {
-							mkdir( $upload_basedir );
-						}
-
-						// Themes base directory
-						$themes_dir     = get_theme_root();
-						$themes_basedir = $themes_dir . DIRECTORY_SEPARATOR;
-						if ( ! is_dir( $themes_basedir ) ) {
-							mkdir( $themes_basedir );
-						}
+						// Parse package config file
+						$config = $this->parse_package( $extract_to . Ai1wm_Export::EXPORT_PACKAGE_NAME );
 
 						// Database import
-						if ( file_exists( $extract_to . Ai1wm_Export::EXPORT_DATABASE_NAME ) ) {
+						if ( is_file( $extract_to . Ai1wm_Export::EXPORT_DATABASE_NAME ) ) {
 							// Backup database
 							$model         = new Ai1wm_Export;
 							$database_file = $model->prepare_database( $storage );
@@ -155,17 +144,64 @@ class Ai1wm_Import
 								$db = MysqlDumpFactory::makeMysqlDump( DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, false );
 							}
 
-							// Truncate database
-							$db->truncateDatabase();
+							// Flush database
+							$db->flush();
+
+							$old_values = array();
+							$new_values = array();
+
+							// Get Site URL
+							if ( isset( $config['SiteURL'] ) && ( $config['SiteURL'] != site_url() ) ) {
+								$old_values[] = $config['SiteURL'];
+								$new_values[] = site_url();
+							}
+
+							// Get Home URL
+							if ( isset( $config['HomeURL'] ) && ( $config['HomeURL'] != home_url() ) ) {
+								$old_values[] = $config['HomeURL'];
+								$new_values[] = home_url();
+							}
+
+							// Get Domain
+							if ( isset( $config['Domain'] ) && ( $config['Domain'] != ( $domain = parse_url( home_url(), PHP_URL_HOST ) ) ) ) {
+								$old_values[] = $config['Domain'];
+								$new_values[] = $domain;
+							}
+
+							$file          = new Ai1wm_File;
+							$database_file = $storage->makeFile( Ai1wm_Export::EXPORT_DATABASE_NAME, $extract_to );
+
+							// Replace Old/New Values
+							if ( $old_values && $new_values ) {
+								$database_file = $file->str_replace_file(
+									$storage,
+									$database_file,
+									$old_values,
+									$new_values
+								);
+
+								$database_file = $file->preg_replace_file(
+									$storage,
+									$database_file,
+									'/s:(\d+):([\\\\]?"[\\\\]?"|[\\\\]?"((.*?)[^\\\\])[\\\\]?");/'
+								);
+							}
 
 							// Import database
 							$db->setOldTablePrefix( AI1WM_TABLE_PREFIX )
 							   ->setNewTablePrefix( $wpdb->prefix )
-							   ->import( $extract_to . Ai1wm_Export::EXPORT_DATABASE_NAME );
+							   ->import( $database_file->getAs( 'string' ) );
 						}
 
 						// Media import
 						if ( is_dir( $extract_to . Ai1wm_Export::EXPORT_MEDIA_NAME ) ) {
+							// Media base directory
+							$upload_dir     = wp_upload_dir();
+							$upload_basedir = $upload_dir['basedir'] . DIRECTORY_SEPARATOR;
+							if ( ! is_dir( $upload_basedir ) ) {
+								mkdir( $upload_basedir );
+							}
+
 							// Backup media files
 							$backup_media_to = $storage->makeDirectory()->getAs( 'string' );
 
@@ -180,6 +216,13 @@ class Ai1wm_Import
 
 						// Themes import
 						if ( is_dir( $extract_to . Ai1wm_Export::EXPORT_THEMES_NAME ) ) {
+							// Themes base directory
+							$themes_dir     = get_theme_root();
+							$themes_basedir = $themes_dir . DIRECTORY_SEPARATOR;
+							if ( ! is_dir( $themes_basedir ) ) {
+								mkdir( $themes_basedir );
+							}
+
 							// Backup themes files
 							$backup_themes_to = $storage->makeDirectory()->getAs( 'string' );
 
@@ -253,6 +296,19 @@ class Ai1wm_Import
 		}
 
 		return true;
+	}
+
+	/**
+	 * Parse package config file
+	 *
+	 * @param  string $file Path to package config file
+	 * @return array        Config parameters
+	 */
+	public function parse_package( $file ) {
+		// Get config file
+		$data = file_get_contents( $file );
+
+		return json_decode( $data, true );
 	}
 
 	/**

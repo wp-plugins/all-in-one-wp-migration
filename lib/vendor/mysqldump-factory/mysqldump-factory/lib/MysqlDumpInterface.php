@@ -29,7 +29,7 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.1.0
+ * @version   GIT: 1.2.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 
@@ -42,12 +42,12 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.1.0
+ * @version   GIT: 1.2.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 interface MysqlDumpInterface
 {
-    const MAXLINESIZE = 1000000;
+    const MAXLINESIZE = 200000;
 
     /**
      * Define MySQL credentials for the current connection
@@ -203,11 +203,11 @@ interface MysqlDumpInterface
     public function getExtendedInsert();
 
     /**
-     * Truncate database
+     * Flush database
      *
      * @return void
      */
-    public function truncateDatabase();
+    public function flush();
 
     /**
      * Import database from file

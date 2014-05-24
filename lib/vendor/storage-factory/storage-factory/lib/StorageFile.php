@@ -29,7 +29,7 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/borislav-angelov/storage-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.9.0
+ * @version   GIT: 2.1.0
  * @link      https://github.com/borislav-angelov/storage-factory/
  */
 
@@ -44,7 +44,7 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'StorageAbstract.php';
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/borislav-angelov/storage-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.9.0
+ * @version   GIT: 2.1.0
  * @link      https://github.com/borislav-angelov/storage-factory/
  */
 class StorageFile extends StorageAbstract
@@ -54,14 +54,25 @@ class StorageFile extends StorageAbstract
     /**
      * CTOR
      */
-    public function __construct($name = null) {
+    public function __construct($name = null, $path = null) {
         if (empty($name)) {
-            $this->file = tempnam(
-                $this->getRootPath(),
-                (defined('AI1WM_STORAGE_PREFIX') ? AI1WM_STORAGE_PREFIX : 'sm_')
-            );
+            if (empty($path)) {
+                $this->file = tempnam(
+                    $this->getRootPath(),
+                    (defined('AI1WM_STORAGE_PREFIX') ? AI1WM_STORAGE_PREFIX : 'sm_')
+                );
+            } else {
+                $this->file = tempnam(
+                    $path,
+                    (defined('AI1WM_STORAGE_PREFIX') ? AI1WM_STORAGE_PREFIX : 'sm_')
+                );
+            }
         } else {
-            $this->file = $this->getRootPath() . DIRECTORY_SEPARATOR . $name;
+            if (empty($path)) {
+                $this->file = $this->getRootPath() . DIRECTORY_SEPARATOR . $name;
+            } else {
+                $this->file = $path . DIRECTORY_SEPARATOR . $name;
+            }
         }
     }
 

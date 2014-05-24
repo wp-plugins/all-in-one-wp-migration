@@ -29,7 +29,7 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/borislav-angelov/storage-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.9.0
+ * @version   GIT: 2.1.0
  * @link      https://github.com/borislav-angelov/storage-factory/
  */
 
@@ -45,7 +45,7 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'StorageDirectory.php';
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/borislav-angelov/storage-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.9.0
+ * @version   GIT: 2.1.0
  * @link      https://github.com/borislav-angelov/storage-factory/
  */
 class StorageArea
@@ -56,10 +56,11 @@ class StorageArea
      * Create a file with unique name
      *
      * @param  string      $name Custom file name
+     * @param  string      $path Custom root path
      * @return StorageFile       StorageFile instance
      */
-    public function makeFile($name = null) {
-        $this->nodes[] = $node = new StorageFile($name);
+    public function makeFile($name = null, $path = null) {
+        $this->nodes[] = $node = new StorageFile($name, $path);
 
         return $node;
     }
@@ -68,10 +69,11 @@ class StorageArea
      * Create a directory with unique name
      *
      * @param  string           $name Custom directory name
+     * @param  string           $path Custom root path
      * @return StorageDirectory       StorageDirectory instance
      */
-    public function makeDirectory($name = null) {
-        $this->nodes[] = $node = new StorageDirectory($name);
+    public function makeDirectory($name = null, $path = null) {
+        $this->nodes[] = $node = new StorageDirectory($name, $path);
 
         return $node;
     }

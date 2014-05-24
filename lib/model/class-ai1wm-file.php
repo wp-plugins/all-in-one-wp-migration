@@ -32,8 +32,8 @@ class Ai1wm_File
 	 *
 	 * @param  StorageArea $storage     Storage instance
 	 * @param  StorageFile $file        StorageFile instance
-	 * @param  string      $pattern     Find and replace pattern
-	 * @param  string      $replacement Replace term
+	 * @param  mixed       $pattern     Find and replace pattern
+	 * @param  mixed       $replacement Replace term
 	 * @return StorageFile              StorageFile instance
 	 */
 	public function str_replace_file( StorageArea $storage, StorageFile $file, $pattern, $replacement ) {

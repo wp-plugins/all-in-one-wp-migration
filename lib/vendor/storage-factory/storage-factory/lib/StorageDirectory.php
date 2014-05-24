@@ -29,7 +29,7 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/borislav-angelov/storage-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.9.0
+ * @version   GIT: 2.1.0
  * @link      https://github.com/borislav-angelov/storage-factory/
  */
 
@@ -44,7 +44,7 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'StorageAbstract.php';
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/borislav-angelov/storage-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.9.0
+ * @version   GIT: 2.1.0
  * @link      https://github.com/borislav-angelov/storage-factory/
  */
 class StorageDirectory extends StorageAbstract
@@ -54,11 +54,19 @@ class StorageDirectory extends StorageAbstract
     /**
      * CTOR
      */
-    public function __construct($name = null) {
+    public function __construct($name = null, $path = null) {
         if (empty($name)) {
-            $this->directory = $this->getRootPath() . DIRECTORY_SEPARATOR . uniqid() . DIRECTORY_SEPARATOR;
+            if (empty($path)) {
+                $this->directory = $this->getRootPath() . DIRECTORY_SEPARATOR . uniqid() . DIRECTORY_SEPARATOR;
+            } else {
+                $this->directory = $path . DIRECTORY_SEPARATOR . uniqid() . DIRECTORY_SEPARATOR;
+            }
         } else {
-            $this->directory = $this->getRootPath() . DIRECTORY_SEPARATOR . $name . DIRECTORY_SEPARATOR;
+            if (empty($path)) {
+                $this->directory = $this->getRootPath() . DIRECTORY_SEPARATOR . $name . DIRECTORY_SEPARATOR;
+            } else {
+                $this->directory = $path . DIRECTORY_SEPARATOR . $name . DIRECTORY_SEPARATOR;
+            }
         }
 
         // Create directory

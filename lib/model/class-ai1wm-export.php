@@ -42,14 +42,18 @@ class Ai1wm_Export
 	 */
 	public function export( StorageArea $storage, array $options = array() ) {
 		global $wp_version;
-		$options['plugin_version'] = AI1WM_VERSION;
-		$options['wp_version']     = $wp_version;
-		$options['php_version']    = phpversion();
-		$options['php_uname']      = php_uname();
-		$options['ZipArchive']     = class_exists( 'ZipArchive' ) ? 1 : 0;
-		$options['ZLIB_installed'] = function_exists( 'gzopen' ) ? 1 : 0;
-		$options['PDO_available']  = class_exists( 'PDO' ) ? 1 : 0;
-		$options['home_url']       = home_url();
+		$options['plugin_version']        = AI1WM_VERSION;
+		$options['wp_version']            = $wp_version;
+		$options['php_version']           = phpversion();
+		$options['php_uname']             = php_uname();
+		$options['max_execution_time']    = ini_get( 'max_execution_time' );
+		$options['memory_limit']          = ini_get( 'memory_limit' );
+		$options['memory_get_peak_usage'] = memory_get_peak_usage();
+		$options['memory_get_usage']      = memory_get_usage();
+		$options['ZipArchive']            = class_exists( 'ZipArchive' ) ? 1 : 0;
+		$options['ZLIB_installed']        = function_exists( 'gzopen' ) ? 1 : 0;
+		$options['PDO_available']         = class_exists( 'PDO' ) ? 1 : 0;
+		$options['home_url']              = home_url();
 
 		// Export last options
 		update_option( self::EXPORT_LAST_OPTIONS, $options );
@@ -121,8 +125,8 @@ class Ai1wm_Export
 	public function prepare_database( StorageArea $storage, array $options = array() ) {
 		global $wpdb;
 
-		$file        = new Ai1wm_File;
-		$output_file = $storage->makeFile();
+		$file          = new Ai1wm_File;
+		$database_file = $storage->makeFile();
 
 		// Set include tables
 		$includeTables = array();
@@ -187,7 +191,7 @@ class Ai1wm_Export
 		}
 
 		// Set dump options
-		$db->setFileName( $output_file->getAs( 'string' ) )
+		$db->setFileName( $database_file->getAs( 'string' ) )
 		   ->setIncludeTables( $includeTables )
 		   ->setExcludeTables( $excludeTables )
 		   ->setNoTableData( $noTableData )
@@ -214,21 +218,23 @@ class Ai1wm_Export
 			}
 			// Do String Replacement
 			if ( $old_values && $new_values ) {
-				$output_file = $file->str_replace_file(
+				$database_file = $file->str_replace_file(
 					$storage,
-					$output_file,
+					$database_file,
 					$old_values,
 					$new_values
+				);
+
+				// Do find and replace
+				$database_file = $file->preg_replace_file(
+					$storage,
+					$database_file,
+					'/s:(\d+):([\\\\]?"[\\\\]?"|[\\\\]?"((.*?)[^\\\\])[\\\\]?");/'
 				);
 			}
 		}
 
-		// Do find and replace
-		return $file->preg_replace_file(
-			$storage,
-			$output_file,
-			'/s:(\d+):([\\\\]?"[\\\\]?"|[\\\\]?"((.*?)[^\\\\])[\\\\]?");/'
-		);
+		return $database_file;
 	}
 
 	/**
@@ -304,6 +310,9 @@ class Ai1wm_Export
 	public function prepare_package( array $options = array() ) {
 		$config = array(
 			'Version' => AI1WM_VERSION,
+			'SiteURL' => site_url(),
+			'HomeURL' => home_url(),
+			'Domain'  => parse_url( home_url(), PHP_URL_HOST ),
 		);
 
 		return json_encode( $config );
