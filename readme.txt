@@ -53,7 +53,10 @@ All in One WP Plugin is the first plugin to offer true mobile experience on Word
 * Users picker - select the users that you want to include in your export
 
 **If you signup for our beta program, you will receive a free license for the commercial version when we release it as well as a few other perks like a free staging platform and access to our super-fast `Opinionated WordPress Hosting`.**
-[All in One WP Migration Beta](https://servmask.com/beta "All in One WP Migration")
+
+* [Get free help from us here](https://servmask.com/#contactModal)
+* [Report a bug or request a feature](https://servmask.com/#contactModal)
+* [Find out more about us](https://servmask.com)
 
 [youtube http://www.youtube.com/watch?v=5FMzLf9a4Dc]
 
