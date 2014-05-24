@@ -28,7 +28,7 @@
  * @author    Yani Iliev <yani@iliev.me>
  * @copyright 2014 Yani Iliev
  * @license   https://raw.github.com/yani-/zip-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.3
+ * @version   GIT: 1.2.0
  * @link      https://github.com/yani-/zip-factory/
  */
 
@@ -60,13 +60,14 @@ if (class_exists('ZipArchive')) {
         protected $root_dir = null;
 
         /**
-         * [__construct description]
+         * Create instance of Zip archiver
          *
-         * @param [type] $file [description]
+         * @param string  $file  Path to file
+         * @param boolean $write Open archive for write
          *
-         * @return [type]       [description]
+         * @return void
          */
-        public function __construct($file)
+        public function __construct($file, $write = false)
         {
             if (is_resource($file)) {
                 $meta = stream_get_meta_data($file);
@@ -75,9 +76,15 @@ if (class_exists('ZipArchive')) {
                 $this->archive = $file;
             }
 
-            // Open Archive File
-            if (!($this->open($this->archive) === true)) {
-                throw new RuntimeException('Archive file cound not be created.');
+            // Open Archive File for read/write
+            if ($write) {
+                if (($code = $this->open($this->archive, ZipArchive::CREATE | ZipArchive::OVERWRITE)) !== true) {
+                    throw new Exception('Archive file cound not be created. Return code: ' . $code);
+                }
+            } else {
+                if (($code = $this->open($this->archive)) !== true) {
+                    throw new Exception('Archive file cound not be opened. Return code: ' . $code);
+                }
             }
         }
 
@@ -105,13 +112,13 @@ if (class_exists('ZipArchive')) {
         }
 
         /**
-         * [addDir description]
+         * Add directory to archive
          *
-         * @param [type] $path       [description]
-         * @param [type] $parent_dir [description]
-         * @param array  $include    [description]
+         * @param string $path       Path to directory
+         * @param string $parent_dir Parent path name
+         * @param array  $include    Include specific directories
          *
-         * @return null [description]
+         * @return void
          */
         public function addDir($path, $parent_dir = null, $include = array())
         {
@@ -121,18 +128,19 @@ if (class_exists('ZipArchive')) {
                 RecursiveIteratorIterator::SELF_FIRST
             );
 
-            // Prepare File Filter Pattern
-            $file_pattern = null;
+            // Prepare filter pattern
+            $filter_pattern = null;
             if (is_array($include)) {
                 $filters = array();
-                foreach ($include as $file) {
-                    $filters[] = str_replace(
-                        '\.\*', '.*',
-                        preg_quote($file, '/')
+                foreach ($include as $filter) {
+                    $filters[] = sprintf(
+                        '(%s(%s.*)?)',
+                        preg_quote( $filter, '/' ),
+                        preg_quote( DIRECTORY_SEPARATOR, '/' )
                     );
                 }
 
-                $file_pattern = implode('|', $filters);
+                $filter_pattern = implode( '|', $filters );
             }
 
             foreach ($iterator as $item) {
@@ -141,12 +149,9 @@ if (class_exists('ZipArchive')) {
                     continue;
                 }
 
-                // Validate file pattern
-                if ($file_pattern) {
-                    if (!preg_match(
-                        '/^(' . $file_pattern . ')$/',
-                        $iterator->getSubPathName()
-                    )) {
+                // Validate filter pattern
+                if ($filter_pattern) {
+                    if (!preg_match('/^' . $filter_pattern . '$/', $iterator->getSubPathName())) {
                         continue;
                     }
                 }

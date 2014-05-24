@@ -29,7 +29,7 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.10
+ * @version   GIT: 1.2.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 
@@ -46,7 +46,7 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'MysqlFileAdapter.php';
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.10
+ * @version   GIT: 1.2.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 class MysqlDumpSQL implements MysqlDumpInterface
@@ -349,11 +349,11 @@ class MysqlDumpSQL implements MysqlDumpInterface
     }
 
     /**
-     * Truncate database
+     * Flush database
      *
      * @return void
      */
-    public function truncateDatabase()
+    public function flush()
     {
         $query = $this->queryAdapter->show_tables($this->database);
         $result = mysql_unbuffered_query($query, $this->getConnection());
@@ -536,11 +536,14 @@ class MysqlDumpSQL implements MysqlDumpInterface
         $query = "SELECT * FROM `$tableName` ";
 
         // Apply additional query clauses
-        if ($this->getNoTableData()) {
-            $clauses = $this->getQueryClauses();
-            if (isset($clauses[$tableName]) && ($queryClause = $clauses[$tableName])) {
-                $query .= $queryClause;
-            }
+        $clauses = $this->getQueryClauses();
+        if (isset($clauses[$tableName]) && ($queryClause = $clauses[$tableName])) {
+            $query .= $queryClause;
+        }
+
+        // No table data
+        if ($this->getNoTableData() && !isset($clauses[$tableName])) {
+            return;
         }
 
         // Replace table prefix
