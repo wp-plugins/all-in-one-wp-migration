@@ -29,7 +29,7 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.2.0
+ * @version   GIT: 1.3.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 
@@ -46,7 +46,7 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'MysqlFileAdapter.php';
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.2.0
+ * @version   GIT: 1.3.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 class MysqlDumpPDO implements MysqlDumpInterface
@@ -113,11 +113,11 @@ class MysqlDumpPDO implements MysqlDumpInterface
     }
 
     /**
-     * Dump database into a file
+     * Export database into a file
      *
      * @return void
      */
-    public function dump()
+    public function export()
     {
         // Set File Adapter
         $this->fileAdapter = new MysqlFileAdapter();
@@ -125,7 +125,7 @@ class MysqlDumpPDO implements MysqlDumpInterface
         // Set output file
         $this->fileAdapter->open($this->getFileName());
 
-        // Write Headers Formating dump file
+        // Write Headers Formatting dump file
         $this->fileAdapter->write($this->getHeader());
 
         // Listing all tables from database
@@ -365,12 +365,12 @@ class MysqlDumpPDO implements MysqlDumpInterface
     {
         $query = $this->queryAdapter->show_tables($this->database);
         $result = $this->getConnection()->query($query);
-        $_deleteTables = array();
+        $deleteTables = array();
         foreach ($result as $row) {
             // Drop table
-            $_deleteTables[] = $this->queryAdapter->drop_table($row['table_name']);
+            $deleteTables[] = $this->queryAdapter->drop_table($row['table_name']);
         }
-        foreach ($_deleteTables as $delete) {
+        foreach ($deleteTables as $delete) {
             $this->getConnection()->query($delete);
         }
     }
@@ -425,6 +425,65 @@ class MysqlDumpPDO implements MysqlDumpInterface
         }
 
         return $tables;
+    }
+
+    /**
+     * Replace table name prefix
+     *
+     * @param  string $input Table name
+     * @return string
+     */
+    public function replaceTableNamePrefix($input)
+    {
+        $pattern = '/^(' . $this->getOldTablePrefix() . ')(.+)/i';
+        $replace = $this->getNewTablePrefix() . '\2';
+
+        return preg_replace($pattern, $replace, $input);
+    }
+
+    /**
+     * Replace create table prefix
+     *
+     * @param  string $input SQL statement
+     * @return string
+     */
+    public function replaceCreateTablePrefix($input)
+    {
+        $pattern = '/^CREATE TABLE `(' . $this->getOldTablePrefix() . ')(.+)`/Ui';
+        $replace = 'CREATE TABLE `' . $this->getNewTablePrefix() . '\2`';
+
+        return preg_replace($pattern, $replace, $input);
+    }
+
+    /**
+     * Replace insert into prefix
+     *
+     * @param  string $input SQL statement
+     * @return string
+     */
+    public function replaceInsertIntoPrefix($input)
+    {
+        $pattern = '/^INSERT INTO `(' . $this->getOldTablePrefix() . ')(.+)`/Ui';
+        $replace = 'INSERT INTO `' . $this->getNewTablePrefix() . '\2`';
+
+        return preg_replace($pattern, $replace, $input);
+    }
+
+    /**
+     * Strip table constraints
+     *
+     * @param  string $input SQL statement
+     * @return string
+     */
+    public function stripTableConstraints($input)
+    {
+        $pattern = array(
+            '/\s+CONSTRAINT(.+),/i',
+            '/,\s+CONSTRAINT(.+)/i',
+        );
+        $replace = '';
+
+        return preg_replace($pattern, $replace, $input);
     }
 
     /**

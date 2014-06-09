@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (C) 2013 ServMask LLC
+ * Copyright (C) 2014 ServMask Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,7 +64,6 @@ class Ai1wm_Feedback
 			}
 		}
 
-		echo json_encode( array( 'errors' => $errors ) );
-		exit;
+		return array( 'errors' => $errors );
 	}
 }

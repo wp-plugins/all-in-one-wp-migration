@@ -23,63 +23,18 @@
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 
-class Ai1wm_Import_Controller
+class Ai1wm_Message_Controller
 {
-	public static function index() {
-		try {
-			$storage       = new StorageArea;
-			$is_accessible = $storage->makeFile();
-			$storage->flush();
-		} catch ( Exception $e ) {
-			$is_accessible = false;
+	public static function close_message() {
+		// Set Type
+		$type = null;
+		if ( isset( $_POST['type'] ) ) {
+			$type = trim( $_POST['type'] );
 		}
 
-		Ai1wm_Template::render(
-			'import/index',
-			array(
-				'is_accessible' => $is_accessible,
-			)
-		);
-	}
-
-	public static function upload_file() {
-		global $wp_rewrite;
-
-		// Set default handlers
-		set_error_handler( array( 'Ai1wm_Error', 'error_handler' ) );
-		set_exception_handler( array( 'Ai1wm_Error', 'exception_handler' ) );
-
-		$result = array();
-
-		// Get options
-		if ( isset( $_FILES['input_file'] ) && ( $input_file = $_FILES['input_file'] ) ) {
-			$options = array(
-				'chunk'  => 0,
-				'chunks' => 0,
-				'name'   => null,
-			);
-
-			// Ordinal number of the current chunk in the set (starts with zero)
-			if ( isset( $_REQUEST['chunk'] ) ) {
-				$options['chunk'] = intval( $_REQUEST['chunk'] );
-			}
-
-			// Total number of chunks in the file
-			if ( isset( $_REQUEST['chunks'] ) ) {
-				$options['chunks'] = intval( $_REQUEST['chunks'] );
-			}
-
-			// Name of partial file
-			if ( isset( $_REQUEST['name'] ) ) {
-				$options['name'] = $_REQUEST['name'];
-			}
-
-			$model = new Ai1wm_Import;
-			$result = $model->import( $input_file, $options );
-
-			// Regenerate permalinks
-			$wp_rewrite->flush_rules( true );
-		}
+		// Close message
+		$model  = new Ai1wm_Message;
+		$result = $model->close_message( $type );
 
 		echo json_encode( $result );
 		exit;

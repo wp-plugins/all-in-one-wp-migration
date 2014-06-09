@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (C) 2013 ServMask LLC
+ * Copyright (C) 2014 ServMask Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@
 				</p>
 
 				<?php if ( $is_accessible ): ?>
-					<div class="ai1wm-upload-file-message ai1wm-message"></div>
+					<div class="ai1wm-message ai1wm-upload-file-message"></div>
 
 					<form action=""  method="post" enctype="multipart/form-data">
 						<div id="ai1wm-plupload-upload-ui" class="hide-if-no-js">

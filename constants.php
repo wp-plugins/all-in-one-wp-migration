@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (C) 2013 ServMask LLC
+ * Copyright (C) 2014 ServMask Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
 // ==================
 // = Plugin VERSION =
 // ==================
-define( 'AI1WM_VERSION', '1.8.1' );
+define( 'AI1WM_VERSION', '1.9.0' );
 
 // ===============
 // = Plugin Name =

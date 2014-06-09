@@ -5,9 +5,9 @@
  * Description: Migration tool for all your blog data
  * Author: ServMask
  * Author URI: https://servmask.com/
- * Version: 1.8.1
+ * Version: 1.9.0
  *
- * Copyright (C) 2013 ServMask LLC
+ * Copyright (C) 2014 ServMask Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

@@ -23,65 +23,40 @@
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 
-class Ai1wm_Import_Controller
+class Ai1wm_Message
 {
-	public static function index() {
-		try {
-			$storage       = new StorageArea;
-			$is_accessible = $storage->makeFile();
-			$storage->flush();
-		} catch ( Exception $e ) {
-			$is_accessible = false;
+	const MESSAGE_INFO       = 'info';
+	const MESSAGE_INFO_CLOSE = 'ai1wm_message_info_close';
+
+	/**
+	 * Close message dialog by type
+	 *
+	 * @param  string $type Type of message
+	 * @return array
+	 */
+	public function close_message( $type ) {
+		$errors = array();
+
+		if ( $type == self::MESSAGE_INFO ) {
+			update_option( self::MESSAGE_INFO_CLOSE, true );
+		} else {
+			$errors[] = 'Unregonized message type.';
 		}
 
-		Ai1wm_Template::render(
-			'import/index',
-			array(
-				'is_accessible' => $is_accessible,
-			)
-		);
+		return array( 'errors' => $errors );
 	}
 
-	public static function upload_file() {
-		global $wp_rewrite;
-
-		// Set default handlers
-		set_error_handler( array( 'Ai1wm_Error', 'error_handler' ) );
-		set_exception_handler( array( 'Ai1wm_Error', 'exception_handler' ) );
-
-		$result = array();
-
-		// Get options
-		if ( isset( $_FILES['input_file'] ) && ( $input_file = $_FILES['input_file'] ) ) {
-			$options = array(
-				'chunk'  => 0,
-				'chunks' => 0,
-				'name'   => null,
-			);
-
-			// Ordinal number of the current chunk in the set (starts with zero)
-			if ( isset( $_REQUEST['chunk'] ) ) {
-				$options['chunk'] = intval( $_REQUEST['chunk'] );
-			}
-
-			// Total number of chunks in the file
-			if ( isset( $_REQUEST['chunks'] ) ) {
-				$options['chunks'] = intval( $_REQUEST['chunks'] );
-			}
-
-			// Name of partial file
-			if ( isset( $_REQUEST['name'] ) ) {
-				$options['name'] = $_REQUEST['name'];
-			}
-
-			$model = new Ai1wm_Import;
-			$result = $model->import( $input_file, $options );
-
-			// Regenerate permalinks
-			$wp_rewrite->flush_rules( true );
+	/**
+	 * Is message dialog closed
+	 *
+	 * @param  string  $type Type of message
+	 * @return boolean
+	 */
+	public function is_closed( $type  ) {
+		if ( $type == self::MESSAGE_INFO ) {
+			return get_option( self::MESSAGE_INFO_CLOSE );
 		}
 
-		echo json_encode( $result );
-		exit;
+		return false;
 	}
 }

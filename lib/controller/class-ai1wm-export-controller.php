@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (C) 2013 ServMask LLC
+ * Copyright (C) 2014 ServMask Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,11 +34,16 @@ class Ai1wm_Export_Controller
 			$is_accessible = false;
 		}
 
+		// Message
+		$message   = new Ai1wm_Message;
+		$is_closed = $message->is_closed( $message::MESSAGE_INFO );
+
 		Ai1wm_Template::render(
 			'export/index',
 			array(
 				'list_plugins'  => get_plugins(),
 				'is_accessible' => $is_accessible,
+				'is_closed'     => $is_closed,
 			)
 		);
 	}
@@ -62,7 +67,7 @@ class Ai1wm_Export_Controller
 			header(
 				sprintf(
 					'Content-Disposition: attachment; filename=%s-%s.%s',
-					Ai1wm_Export::EXPORT_ARCHIVE_NAME,
+					$model::EXPORT_ARCHIVE_NAME,
 					time(),
 					'zip'
 				)

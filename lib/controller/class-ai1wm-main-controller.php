@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (C) 2013 ServMask LLC
+ * Copyright (C) 2014 ServMask Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -76,6 +76,7 @@ class Ai1wm_Main_Controller
 		add_action( 'wp_ajax_leave_feedback', 'Ai1wm_Feedback_Controller::leave_feedback' );
 		add_action( 'wp_ajax_report_problem', 'Ai1wm_Report_Controller::report_problem' );
 		add_action( 'wp_ajax_upload_file', 'Ai1wm_Import_Controller::upload_file' );
+		add_action( 'wp_ajax_close_message', 'Ai1wm_Message_Controller::close_message' );
 
 		// Enable or disable maintenance mode
 		if ( get_option( Ai1wm_Import::MAINTENANCE_MODE ) ) {
@@ -255,6 +256,12 @@ class Ai1wm_Main_Controller
 			),
 		);
 		wp_localize_script( 'ai1wm-js-export', 'ai1wm_report', $report_init );
+		$message_init = array(
+			'ajax' => array(
+				'url' => admin_url( 'admin-ajax.php' ) . '?action=close_message',
+			),
+		);
+		wp_localize_script( 'ai1wm-js-export', 'ai1wm_message', $message_init );
 	}
 
 	/**

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (C) 2013 ServMask LLC
+ * Copyright (C) 2014 ServMask Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@ if ( defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	delete_option( Ai1wm_Export::EXPORT_LAST_OPTIONS );
 	delete_option( Ai1wm_Error::ERROR_HANDLER );
 	delete_option( Ai1wm_Error::EXCEPTION_HANDLER );
+	delete_option( Ai1wm_Message::MESSAGE_INFO_CLOSE );
 
 	// delete any files not located inside plugin's folder (if any)
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (C) 2013 ServMask LLC
+ * Copyright (C) 2014 ServMask Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,7 +45,10 @@ class Ai1wm_Feedback_Controller
 		}
 
 		// Send Feedback
-		$model = new Ai1wm_Feedback;
-		return $model->leave_feedback( $email, $message, $terms );
+		$model  = new Ai1wm_Feedback;
+		$result = $model->leave_feedback( $email, $message, $terms );
+
+		echo json_encode( $result );
+		exit;
 	}
 }

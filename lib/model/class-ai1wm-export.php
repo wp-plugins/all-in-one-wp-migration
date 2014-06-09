@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (C) 2013 ServMask LLC
+ * Copyright (C) 2014 ServMask Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,7 +65,11 @@ class Ai1wm_Export
 		$output_file = $storage->makeFile();
 
 		// Make archive
-		$archive = ZipFactory::makeZipArchiver( $output_file->getAs( 'resource' ), ! class_exists( 'ZipArchive' ), true );
+		try {
+			$archive = ZipFactory::makeZipArchiver( $output_file->getAs( 'resource' ), ! class_exists( 'ZipArchive' ), true );
+		} catch ( Exception $e ) {
+			$archive = ZipFactory::makeZipArchiver( $output_file->getAs( 'resource' ), true, true );
+		}
 
 		// Should we export database?
 		if ( ! isset( $options['export-database'] ) ) {
@@ -199,8 +203,8 @@ class Ai1wm_Export
 		   ->setNewTablePrefix( AI1WM_TABLE_PREFIX )
 		   ->setQueryClauses( $clauses );
 
-		// Make dump
-		$db->dump();
+		// Export database into a file
+		$db->export();
 
 		// Replace Old/New Values
 		if ( isset( $options['replace'] ) && ( $replace = $options['replace'] ) ) {

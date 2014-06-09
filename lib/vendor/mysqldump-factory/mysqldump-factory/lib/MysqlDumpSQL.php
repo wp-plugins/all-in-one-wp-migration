@@ -29,7 +29,7 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.2.0
+ * @version   GIT: 1.3.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 
@@ -46,7 +46,7 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'MysqlFileAdapter.php';
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.2.0
+ * @version   GIT: 1.3.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 class MysqlDumpSQL implements MysqlDumpInterface
@@ -105,11 +105,11 @@ class MysqlDumpSQL implements MysqlDumpInterface
     }
 
     /**
-     * Dump database into a file
+     * Export database into a file
      *
      * @return void
      */
-    public function dump()
+    public function export()
     {
         // Set File Adapter
         $this->fileAdapter = new MysqlFileAdapter();
@@ -117,7 +117,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
         // Set output file
         $this->fileAdapter->open($this->getFileName());
 
-        // Write Headers Formating dump file
+        // Write Headers Formatting dump file
         $this->fileAdapter->write($this->getHeader());
 
         // Listing all tables from database
@@ -357,12 +357,12 @@ class MysqlDumpSQL implements MysqlDumpInterface
     {
         $query = $this->queryAdapter->show_tables($this->database);
         $result = mysql_unbuffered_query($query, $this->getConnection());
-        $_deleteTables = array();
+        $deleteTables = array();
         while ($row = mysql_fetch_assoc($result)) {
             // Drop table
-            $_deleteTables[] = $this->queryAdapter->drop_table($row['table_name']);
+            $deleteTables[] = $this->queryAdapter->drop_table($row['table_name']);
         }
-        foreach ($_deleteTables as $delete) {
+        foreach ($deleteTables as $delete) {
             mysql_unbuffered_query($delete, $this->getConnection());
         }
     }
@@ -381,8 +381,11 @@ class MysqlDumpSQL implements MysqlDumpInterface
 
             // Read database file line by line
             while (($line = fgets($fileHandler)) !== false) {
-                // Replace table prefix
-                $line = $this->replaceTablePrefix($line, false);
+                // Replace create table prefix
+                $line = $this->replaceCreateTablePrefix($line);
+
+                // Replace insert into prefix
+                $line = $this->replaceInsertIntoPrefix($line);
 
                 $query .= $line;
                 if (preg_match('/;\s*$/', $line)) {
@@ -416,12 +419,72 @@ class MysqlDumpSQL implements MysqlDumpInterface
         return $tables;
     }
 
+
+    /**
+     * Replace table name prefix
+     *
+     * @param  string $input Table name
+     * @return string
+     */
+    public function replaceTableNamePrefix($input)
+    {
+        $pattern = '/^(' . $this->getOldTablePrefix() . ')(.+)/i';
+        $replace = $this->getNewTablePrefix() . '\2';
+
+        return preg_replace($pattern, $replace, $input);
+    }
+
+    /**
+     * Replace create table prefix
+     *
+     * @param  string $input SQL statement
+     * @return string
+     */
+    public function replaceCreateTablePrefix($input)
+    {
+        $pattern = '/^CREATE TABLE `(' . $this->getOldTablePrefix() . ')(.+)`/Ui';
+        $replace = 'CREATE TABLE `' . $this->getNewTablePrefix() . '\2`';
+
+        return preg_replace($pattern, $replace, $input);
+    }
+
+    /**
+     * Replace insert into prefix
+     *
+     * @param  string $input SQL statement
+     * @return string
+     */
+    public function replaceInsertIntoPrefix($input)
+    {
+        $pattern = '/^INSERT INTO `(' . $this->getOldTablePrefix() . ')(.+)`/Ui';
+        $replace = 'INSERT INTO `' . $this->getNewTablePrefix() . '\2`';
+
+        return preg_replace($pattern, $replace, $input);
+    }
+
+    /**
+     * Strip table constraints
+     *
+     * @param  string $input SQL statement
+     * @return string
+     */
+    public function stripTableConstraints($input)
+    {
+        $pattern = array(
+            '/\s+CONSTRAINT(.+),/i',
+            '/,\s+CONSTRAINT(.+)/i',
+        );
+        $replace = '';
+
+        return preg_replace($pattern, $replace, $input);
+    }
+
     /**
      * Get MySQL connection (lazy loading)
      *
      * @return resource
      */
-    protected function getConnection()
+    public function getConnection()
     {
         if ($this->connection === null) {
             // Make connection (Socket)
@@ -501,7 +564,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
         while ($row = mysql_fetch_assoc($result)) {
             if (isset($row['Create Table'])) {
                 // Replace table prefix
-                $tableName = $this->replaceTablePrefix($tableName);
+                $tableName = $this->replaceTableNamePrefix($tableName);
 
                 $this->fileAdapter->write("-- " .
                     "--------------------------------------------------------" .
@@ -514,7 +577,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
                 }
 
                 // Replace table prefix
-                $createTable = $this->replaceTablePrefix($row['Create Table'], false);
+                $createTable = $this->replaceCreateTablePrefix($row['Create Table'], false);
 
                 $this->fileAdapter->write($createTable . ";\n\n");
 
@@ -547,7 +610,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
         }
 
         // Replace table prefix
-        $tableName = $this->replaceTablePrefix($tableName);
+        $tableName = $this->replaceTableNamePrefix($tableName);
 
         $this->fileAdapter->write(
             "--\n" .
@@ -560,9 +623,6 @@ class MysqlDumpSQL implements MysqlDumpInterface
         while ($row = mysql_fetch_row($result)) {
             $items = array();
             foreach ($row as $value) {
-                if ($value) {
-                    $value = $this->replaceTablePrefix($value);
-                }
                 $items[] = is_null($value) ? 'NULL' : "'" . mysql_real_escape_string($value) . "'";
             }
 
@@ -581,22 +641,6 @@ class MysqlDumpSQL implements MysqlDumpInterface
 
         if (!$insertFirst) {
             $this->fileAdapter->write(";\n");
-        }
-    }
-
-    /**
-     * Replace table prefix (old to new one)
-     *
-     * @param  string $tableName Name of table
-     * @param  bool   $start     Match start of string, or start of line
-     * @return string
-     */
-    protected function replaceTablePrefix($tableName, $start = true) {
-        $pattern = preg_quote($this->getOldTablePrefix(), '/');
-        if ($start) {
-            return preg_replace('/^' . $pattern . '/i', $this->getNewTablePrefix(), $tableName);
-        } else {
-            return preg_replace('/' . $pattern . '/i', $this->getNewTablePrefix(), $tableName);
         }
     }
 }

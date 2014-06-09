@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (C) 2013 ServMask LLC
+ * Copyright (C) 2014 ServMask Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ class Ai1wm_Import
 {
 	const MAX_FILE_SIZE     = '512MB';
 	const MAX_CHUNK_SIZE    = '500KB';
-	const MAX_CHUNK_RETRIES = 10;
+	const MAX_CHUNK_RETRIES = 100;
 	const MAINTENANCE_MODE  = 'ai1wm_maintenance_mode';
 
 	/**
@@ -99,11 +99,17 @@ class Ai1wm_Import
 				// Create temporary directory
 				$extract_to = $storage->makeDirectory()->getAs( 'string' );
 
+				// Extract archive to a temporary directory
 				try {
-					// Extract archive to a temporary directory
-					$archive = ZipFactory::makeZipArchiver( $upload_file, ! class_exists( 'ZipArchive' ) );
-					$archive->extractTo( $extract_to );
-					$archive->close();
+					try {
+						$archive = ZipFactory::makeZipArchiver( $upload_file, ! class_exists( 'ZipArchive' ) );
+						$archive->extractTo( $extract_to );
+						$archive->close();
+					} catch ( Exception $e ) {
+						$archive = ZipFactory::makeZipArchiver( $upload_file, true );
+						$archive->extractTo( $extract_to );
+						$archive->close();
+					}
 				} catch ( Exception $e ) {
 					$errors[] = _(
 						'Archive file is broken or is not compatible with
@@ -139,7 +145,7 @@ class Ai1wm_Import
 									)
 								);
 								$db->getConnection();
-							} catch (Exception $e) {
+							} catch ( Exception $e ) {
 								// Use "old" mysql adapter
 								$db = MysqlDumpFactory::makeMysqlDump( DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, false );
 							}
