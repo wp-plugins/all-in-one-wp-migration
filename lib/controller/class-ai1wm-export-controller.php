@@ -67,7 +67,7 @@ class Ai1wm_Export_Controller
 			header(
 				sprintf(
 					'Content-Disposition: attachment; filename=%s-%s.%s',
-					$model::EXPORT_ARCHIVE_NAME,
+					Ai1wm_Export::EXPORT_ARCHIVE_NAME,
 					time(),
 					'zip'
 				)
