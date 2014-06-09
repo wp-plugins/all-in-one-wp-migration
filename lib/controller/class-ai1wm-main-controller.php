@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (C) 2013 ServMask LLC
+ * Copyright (C) 2014 ServMask Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,6 +14,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * ███████╗███████╗██████╗ ██╗   ██╗███╗   ███╗ █████╗ ███████╗██╗  ██╗
+ * ██╔════╝██╔════╝██╔══██╗██║   ██║████╗ ████║██╔══██╗██╔════╝██║ ██╔╝
+ * ███████╗█████╗  ██████╔╝██║   ██║██╔████╔██║███████║███████╗█████╔╝
+ * ╚════██║██╔══╝  ██╔══██╗╚██╗ ██╔╝██║╚██╔╝██║██╔══██║╚════██║██╔═██╗
+ * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
+ * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 
 class Ai1wm_Main_Controller
@@ -69,13 +76,29 @@ class Ai1wm_Main_Controller
 		add_action( 'wp_ajax_leave_feedback', 'Ai1wm_Feedback_Controller::leave_feedback' );
 		add_action( 'wp_ajax_report_problem', 'Ai1wm_Report_Controller::report_problem' );
 		add_action( 'wp_ajax_upload_file', 'Ai1wm_Import_Controller::upload_file' );
+		add_action( 'wp_ajax_close_message', 'Ai1wm_Message_Controller::close_message' );
 
 		// Enable or disable maintenance mode
 		if ( get_option( Ai1wm_Import::MAINTENANCE_MODE ) ) {
 			add_action( 'get_header', array( $this, 'activate_maintenance_mode' ) );
 		}
 
+		// Add a links to plugin list page
+		add_filter( 'plugin_row_meta', array( $this, 'plugin_row_meta' ), 10, 2 );
+
 		return $this;
+	}
+
+	/**
+	 * Add a links to plugin list page
+	 * @return void
+	 */
+	public 	function plugin_row_meta( $links, $file ) {
+		if ( $file == AI1WM_PLUGIN_BASENAME ) {
+			$links[] = sprintf( __( '<a href="%s" target="_blank">Get Support</a>', AI1WM_PLUGIN_NAME ), 'https://servmask.com/#contactModal' );
+		}
+
+		return $links;
 	}
 
 	/**
@@ -96,7 +119,7 @@ class Ai1wm_Main_Controller
 			'<h1>%s</h1><p>%s<br /><strong>%s%s</strong></p>',
 			_( 'Website Under Maintenance' ),
 			_( 'Hi, our Website is currently undergoing scheduled maintenance' ),
-			_( 'Please check back very soon.' ),
+			_( 'Please check back very soon. ' ),
 			_( 'Sorry for the inconvenience!' )
 		);
 
@@ -233,6 +256,12 @@ class Ai1wm_Main_Controller
 			),
 		);
 		wp_localize_script( 'ai1wm-js-export', 'ai1wm_report', $report_init );
+		$message_init = array(
+			'ajax' => array(
+				'url' => admin_url( 'admin-ajax.php' ) . '?action=close_message',
+			),
+		);
+		wp_localize_script( 'ai1wm-js-export', 'ai1wm_message', $message_init );
 	}
 
 	/**

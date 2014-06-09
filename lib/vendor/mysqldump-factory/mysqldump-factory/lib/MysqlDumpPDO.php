@@ -29,7 +29,7 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.10
+ * @version   GIT: 1.3.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 
@@ -46,12 +46,16 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'MysqlFileAdapter.php';
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.10
+ * @version   GIT: 1.3.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 class MysqlDumpPDO implements MysqlDumpInterface
 {
     protected $hostname         = null;
+
+    protected $port             = null;
+
+    protected $socket           = null;
 
     protected $username         = null;
 
@@ -94,8 +98,12 @@ class MysqlDumpPDO implements MysqlDumpInterface
      */
     public function __construct($hostname = 'localhost', $username = '', $password = '', $database = '')
     {
+        $dsn = $this->parseDSN($hostname);
+
         // Set MySQL credentials
-        $this->hostname = $hostname;
+        $this->hostname = $dsn['host'];
+        $this->port     = $dsn['port'];
+        $this->socket   = $dsn['socket'];
         $this->username = $username;
         $this->password = $password;
         $this->database = $database;
@@ -105,11 +113,11 @@ class MysqlDumpPDO implements MysqlDumpInterface
     }
 
     /**
-     * Dump database into a file
+     * Export database into a file
      *
      * @return void
      */
-    public function dump()
+    public function export()
     {
         // Set File Adapter
         $this->fileAdapter = new MysqlFileAdapter();
@@ -117,7 +125,7 @@ class MysqlDumpPDO implements MysqlDumpInterface
         // Set output file
         $this->fileAdapter->open($this->getFileName());
 
-        // Write Headers Formating dump file
+        // Write Headers Formatting dump file
         $this->fileAdapter->write($this->getHeader());
 
         // Listing all tables from database
@@ -349,20 +357,20 @@ class MysqlDumpPDO implements MysqlDumpInterface
     }
 
     /**
-     * Truncate database
+     * Flush database
      *
      * @return void
      */
-    public function truncateDatabase()
+    public function flush()
     {
         $query = $this->queryAdapter->show_tables($this->database);
         $result = $this->getConnection()->query($query);
-        $_deleteTables = array();
+        $deleteTables = array();
         foreach ($result as $row) {
             // Drop table
-            $_deleteTables[] = $this->queryAdapter->drop_table($row['table_name']);
+            $deleteTables[] = $this->queryAdapter->drop_table($row['table_name']);
         }
-        foreach ($_deleteTables as $delete) {
+        foreach ($deleteTables as $delete) {
             $this->getConnection()->query($delete);
         }
     }
@@ -420,6 +428,65 @@ class MysqlDumpPDO implements MysqlDumpInterface
     }
 
     /**
+     * Replace table name prefix
+     *
+     * @param  string $input Table name
+     * @return string
+     */
+    public function replaceTableNamePrefix($input)
+    {
+        $pattern = '/^(' . $this->getOldTablePrefix() . ')(.+)/i';
+        $replace = $this->getNewTablePrefix() . '\2';
+
+        return preg_replace($pattern, $replace, $input);
+    }
+
+    /**
+     * Replace create table prefix
+     *
+     * @param  string $input SQL statement
+     * @return string
+     */
+    public function replaceCreateTablePrefix($input)
+    {
+        $pattern = '/^CREATE TABLE `(' . $this->getOldTablePrefix() . ')(.+)`/Ui';
+        $replace = 'CREATE TABLE `' . $this->getNewTablePrefix() . '\2`';
+
+        return preg_replace($pattern, $replace, $input);
+    }
+
+    /**
+     * Replace insert into prefix
+     *
+     * @param  string $input SQL statement
+     * @return string
+     */
+    public function replaceInsertIntoPrefix($input)
+    {
+        $pattern = '/^INSERT INTO `(' . $this->getOldTablePrefix() . ')(.+)`/Ui';
+        $replace = 'INSERT INTO `' . $this->getNewTablePrefix() . '\2`';
+
+        return preg_replace($pattern, $replace, $input);
+    }
+
+    /**
+     * Strip table constraints
+     *
+     * @param  string $input SQL statement
+     * @return string
+     */
+    public function stripTableConstraints($input)
+    {
+        $pattern = array(
+            '/\s+CONSTRAINT(.+),/i',
+            '/,\s+CONSTRAINT(.+)/i',
+        );
+        $replace = '';
+
+        return preg_replace($pattern, $replace, $input);
+    }
+
+    /**
      * Get MySQL connection (lazy loading)
      *
      * @return PDO
@@ -454,9 +521,18 @@ class MysqlDumpPDO implements MysqlDumpInterface
         // Use Socket or TCP
         $hostname = ($useSocket ? $this->hostname : gethostbyname($this->hostname));
 
+        // Use default or custom port
+        if ($this->port === 3306 || empty($this->port)) {
+            $dsn = sprintf('mysql:host=%s;dbname=%s', $hostname, $this->database);
+        } else if (!empty($this->socket)) {
+            $dsn = sprintf('mysql:host=%s;unix_socket=%s;dbname=%s', $hostname, $this->socket, $this->database);
+        } else {
+            $dsn = sprintf('mysql:host=%s;port=%s;dbname=%s', $hostname, $this->port, $this->database);
+        }
+
         // Make connection
         $connection = new PDO(
-            sprintf('mysql:host=%s;dbname=%s', $hostname, $this->database),
+            $dsn,
             $this->username,
             $this->password,
             array(
@@ -543,11 +619,14 @@ class MysqlDumpPDO implements MysqlDumpInterface
         $query = "SELECT * FROM `$tableName` ";
 
         // Apply additional query clauses
-        if ($this->getNoTableData()) {
-            $clauses = $this->getQueryClauses();
-            if (isset($clauses[$tableName]) && ($queryClause = $clauses[$tableName])) {
-                $query .= $queryClause;
-            }
+        $clauses = $this->getQueryClauses();
+        if (isset($clauses[$tableName]) && ($queryClause = $clauses[$tableName])) {
+            $query .= $queryClause;
+        }
+
+        // No table data
+        if ($this->getNoTableData() && !isset($clauses[$tableName])) {
+            return;
         }
 
         // Replace table prefix
@@ -605,5 +684,37 @@ class MysqlDumpPDO implements MysqlDumpInterface
         } else {
             return preg_replace('/' . $pattern . '/i', $this->getNewTablePrefix(), $tableName);
         }
+    }
+
+    /**
+     * Parse data source name
+     *
+     * @param  string $input Data source name
+     * @return array         List of host, port and socket
+     */
+    protected function parseDSN($input) {
+        $data = explode(':', $input);
+
+        // Set hostname
+        $host = 'localhost';
+        if (!empty($data[0])) {
+            $host = $data[0];
+        }
+
+        // Set port and socket
+        $port = $socket = null;
+        if (!empty($data[1])) {
+            if (is_numeric($data[1])) {
+                $port = $data[1];
+            } else {
+                $socket = $data[1];
+            }
+        }
+
+        return array(
+            'host'   => $host,
+            'port'   => $port,
+            'socket' => $socket,
+        );
     }
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (C) 2013 ServMask LLC
+ * Copyright (C) 2014 ServMask Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,17 +14,36 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * ███████╗███████╗██████╗ ██╗   ██╗███╗   ███╗ █████╗ ███████╗██╗  ██╗
+ * ██╔════╝██╔════╝██╔══██╗██║   ██║████╗ ████║██╔══██╗██╔════╝██║ ██╔╝
+ * ███████╗█████╗  ██████╔╝██║   ██║██╔████╔██║███████║███████╗█████╔╝
+ * ╚════██║██╔══╝  ██╔══██╗╚██╗ ██╔╝██║╚██╔╝██║██╔══██║╚════██║██╔═██╗
+ * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
+ * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 
 class Ai1wm_Export_Controller
 {
 	public static function index() {
-		$model    = new Ai1wm_Export;
-		$temp_dir = sys_get_temp_dir();
-		Ai1wm_Template::render( 'export/index', array(
-				'list_plugins'    => get_plugins(),
-				'temp_dir'        => $temp_dir,
-				'temp_dir_access' => is_readable( $temp_dir ) && is_writable( $temp_dir ),
+		try {
+			$storage       = new StorageArea;
+			$is_accessible = $storage->makeFile();
+			$storage->flush();
+		} catch ( Exception $e ) {
+			$is_accessible = false;
+		}
+
+		// Message
+		$message   = new Ai1wm_Message;
+		$is_closed = $message->is_closed( $message::MESSAGE_INFO );
+
+		Ai1wm_Template::render(
+			'export/index',
+			array(
+				'list_plugins'  => get_plugins(),
+				'is_accessible' => $is_accessible,
+				'is_closed'     => $is_closed,
 			)
 		);
 	}
@@ -33,14 +52,14 @@ class Ai1wm_Export_Controller
 		// Set default handlers
 		set_error_handler( array( 'Ai1wm_Error', 'error_handler' ) );
 		set_exception_handler( array( 'Ai1wm_Error', 'exception_handler' ) );
-		
+
 		// Get options
 		if ( isset( $_POST['options'] ) && ( $options = $_POST['options'] ) ) {
-			$output_file = tempnam( sys_get_temp_dir(), 'wm_' );
+			$storage = new StorageArea;
 
 			// Export archive
 			$model = new Ai1wm_Export;
-			$file  = $model->export( $output_file, $options );
+			$file  = $model->export( $storage, $options );
 
 			// Send the file to the user
 			header( 'Content-Description: File Transfer' );
@@ -48,7 +67,7 @@ class Ai1wm_Export_Controller
 			header(
 				sprintf(
 					'Content-Disposition: attachment; filename=%s-%s.%s',
-					Ai1wm_Export::EXPORT_ARCHIVE_NAME,
+					$model::EXPORT_ARCHIVE_NAME,
 					time(),
 					'zip'
 				)
@@ -57,12 +76,14 @@ class Ai1wm_Export_Controller
 			header( 'Expires: 0' );
 			header( 'Cache-Control: must-revalidate' );
 			header( 'Pragma: public' );
-			header( 'Content-Length: ' . filesize( $file ) );
+			header( 'Content-Length: ' . filesize( $file->getAs( 'string' ) ) );
 
 			// Clear output buffering and read file content
-			@ob_end_flush();
-			readfile( $file );
-			@unlink( $file );
+			if ( ob_get_length() > 0 ) {
+				@ob_end_clean();
+			}
+			readfile( $file->getAs( 'string' ) );
+			$storage->flush();
 			exit;
 		}
 	}

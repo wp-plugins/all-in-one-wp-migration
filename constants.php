@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (C) 2013 ServMask LLC
+ * Copyright (C) 2014 ServMask Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,27 +14,29 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * ███████╗███████╗██████╗ ██╗   ██╗███╗   ███╗ █████╗ ███████╗██╗  ██╗
+ * ██╔════╝██╔════╝██╔══██╗██║   ██║████╗ ████║██╔══██╗██╔════╝██║ ██╔╝
+ * ███████╗█████╗  ██████╔╝██║   ██║██╔████╔██║███████║███████╗█████╔╝
+ * ╚════██║██╔══╝  ██╔══██╗╚██╗ ██╔╝██║╚██╔╝██║██╔══██║╚════██║██╔═██╗
+ * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
+ * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 
 // ==================
 // = Plugin VERSION =
 // ==================
-define( 'AI1WM_VERSION', '1.5.0' );
+define( 'AI1WM_VERSION', '1.9.0' );
 
 // ===============
 // = Plugin Name =
 // ===============
 define( 'AI1WM_PLUGIN_NAME', 'all-in-one-wp-migration' );
 
-// ===================
-// = Plugin Basename =
-// ===================
-define( 'AI1WM_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
-
 // ===============
-// = Plugin Path =
+// = Storage Path =
 // ===============
-define( 'AI1WM_PATH', dirname( __FILE__ ) );
+define( 'AI1WM_STORAGE_PATH', AI1WM_PATH . DIRECTORY_SEPARATOR . 'storage' );
 
 // ============
 // = Lib Path =
@@ -67,11 +69,6 @@ define( 'AI1WM_EXCEPTION_PATH', AI1WM_LIB_PATH . DIRECTORY_SEPARATOR . 'exceptio
 define( 'AI1WM_VENDOR_PATH', AI1WM_LIB_PATH . DIRECTORY_SEPARATOR . 'vendor' );
 
 // ==============
-// = Plugin Url =
-// ==============
-define( 'AI1WM_URL', plugins_url( '', __FILE__ ) );
-
-// ==============
 // = ServMask Feedback Url =
 // ==============
 define( 'AI1WM_FEEDBACK_URL', 'https://servmask.com/ai1wm/feedback/create' );
@@ -85,6 +82,11 @@ define( 'AI1WM_REPORT_URL', 'https://servmask.com/ai1wm/report/create' );
 // = ServMask Table Prefix =
 // ==============
 define( 'AI1WM_TABLE_PREFIX', 'SERVMASK_PREFIX_' );
+
+// ==============
+// = ServMask Storage Prefix =
+// ==============
+define( 'AI1WM_STORAGE_PREFIX', 'wm_' );
 
 // ===========================
 // = WP_CONTENT_DIR Constant =

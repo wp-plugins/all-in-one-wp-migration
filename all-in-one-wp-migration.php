@@ -1,13 +1,13 @@
 <?php
 /**
  * Plugin Name: All-in-One WP Migration
- * Plugin URI: http://servmask.com/
+ * Plugin URI: https://servmask.com/
  * Description: Migration tool for all your blog data
  * Author: ServMask
- * Author URI: http://servmask.com/
- * Version: 1.5.0
+ * Author URI: https://servmask.com/
+ * Version: 1.9.0
  *
- * Copyright (C) 2013 ServMask LLC
+ * Copyright (C) 2014 ServMask Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,9 +21,25 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * ███████╗███████╗██████╗ ██╗   ██╗███╗   ███╗ █████╗ ███████╗██╗  ██╗
+ * ██╔════╝██╔════╝██╔══██╗██║   ██║████╗ ████║██╔══██╗██╔════╝██║ ██╔╝
+ * ███████╗█████╗  ██████╔╝██║   ██║██╔████╔██║███████║███████╗█████╔╝
+ * ╚════██║██╔══╝  ██╔══██╗╚██╗ ██╔╝██║╚██╔╝██║██╔══██║╚════██║██╔═██╗
+ * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
+ * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 @set_time_limit( 0 );
 @ini_set( 'max_input_time', '-1' );
+
+// Plugin Basename
+define( 'AI1WM_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
+
+// Plugin Path
+define( 'AI1WM_PATH', dirname( __FILE__ ) );
+
+// Plugin Url
+define( 'AI1WM_URL', plugins_url( '', __FILE__ ) );
 
 // include constants
 require_once dirname( __FILE__ ) . DIRECTORY_SEPARATOR . 'constants.php';

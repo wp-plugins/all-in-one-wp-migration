@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (C) 2013 ServMask LLC
+ * Copyright (C) 2014 ServMask Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,6 +14,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * ███████╗███████╗██████╗ ██╗   ██╗███╗   ███╗ █████╗ ███████╗██╗  ██╗
+ * ██╔════╝██╔════╝██╔══██╗██║   ██║████╗ ████║██╔══██╗██╔════╝██║ ██╔╝
+ * ███████╗█████╗  ██████╔╝██║   ██║██╔████╔██║███████║███████╗█████╔╝
+ * ╚════██║██╔══╝  ██╔══██╗╚██╗ ██╔╝██║╚██╔╝██║██╔══██║╚════██║██╔═██╗
+ * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
+ * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 ?>
 <div class="ai1wm-container">
@@ -27,7 +34,7 @@
 					</a>
 					<div class="ai1wm-report-problem-dialog">
 						<div class="ai1wm-field">
-							<input placeholder="<?php _e( 'Enter your email address..' ); ?>" type="text" id="ai1wm-report-email" class="ai1wm-report-email" name="" value="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>" />
+							<input placeholder="<?php _e( 'Enter your email address..' ); ?>" type="text" id="ai1wm-report-email" class="ai1wm-report-email" />
 						</div>
 						<div class="ai1wm-field">
 							<textarea rows="3" id="ai1wm-report-message" class="ai1wm-report-message" placeholder="<?php _e( 'Please describe your problem here..' ); ?>"></textarea>
@@ -52,29 +59,43 @@
 					<?php _e( 'When the file is uploaded successfully it will be automatically restored on the current WordPress instance.' ); ?>
 				</p>
 
-				<div class="ai1wm-upload-file-message ai1wm-message"></div>
+				<?php if ( $is_accessible ): ?>
+					<div class="ai1wm-message ai1wm-upload-file-message"></div>
 
-				<form action=""  method="post" enctype="multipart/form-data">
-					<div id="ai1wm-plupload-upload-ui" class="hide-if-no-js">
-						<div class="ai1wm-drag-drop-area" id="ai1wm-drag-drop-area">
-							<div class="ai1wm-drag-drop-inside">
-								<p class="ai1wm-upload-progress"></p>
-								<p class="ai1wm-drag-drop-info"><?php _e( 'Drop file here' ); ?></p>
-								<p><?php _e( 'or' ); ?></p>
-								<p class="ai1wm-drag-drop-buttons">
-									<button id="ai1wm-browse-button" class="button">
-										<i class="ai1wm-icon-file"></i>&nbsp;<?php _e( 'Select File' ); ?>
-									</button>
-								</p>
+					<form action=""  method="post" enctype="multipart/form-data">
+						<div id="ai1wm-plupload-upload-ui" class="hide-if-no-js">
+							<div class="ai1wm-drag-drop-area" id="ai1wm-drag-drop-area">
+								<div class="ai1wm-drag-drop-inside">
+									<p class="ai1wm-upload-progress"></p>
+									<p class="ai1wm-drag-drop-info"><?php _e( 'Drop file here' ); ?></p>
+									<p><?php _e( 'or' ); ?></p>
+									<p class="ai1wm-drag-drop-buttons">
+										<button id="ai1wm-browse-button" class="button">
+											<i class="ai1wm-icon-file"></i>&nbsp;<?php _e( 'Select File' ); ?>
+										</button>
+									</p>
+								</div>
 							</div>
 						</div>
-					</div>
 
-					<p class="max-upload-size">
-						<?php _e( 'Maximum upload file size:' ); ?>
-						<strong><?php echo Ai1wm_Import::MAX_FILE_SIZE; ?></strong>
-					</p>
-				</form>
+						<p class="max-upload-size">
+							<?php _e( 'Maximum upload file size:' ); ?>
+							<strong><?php echo Ai1wm_Import::MAX_FILE_SIZE; ?></strong>
+						</p>
+					</form>
+				<?php else: ?>
+					<div class="ai1wm-message ai1wm-red-message">
+						<?php
+						printf(
+							_(
+								'Site could not be imported!<br />
+								Please make sure that storage directory <strong>%s</strong> has read and write permissions.'
+							),
+							AI1WM_STORAGE_PATH
+						);
+						?>
+					</div>
+				<?php endif; ?>
 			</div>
 		</div>
 		<div class="ai1wm-right">
@@ -89,7 +110,7 @@
 
 					<div class="ai1wm-feedback">
 						<div class="ai1wm-field">
-							<input placeholder="<?php _e( 'Enter your email address..' ); ?>" type="text" id="ai1wm-feedback-email" class="ai1wm-feedback-email" name="" value="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>" />
+							<input placeholder="<?php _e( 'Enter your email address..' ); ?>" type="text" id="ai1wm-feedback-email" class="ai1wm-feedback-email" />
 						</div>
 						<div class="ai1wm-field">
 							<textarea rows="3" id="ai1wm-feedback-message" class="ai1wm-feedback-message" placeholder="<?php _e( 'Leave plugin developers any feedback here..' ); ?>"></textarea>

@@ -29,7 +29,7 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.10
+ * @version   GIT: 1.3.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 
@@ -42,12 +42,12 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.0.10
+ * @version   GIT: 1.3.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 interface MysqlDumpInterface
 {
-    const MAXLINESIZE = 1000000;
+    const MAXLINESIZE = 200000;
 
     /**
      * Define MySQL credentials for the current connection
@@ -61,11 +61,11 @@ interface MysqlDumpInterface
     public function __construct($hostname = 'localhost', $username = '', $password = '', $database = '');
 
     /**
-     * Dump database into a file
+     * Export database into a file
      *
      * @return void
      */
-    public function dump();
+    public function export();
 
     /**
      * Set output file name
@@ -203,11 +203,11 @@ interface MysqlDumpInterface
     public function getExtendedInsert();
 
     /**
-     * Truncate database
+     * Flush database
      *
      * @return void
      */
-    public function truncateDatabase();
+    public function flush();
 
     /**
      * Import database from file
@@ -223,4 +223,43 @@ interface MysqlDumpInterface
      * @return array
      */
     public function listTables();
+
+    /**
+     * Replace table name prefix
+     *
+     * @param  string $input Table name
+     * @return string
+     */
+    public function replaceTableNamePrefix($input);
+
+    /**
+     * Replace create table prefix
+     *
+     * @param  string $input SQL statement
+     * @return string
+     */
+    public function replaceCreateTablePrefix($input);
+
+    /**
+     * Replace insert into prefix
+     *
+     * @param  string $input SQL statement
+     * @return string
+     */
+    public function replaceInsertIntoPrefix($input);
+
+    /**
+     * Strip table constraints
+     *
+     * @param  string $input SQL statement
+     * @return string
+     */
+    public function stripTableConstraints($input);
+
+    /**
+     * Get MySQL connection (lazy loading)
+     *
+     * @return resource
+     */
+    public function getConnection();
 }
