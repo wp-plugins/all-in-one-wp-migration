@@ -74,6 +74,7 @@ class StorageFile extends StorageAbstract
                 $this->file = $path . DIRECTORY_SEPARATOR . $name;
             }
         }
+        chmod( $this->file, 0777 );
     }
 
     /**

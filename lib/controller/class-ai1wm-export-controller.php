@@ -36,7 +36,7 @@ class Ai1wm_Export_Controller
 
 		// Message
 		$message   = new Ai1wm_Message;
-		$is_closed = $message->is_closed( $message::MESSAGE_INFO );
+		$is_closed = $message->is_closed( Ai1wm_Message::MESSAGE_INFO );
 
 		Ai1wm_Template::render(
 			'export/index',
@@ -67,7 +67,7 @@ class Ai1wm_Export_Controller
 			header(
 				sprintf(
 					'Content-Disposition: attachment; filename=%s-%s.%s',
-					$model::EXPORT_ARCHIVE_NAME,
+					Ai1wm_Export::EXPORT_ARCHIVE_NAME,
 					time(),
 					'zip'
 				)
