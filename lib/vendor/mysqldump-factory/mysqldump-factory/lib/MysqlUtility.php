@@ -2,7 +2,7 @@
 /* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
 /**
- * MysqlFileAdapter class
+ * Utility class file
  *
  * PHP version 5
  *
@@ -34,7 +34,7 @@
  */
 
 /**
- * MysqlFileAdapter class
+ * Utility class
  *
  * @category  Databases
  * @package   MysqlDumpFactory
@@ -45,30 +45,55 @@
  * @version   GIT: 1.8.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
-class MysqlFileAdapter
+class MysqlUtility
 {
-    protected $fileHandler = null;
+    /**
+     * Find and replace input with pattern
+     *
+     * @param  string $input   Value
+     * @param  string $pattern Pattern
+     * @return string
+     */
+    public static function pregReplace($input, $pattern) {
+        // PHP doesn't garbage collect functions created by create_function()
+        static $callback = null;
 
-    public function open($fileName)
-    {
-        $this->fileHandler = fopen($fileName, 'wb');
-        if (false === $this->fileHandler) {
-            throw new Exception('Output file is not writable', 2);
+        if ($callback === null) {
+            $callback = create_function(
+                '$matches',
+                "return isset(\$matches[3]) ? 's:' .
+                    strlen(MysqlUtility::unescapeMysql(\$matches[3])) .
+                    ':\"' .
+                    MysqlUtility::unescapeQuotes(\$matches[3]) .
+                    '\";' : \$matches[0];
+                "
+            );
         }
+
+        return preg_replace_callback($pattern, $callback, $input);
     }
 
-    public function write($str)
-    {
-        $bytesWritten = 0;
-        if (false === ($bytesWritten = fwrite($this->fileHandler, $str))) {
-            throw new Exception('Writting to file failed! Probably, there is no more free space left?', 4);
-        }
-
-        return $bytesWritten;
+    /**
+     * Unescape to avoid dump-text issues
+     *
+     * @param  string $input Text
+     * @return string
+     */
+    public static function unescapeMysql($input) {
+        return str_replace(
+            array('\\\\', '\\0', "\\n", "\\r", '\Z', "\'", '\"'),
+            array('\\', '\0', "\n", "\r", "\x1a", "'", '"'),
+            $input
+        );
     }
 
-    public function close()
-    {
-        return fclose($this->fileHandler);
+    /**
+     * Fix strange behaviour if you have escaped quotes in your replacement
+     *
+     * @param  string $input Text
+     * @return string
+     */
+    public static function unescapeQuotes($input) {
+        return str_replace('\"', '"', $input);
     }
 }

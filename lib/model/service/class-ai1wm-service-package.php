@@ -23,21 +23,56 @@
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 
-// Include plugin bootstrap file
-require_once dirname( __FILE__ ) .
-	DIRECTORY_SEPARATOR .
-	'all-in-one-wp-migration.php';
+class Ai1wm_Service_Package implements Ai1wm_Service_Interface
+{
+	protected $options = array();
 
-/**
- * Trigger Uninstall process only if WP_UNINSTALL_PLUGIN is defined
- */
-if ( defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-	global $wpdb, $wp_filesystem;
+	public function __construct( array $options = array() ) {
+		$this->options = $options;
+	}
 
-	// delete any options or other data stored in the database here
-	delete_option( AI1WM_MAINTENANCE_MODE );
-	delete_option( AI1WM_EXPORT_OPTIONS );
-	delete_option( AI1WM_ERROR_HANDLER );
-	delete_option( AI1WM_EXCEPTION_HANDLER );
-	delete_option( AI1WM_MESSAGES );
+	/**
+	 * Import package configuration
+	 *
+	 * @return array
+	 */
+	public function import() {
+		global $wp_version;
+
+		// Get config file
+		$data = file_get_contents( StorageArea::getInstance()->getRootPath() . AI1WM_PACKAGE_NAME );
+
+		// Parse config file
+		$config = json_decode( $data, true );
+
+		// Add plugin version
+		if ( ! isset( $config['Plugin']['Version'] ) ) {
+			$config['Plugin']['Version'] = AI1WM_VERSION;
+		}
+
+		// Add wordpress version
+		if ( ! isset( $config['WordPress']['Version'] ) ) {
+			$config['WordPress']['Version'] = $wp_version;
+		}
+
+		return $config;
+	}
+
+	/**
+	 * Export package configuration
+	 *
+	 * @return string
+	 */
+	public function export() {
+		global $wp_version;
+
+		$config = array(
+			'SiteURL' => site_url(),
+			'HomeURL' => home_url(),
+			'Plugin' => array( 'Version' => AI1WM_VERSION ),
+			'WordPress' => array( 'Version' => $wp_version ),
+		);
+
+		return json_encode( $config );
+	}
 }

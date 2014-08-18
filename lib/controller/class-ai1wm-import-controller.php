@@ -27,9 +27,7 @@ class Ai1wm_Import_Controller
 {
 	public static function index() {
 		try {
-			$storage       = new StorageArea;
-			$is_accessible = $storage->makeFile();
-			$storage->flush();
+			$is_accessible = StorageArea::getInstance()->getRootPath();
 		} catch ( Exception $e ) {
 			$is_accessible = false;
 		}
@@ -42,21 +40,23 @@ class Ai1wm_Import_Controller
 		);
 	}
 
-	public static function upload_file() {
+	public static function import() {
 		global $wp_rewrite;
 
 		// Set default handlers
 		set_error_handler( array( 'Ai1wm_Error', 'error_handler' ) );
 		set_exception_handler( array( 'Ai1wm_Error', 'exception_handler' ) );
 
-		$result = array();
+		$messages = array();
 
-		// Get options
-		if ( isset( $_FILES['input_file'] ) && ( $input_file = $_FILES['input_file'] ) ) {
+		if ( isset( $_FILES['upload-file'] ) || isset( $_REQUEST['force'] ) ) {
 			$options = array(
-				'chunk'  => 0,
-				'chunks' => 0,
-				'name'   => null,
+				'chunk'   => 0,
+				'chunks'  => 1,
+				'import'  => array(
+					'file'  => null,
+					'force' => null,
+				),
 			);
 
 			// Ordinal number of the current chunk in the set (starts with zero)
@@ -69,19 +69,120 @@ class Ai1wm_Import_Controller
 				$options['chunks'] = intval( $_REQUEST['chunks'] );
 			}
 
-			// Name of partial file
+			// Import file
 			if ( isset( $_REQUEST['name'] ) ) {
-				$options['name'] = $_REQUEST['name'];
+				$options['import']['file'] = $_REQUEST['name'];
 			}
 
-			$model = new Ai1wm_Import;
-			$result = $model->import( $input_file, $options );
+			// Force file
+			if ( isset( $_REQUEST['force'] ) ) {
+				$options['import']['force'] = $_REQUEST['force'];
+			}
 
-			// Regenerate permalinks
-			$wp_rewrite->flush_rules( true );
+			try {
+				// Upload file
+				if ( self::upload( $options ) ) {
+
+					// Import site
+					$model = new Ai1wm_Import( $options );
+					if ( $model->import() ) {
+						$messages[] = array(
+							'type' => 'success',
+							'text' => sprintf(
+								_(
+									'Your data has been imported successfuly!<br />' .
+									'You need to perform two more steps:<br />' .
+									'<strong>1. You must save your permalinks structure twice. <a class="ai1wm-no-underline" href="%s#submit" target="_blank">Permalinks Settings</a></strong> (opens a new window)<br />' .
+									'<strong>2. <a class="ai1wm-no-underline" href="https://wordpress.org/support/view/plugin-reviews/all-in-one-wp-migration?rate=5#postform" target="_blank">Review the plugin</a>.</strong> (opens a new window)'
+								),
+								admin_url( 'options-permalink.php' )
+							),
+						);
+
+						// Flush storage
+						StorageArea::getInstance()->flush();
+					}
+				}
+			} catch ( Exception $e ) {
+				$messages[] = array(
+					'type' => 'error',
+					'text' => $e->getMessage(),
+				);
+			}
 		}
 
-		echo json_encode( $result );
+		// Regenerate permalinks
+		$wp_rewrite->flush_rules( true );
+
+		// Display messages
+		echo json_encode( $messages );
+		exit;
+	}
+
+	public static function upload( $options ) {
+		$storage = StorageArea::getInstance();
+
+		// Partial upload file
+		$partial_file = $storage->makeFile( $options['import']['file'] );
+
+		// Upload file
+		if ( isset( $_FILES['upload-file'] ) ) {
+
+			// Has any upload error?
+			if ( empty( $_FILES['upload-file']['error'] ) ) {
+
+				// Flush storage
+				if ( $options['chunk'] === 0 ) {
+					$storage->flush();
+				}
+
+				// Open partial file
+				$out = fopen( $partial_file->getName(), $options['chunk'] == 0 ? 'wb' : 'ab' );
+				if ( $out ) {
+					// Read binary input stream and append it to temp file
+					$in = fopen( $_FILES['upload-file']['tmp_name'], 'rb' );
+					if ( $in ) {
+						while ( $buff = fread( $in, 4096 ) ) {
+							fwrite( $out, $buff );
+						}
+					}
+
+					fclose( $in );
+					fclose( $out );
+
+					// Remove temporary uploaded file
+					unlink( $_FILES['upload-file']['tmp_name'] );
+				} else {
+					throw new Ai1wm_Import_Exception(
+						sprintf(
+							_(
+								'Site could not be imported!<br />' .
+								'Please make sure that storage directory <strong>%s</strong> has read and write permissions.'
+							),
+							AI1WM_STORAGE_PATH
+						)
+					);
+
+					// Flush storage
+					$storage->flush();
+				}
+			} else {
+				throw new Ai1wm_Import_Exception(
+					sprintf(
+						_(
+							'Site could not be imported!<br />' .
+							'Please contact ServMask Support and report the following error code: %d'
+						),
+						$_FILES['upload-file']['error']
+					)
+				);
+			}
+		}
+
+		// Upload completed?
+		if ( ! $options['chunks'] || $options['chunk'] == $options['chunks'] - 1 ) {
+			return $partial_file;
+		}
 		exit;
 	}
 }

@@ -26,15 +26,17 @@
 class Ai1wm_Message_Controller
 {
 	public static function close_message() {
-		// Set Type
-		$type = null;
-		if ( isset( $_POST['type'] ) ) {
-			$type = trim( $_POST['type'] );
+		$errors = array();
+
+		// Set Key
+		$key = null;
+		if ( isset( $_POST['key'] ) ) {
+			$key = trim( $_POST['key'] );
 		}
 
 		// Close message
 		$model  = new Ai1wm_Message;
-		$result = $model->close_message( $type );
+		$result = $model->close_message( $key );
 
 		echo json_encode( $result );
 		exit;

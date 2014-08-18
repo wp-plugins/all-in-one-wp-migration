@@ -2,8 +2,8 @@
 Contributors: yani.iliev, bangelov, mirkov
 Tags: db migration, migration, wordpress migration, db backup, db restore, website backup, website restore, website migration, website deploy, wordpress deploy, db backup, database export, database serialization, database find replace
 Requires at least: 3.3
-Tested up to: 3.9
-Stable tag: 1.9.2
+Tested up to: 3.9.2
+Stable tag: 2.0.0
 License: GPLv2 or later
 
 All-in-One WP Migration is the only tools that you will ever needs when you need to perform site migration of your WordPress blog.
@@ -39,20 +39,8 @@ All in One WP Plugin is the first plugin to offer true mobile experience on Word
 = Support for ZipArchive and PclZIP =
 * Your export files are archived using the fast ZipArchive pecl extension. If your server doesn't have it, we fall back to PclZIP which is included in WordPress
 
-= True WordPress v3.3 Support =
-* We tested every single WordPress version from `3.3` up to `3.9`
-
-= Coming soon in a commercial version =
-* A new, slicker design
-* Themes picker - you can select exactly what themes you want to export - start with just theme names or dig deep and select single files
-* Media picker - allows you to select what media files you want to export
-* Plugins picker - allows you to select what plugins to export as well as to dig deeper and select the exact files to export
-* Database picker - select what tables to export
-* Custom post type picker - select what post types to export (pages, posts, events, videos etc)
-* Post and Page picker - select what posts or pages you would like to include in your data export.
-* Users picker - select the users that you want to include in your export
-
-**If you signup for our beta program, you will receive a free license for the commercial version when we release it as well as a few other perks like a free staging platform and access to our super-fast `Opinionated WordPress Hosting`.**
+= WordPress v3.3 Support =
+* We tested every WordPress version from `3.3` up to `3.9.2`
 
 * [Get free help from us here](https://servmask.com/#contactModal)
 * [Report a bug or request a feature](https://servmask.com/#contactModal)
@@ -73,6 +61,15 @@ All in One WP Plugin is the first plugin to offer true mobile experience on Word
 3. Plugin Menu
 
 == Changelog ==
+= 2.0.0 =
+* Added support for migration of WordPress in Network Mode (Multi Site)
+* New improved UI and UX
+* New improved language translations on the menu items and help texts
+* Better error handling and notifications
+* Fixed a bug when exporting comments and associated comments meta data
+* Fixed a bug when using find and replace functionality
+* Fixed a bug with storage directory permissions and search indexation
+
 = 1.9.2 =
 * Added PHP <= v5.2.7 compatibility
 
