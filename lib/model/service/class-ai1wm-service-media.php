@@ -23,21 +23,49 @@
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 
-// Include plugin bootstrap file
-require_once dirname( __FILE__ ) .
-	DIRECTORY_SEPARATOR .
-	'all-in-one-wp-migration.php';
+class Ai1wm_Service_Media implements Ai1wm_Service_Interface
+{
+	protected $options = array();
 
-/**
- * Trigger Uninstall process only if WP_UNINSTALL_PLUGIN is defined
- */
-if ( defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-	global $wpdb, $wp_filesystem;
+	public function __construct( array $options = array() ) {
+		$this->options = $options;
+	}
 
-	// delete any options or other data stored in the database here
-	delete_option( AI1WM_MAINTENANCE_MODE );
-	delete_option( AI1WM_EXPORT_OPTIONS );
-	delete_option( AI1WM_ERROR_HANDLER );
-	delete_option( AI1WM_EXCEPTION_HANDLER );
-	delete_option( AI1WM_MESSAGES );
+	/**
+	 * Import media
+	 *
+	 * @return void
+	 */
+	public function import() {
+		$storage = StorageArea::getInstance();
+
+		// Media directory
+		$upload_dir     = wp_upload_dir();
+		$upload_basedir = $upload_dir['basedir'];
+		if ( ! is_dir( $upload_basedir ) ) {
+			mkdir( $upload_basedir );
+		}
+
+		// Backup media files
+		$backup_media_to = $storage->makeDirectory();
+
+		StorageUtility::copy( $upload_basedir, $backup_media_to->getName() );
+
+		// Flush media files
+		StorageUtility::flush( $upload_basedir );
+
+		// Import media files
+		StorageUtility::copy( $storage->getRootPath() . AI1WM_MEDIA_NAME, $upload_basedir );
+	}
+
+	/**
+	 * Export media
+	 *
+	 * @return string
+	 */
+	public function export() {
+		$upload_dir = wp_upload_dir();
+
+		return $upload_dir['basedir'];
+	}
 }

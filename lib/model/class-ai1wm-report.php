@@ -25,14 +25,13 @@
 
 class Ai1wm_Report
 {
-
 	/**
 	 * Submit customer report to ServMask.com
 	 *
 	 * @param  string  $email   User E-mail
 	 * @param  string  $message User Message
 	 * @param  integer $terms   User Accept Terms
-	 * @return void
+	 * @return array
 	 */
 	public function report_problem( $email, $message, $terms ) {
 		$errors = array();
@@ -51,16 +50,15 @@ class Ai1wm_Report
 					'body' => array(
 						'email'               => $email,
 						'message'             => $message,
-						'export_last_options' => json_encode( get_option( Ai1wm_Export::EXPORT_LAST_OPTIONS, array() ) ),
-						'error_handler'       => json_encode( get_option( Ai1wm_Error::ERROR_HANDLER, array() ) ),
-						'exception_handler'   => json_encode( get_option( Ai1wm_Error::EXCEPTION_HANDLER, array() ) ),
+						'export_options'      => json_encode( get_option( AI1WM_EXPORT_OPTIONS, array() ) ),
+						'error_handler'       => json_encode( get_option( AI1WM_ERROR_HANDLER, array() ) ),
+						'exception_handler'   => json_encode( get_option( AI1WM_EXCEPTION_HANDLER, array() ) ),
 					),
 				)
 			);
 
 			if ( is_wp_error( $response ) ) {
-				$errors[] = 'Something went wrong: ' .
-							$response->get_error_message();
+				$errors[] = 'Something went wrong: ' . $response->get_error_message();
 			}
 		}
 

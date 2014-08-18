@@ -29,12 +29,13 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/borislav-angelov/storage-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 2.1.0
+ * @version   GIT: 2.6.0
  * @link      https://github.com/borislav-angelov/storage-factory/
  */
 
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'StorageFile.php';
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'StorageDirectory.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'StorageUtility.php';
 
 /**
  * StorageArea Main class
@@ -45,48 +46,85 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'StorageDirectory.php';
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/borislav-angelov/storage-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 2.1.0
+ * @version   GIT: 2.6.0
  * @link      https://github.com/borislav-angelov/storage-factory/
  */
 class StorageArea
 {
-    protected $nodes = array();
+    protected static $instance = null;
+
+    public static function getInstance() {
+        if (self::$instance === null) {
+            self::$instance = new self;
+        }
+
+        return self::$instance;
+    }
+
+    private function __construct() {
+        // Singleton
+    }
+
+
+    /**
+     * Get storage absolute path
+     *
+     * @return string
+     */
+    public function getRootPath() {
+        if (defined('AI1WM_STORAGE_PATH')) {
+            if (!is_dir(AI1WM_STORAGE_PATH)) {
+                @mkdir(AI1WM_STORAGE_PATH);
+            }
+
+            // Verify permissions
+            if (StorageUtility::isAccessible(AI1WM_STORAGE_PATH)) {
+                if (defined('AI1WM_STORAGE_INDEX')) {
+                    $index = AI1WM_STORAGE_PATH . DIRECTORY_SEPARATOR . AI1WM_STORAGE_INDEX;
+                    if (!is_file($index)) {
+                        @touch($index);
+                    }
+                }
+
+                return AI1WM_STORAGE_PATH . DIRECTORY_SEPARATOR;
+            } else {
+                throw new Exception('Storage directory is not accessible (read/write).');
+            }
+        } else {
+            throw new Exception('AI1WM_STORAGE_PATH is not defined.');
+        }
+    }
 
     /**
      * Create a file with unique name
      *
      * @param  string      $name Custom file name
-     * @param  string      $path Custom root path
      * @return StorageFile       StorageFile instance
      */
-    public function makeFile($name = null, $path = null) {
-        $this->nodes[] = $node = new StorageFile($name, $path);
-
-        return $node;
+    public function makeFile($name = null) {
+        return new StorageFile($name, $this->getRootPath());
     }
 
     /**
      * Create a directory with unique name
      *
      * @param  string           $name Custom directory name
-     * @param  string           $path Custom root path
      * @return StorageDirectory       StorageDirectory instance
      */
-    public function makeDirectory($name = null, $path = null) {
-        $this->nodes[] = $node = new StorageDirectory($name, $path);
-
-        return $node;
+    public function makeDirectory($name = null) {
+        return new StorageDirectory($name, $this->getRootPath());
     }
 
     /**
-     * Remove all files and directories in the current storage
+     * Delete all files and directories in the storage
      *
-     * @param  string $path Remove all files and directories from given path
-     * @return void
+     * @return boolean
      */
     public function flush() {
-        foreach ($this->nodes as $node) {
-            $node->delete();
+        if (defined('AI1WM_STORAGE_INDEX')) {
+            return StorageUtility::flush($this->getRootPath(), array(AI1WM_STORAGE_INDEX));
         }
+
+        return StorageUtility::flush($this->getRootPath());
     }
 }

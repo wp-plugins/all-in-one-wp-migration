@@ -23,21 +23,47 @@
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 
-// Include plugin bootstrap file
-require_once dirname( __FILE__ ) .
-	DIRECTORY_SEPARATOR .
-	'all-in-one-wp-migration.php';
+class Ai1wm_Maintenance
+{
+	/**
+	 * Enable WordPress maintenance mode
+	 *
+	 * @return boolean
+	 */
+	public static function enable() {
+		return update_option( AI1WM_MAINTENANCE_MODE, true );
+	}
 
-/**
- * Trigger Uninstall process only if WP_UNINSTALL_PLUGIN is defined
- */
-if ( defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-	global $wpdb, $wp_filesystem;
+	/**
+	 * Disable WordPress maintenance mode
+	 *
+	 * @return boolean
+	 */
+	public static function disable() {
+		update_option( AI1WM_MAINTENANCE_MODE, false );
+	}
 
-	// delete any options or other data stored in the database here
-	delete_option( AI1WM_MAINTENANCE_MODE );
-	delete_option( AI1WM_EXPORT_OPTIONS );
-	delete_option( AI1WM_ERROR_HANDLER );
-	delete_option( AI1WM_EXCEPTION_HANDLER );
-	delete_option( AI1WM_MESSAGES );
+	public static function active() {
+		return get_option( AI1WM_MAINTENANCE_MODE );
+	}
+
+	/**
+	 * Display Wordpress maintenance mode
+	 *
+	 * @return void
+	 */
+	public static function display() {
+		if ( self::active() ) {
+			$title = _( 'Maintenance Mode' );
+			$body  = sprintf(
+				'<h1>%s</h1><p>%s<br /><strong>%s%s</strong></p>',
+				_( 'Website Under Maintenance' ),
+				_( 'Hi, our Website is currently undergoing scheduled maintenance' ),
+				_( 'Please check back very soon. ' ),
+				_( 'Sorry for the inconvenience!' )
+			);
+
+			wp_die( $body, $title );
+		}
+	}
 }

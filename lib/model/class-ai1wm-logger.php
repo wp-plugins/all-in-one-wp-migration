@@ -23,21 +23,49 @@
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 
-// Include plugin bootstrap file
-require_once dirname( __FILE__ ) .
-	DIRECTORY_SEPARATOR .
-	'all-in-one-wp-migration.php';
+class Ai1wm_Logger
+{
+	/**
+	 * Log debug data
+	 *
+	 * @return boolean
+	 */
+	public static function debug( $key, array $data = array() ) {
+		global $wp_version;
 
-/**
- * Trigger Uninstall process only if WP_UNINSTALL_PLUGIN is defined
- */
-if ( defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-	global $wpdb, $wp_filesystem;
+		// Meta options
+		$data['plugin_version']        = AI1WM_VERSION;
+		$data['wp_version']            = $wp_version;
+		$data['php_version']           = phpversion();
+		$data['php_uname']             = php_uname();
+		$data['max_execution_time']    = ini_get( 'max_execution_time' );
+		$data['memory_limit']          = ini_get( 'memory_limit' );
+		$data['memory_get_peak_usage'] = memory_get_peak_usage();
+		$data['memory_get_usage']      = memory_get_usage();
+		$data['ZipArchive']            = class_exists( 'ZipArchive' ) ? 1 : 0;
+		$data['ZLIB_installed']        = function_exists( 'gzopen' ) ? 1 : 0;
+		$data['PDO_available']         = class_exists( 'PDO' ) ? 1 : 0;
+		$data['site_url']              = site_url();
+		$data['home_url']              = home_url();
 
-	// delete any options or other data stored in the database here
-	delete_option( AI1WM_MAINTENANCE_MODE );
-	delete_option( AI1WM_EXPORT_OPTIONS );
-	delete_option( AI1WM_ERROR_HANDLER );
-	delete_option( AI1WM_EXCEPTION_HANDLER );
-	delete_option( AI1WM_MESSAGES );
+		return update_option( $key, $data );
+	}
+
+	/**
+	 * Log error data
+	 *
+	 * @return boolean
+	 */
+	public static function error( $key, array $data = array() ) {
+		return update_option( $key, $data );
+	}
+
+	/**
+	 * Log info data
+	 *
+	 * @return boolean
+	 */
+	public static function info( $key, array $data = array() ) {
+		return update_option( $key, $data );
+	}
 }

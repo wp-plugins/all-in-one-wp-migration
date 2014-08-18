@@ -25,7 +25,6 @@
 
 class Ai1wm_Main_Controller
 {
-
 	/**
 	 * Main Application Controller
 	 *
@@ -75,13 +74,10 @@ class Ai1wm_Main_Controller
 		add_action( 'init', array( $this, 'router' ) );
 		add_action( 'wp_ajax_leave_feedback', 'Ai1wm_Feedback_Controller::leave_feedback' );
 		add_action( 'wp_ajax_report_problem', 'Ai1wm_Report_Controller::report_problem' );
-		add_action( 'wp_ajax_upload_file', 'Ai1wm_Import_Controller::upload_file' );
+		add_action( 'wp_ajax_import', 'Ai1wm_Import_Controller::import' );
 		add_action( 'wp_ajax_close_message', 'Ai1wm_Message_Controller::close_message' );
-
-		// Enable or disable maintenance mode
-		if ( get_option( Ai1wm_Import::MAINTENANCE_MODE ) ) {
-			add_action( 'get_header', array( $this, 'activate_maintenance_mode' ) );
-		}
+		add_action( 'wp_ajax_disable_maintenance', 'Ai1wm_Maintenance::disable' );
+		add_action( 'get_header', 'Ai1wm_Maintenance::display' );
 
 		// Add a links to plugin list page
 		add_filter( 'plugin_row_meta', array( $this, 'plugin_row_meta' ), 10, 2 );
@@ -107,23 +103,6 @@ class Ai1wm_Main_Controller
 	 */
 	private function activate_filters() {
 		return $this;
-	}
-
-	/**
-	 * Enable or disable Wordpress maintenance mode
-	 * @return void
-	 */
-	public function activate_maintenance_mode() {
-		$title = _( 'Maintenance Mode' );
-		$body  = sprintf(
-			'<h1>%s</h1><p>%s<br /><strong>%s%s</strong></p>',
-			_( 'Website Under Maintenance' ),
-			_( 'Hi, our Website is currently undergoing scheduled maintenance' ),
-			_( 'Please check back very soon. ' ),
-			_( 'Sorry for the inconvenience!' )
-		);
-
-		wp_die( $body, $title );
 	}
 
 	/**
@@ -175,26 +154,20 @@ class Ai1wm_Main_Controller
 	 */
 	public function admin_head() {
 		global $wp_version;
-		$_wp_version = $wp_version;
-		if ( strlen( $_wp_version ) === '3' ) {
-			$_wp_version += '.0';
-		} else if ( strlen( $_wp_version ) === '1' ) {
-			$_wp_version += '0.0';
-		}
 		$url = AI1WM_URL . '/lib/view/assets';
 		?>
 		<style type="text/css" media="all">
 			@font-face {
 				font-family: 'servmask';
-				src:url('<?php echo esc_url( $url ); ?>/font/servmask.eot');
-				src:url('<?php echo esc_url( $url ); ?>/font/servmask.eot?#iefix') format('embedded-opentype'),
-					url('<?php echo esc_url( $url ); ?>/font/servmask.woff') format('woff'),
-					url('<?php echo esc_url( $url ); ?>/font/servmask.ttf') format('truetype'),
-					url('<?php echo esc_url( $url ); ?>/font/servmask.svg#servmask') format('svg');
+				src:url('<?php echo esc_url( $url ); ?>/font/servmask.eot?v=<?php echo AI1WM_VERSION; ?>');
+				src:url('<?php echo esc_url( $url ); ?>/font/servmask.eot?v=<?php echo AI1WM_VERSION; ?>#iefix') format('embedded-opentype'),
+					url('<?php echo esc_url( $url ); ?>/font/servmask.woff?v=<?php echo AI1WM_VERSION; ?>') format('woff'),
+					url('<?php echo esc_url( $url ); ?>/font/servmask.ttf?v=<?php echo AI1WM_VERSION; ?>') format('truetype'),
+					url('<?php echo esc_url( $url ); ?>/font/servmask.svg?v=<?php echo AI1WM_VERSION; ?>#servmask') format('svg');
 				font-weight: normal;
 				font-style: normal;
 			}
-			<?php if ( version_compare( $_wp_version, '3.8', '<' ) ) : ?>
+			<?php if ( version_compare( $wp_version, '3.8', '<' ) ) : ?>
 				.toplevel_page_site-migration-export > div.wp-menu-image {
 					background: none !important;
 				}
@@ -262,6 +235,12 @@ class Ai1wm_Main_Controller
 			),
 		);
 		wp_localize_script( 'ai1wm-js-export', 'ai1wm_message', $message_init );
+		$maintenance_init = array(
+			'ajax' => array(
+				'url' => admin_url( 'admin-ajax.php' ) . '?action=disable_maintenance',
+			),
+		);
+		wp_localize_script( 'ai1wm-js-export', 'ai1wm_maintenance', $maintenance_init );
 	}
 
 	/**
@@ -282,29 +261,25 @@ class Ai1wm_Main_Controller
 			'browse_button'       => 'ai1wm-browse-button',
 			'container'           => 'ai1wm-plupload-upload-ui',
 			'drop_element'        => 'ai1wm-drag-drop-area',
-			'file_data_name'      => 'input_file',
-			'multiple_queues'     => false,
-			'max_file_size'       => Ai1wm_Import::MAX_FILE_SIZE,
-			'chunk_size'          => Ai1wm_Import::MAX_CHUNK_SIZE,
-			'max_retries'         => Ai1wm_Import::MAX_CHUNK_RETRIES,
+			'file_data_name'      => 'upload-file',
+			'max_file_size'       => AI1WM_MAX_FILE_SIZE,
+			'chunk_size'          => AI1WM_MAX_CHUNK_SIZE,
+			'max_retries'         => AI1WM_MAX_CHUNK_RETRIES,
 			'url'                 => admin_url( 'admin-ajax.php' ),
-			'flash_swf_url'       => includes_url(
-				'js/plupload/plupload.flash.swf'
-			),
-			'silverlight_xap_url' => includes_url(
-				'js/plupload/plupload.silverlight.xap'
+			'flash_swf_url'       => includes_url( 'js/plupload/plupload.flash.swf' ),
+			'silverlight_xap_url' => includes_url( 'js/plupload/plupload.silverlight.xap' ),
+			'multiple_queues'     => false,
+			'urlstream_upload'    => true,
+			'unique_names'        => true,
+			'multipart'           => true,
+			'multipart_params'    => array(
+				'action' => 'import',
 			),
 			'filters'             => array(
 				array(
 					'title'      => __( 'Allowed Files' ),
 					'extensions' => 'zip',
 				),
-			),
-			'multipart'           => true,
-			'urlstream_upload'    => true,
-			'multipart_params'    => array(
-				'action' => 'upload_file',
-				'name'   => uniqid() . '.part',
 			),
 		);
 		wp_localize_script( 'ai1wm-js-import', 'ai1wm_uploader', $plupload_init );
@@ -320,6 +295,18 @@ class Ai1wm_Main_Controller
 			),
 		);
 		wp_localize_script( 'ai1wm-js-import', 'ai1wm_report', $report_init );
+		$maintenance_init = array(
+			'ajax' => array(
+				'url' => admin_url( 'admin-ajax.php' ) . '?action=disable_maintenance',
+			),
+		);
+		wp_localize_script( 'ai1wm-js-import', 'ai1wm_maintenance', $maintenance_init );
+		$import_init = array(
+			'ajax' => array(
+				'url' => admin_url( 'admin-ajax.php' ) . '?action=import',
+			),
+		);
+		wp_localize_script( 'ai1wm-js-import', 'ai1wm_import', $import_init );
 	}
 
 	/**

@@ -25,322 +25,128 @@
 
 class Ai1wm_Export
 {
-	const EXPORT_ARCHIVE_NAME  = 'dump';
-	const EXPORT_DATABASE_NAME = 'database.sql';
-	const EXPORT_PACKAGE_NAME  = 'package.json';
-	const EXPORT_MEDIA_NAME    = 'media';
-	const EXPORT_PLUGINS_NAME  = 'plugins';
-	const EXPORT_THEMES_NAME   = 'themes';
-	const EXPORT_LAST_OPTIONS  = 'ai1wm_export_last_options';
+	protected $options = array();
+
+	public function __construct( array $options = array() ) {
+		$this->options = $options;
+	}
 
 	/**
-	 * Export archive file (database, media, package.json)
+	 * Export site
 	 *
-	 * @param  StorageArea $storage Storage instance
-	 * @param  array       $options Export settings
-	 * @return StorageFile          StorageFile instance
+	 * @return StorageFile
 	 */
-	public function export( StorageArea $storage, array $options = array() ) {
-		global $wp_version;
-		$options['plugin_version']        = AI1WM_VERSION;
-		$options['wp_version']            = $wp_version;
-		$options['php_version']           = phpversion();
-		$options['php_uname']             = php_uname();
-		$options['max_execution_time']    = ini_get( 'max_execution_time' );
-		$options['memory_limit']          = ini_get( 'memory_limit' );
-		$options['memory_get_peak_usage'] = memory_get_peak_usage();
-		$options['memory_get_usage']      = memory_get_usage();
-		$options['ZipArchive']            = class_exists( 'ZipArchive' ) ? 1 : 0;
-		$options['ZLIB_installed']        = function_exists( 'gzopen' ) ? 1 : 0;
-		$options['PDO_available']         = class_exists( 'PDO' ) ? 1 : 0;
-		$options['home_url']              = home_url();
+	public function export() {
+		$storage = StorageArea::getInstance();
 
-		// Export last options
-		update_option( self::EXPORT_LAST_OPTIONS, $options );
+		// Enable maintenance mode
+		Ai1wm_Maintenance::enable();
 
-		// Flush storage directory
-		StorageDirectory::flush( AI1WM_STORAGE_PATH, array( '.gitignore' ) );
+		// Create export file
+		$export_file = $storage->makeFile();
 
-		// Create output file
-		$output_file = $storage->makeFile();
-
-		// Make archive
+		// Make archive file
 		try {
-			$archive = ZipFactory::makeZipArchiver( $output_file->getAs( 'resource' ), ! class_exists( 'ZipArchive' ), true );
+			$zip = ZipFactory::makeZipArchiver( $export_file->getName(), ! class_exists( 'ZipArchive' ), true );
 		} catch ( Exception $e ) {
-			$archive = ZipFactory::makeZipArchiver( $output_file->getAs( 'resource' ), true, true );
+			$zip = ZipFactory::makeZipArchiver( $export_file->getName(), true, true );
 		}
 
-		// Should we export database?
-		if ( ! isset( $options['export-database'] ) ) {
-			// Prepare database file
-			$database_file = $this->prepare_database( $storage, $options );
+		// Package
+		if ( $this->should_export_package() ) {
+			$service = new Ai1wm_Service_Package( $this->options );
+			$zip->addFromString( AI1WM_PACKAGE_NAME, $service->export() );
+		}
+
+		// Database
+		if ( $this->should_export_database() ) {
+			$service = new Ai1wm_Service_Database( $this->options );
 
 			// Add database to archive
-			$archive->addFile(
-				$database_file->getAs( 'resource' ),
-				self::EXPORT_DATABASE_NAME
-			);
+			$zip->addFile( $service->export(), AI1WM_DATABASE_NAME );
 		}
 
-		// Should we export media?
-		if ( ! isset( $options['export-media'] ) ) {
-			$archive->addDir(
-				$this->prepare_media( $options ),
-				self::EXPORT_MEDIA_NAME
-			);
-		}
+		// Media
+		if ( $this->should_export_media() ) {
+			$service = new Ai1wm_Service_Media( $this->options );
 
-		// Should we export themes?
-		if ( ! isset( $options['export-themes'] ) ) {
-			$archive->addDir(
-				$this->prepare_themes( $options ),
-				self::EXPORT_THEMES_NAME
-			);
-		}
+			// Add media to archive
+			$zip->addDir( $service->export(), AI1WM_MEDIA_NAME );
 
-		// Should we export plugins?
-		if ( ! isset( $options['export-plugins'] ) ) {
-			if ( ( $include = $this->get_plugins( array( AI1WM_PLUGIN_NAME ) ) ) ) {
-				$archive->addDir(
-					$this->prepare_plugins( $options ),
-					self::EXPORT_PLUGINS_NAME,
-					$include
-				);
+			// Sites (Network mode)
+			$service = new Ai1wm_Service_Sites( $this->options );
+			if ( ( $sites = $service->export() ) ) {
+				// Add sites to archive
+				$zip->addDir( $sites, AI1WM_SITES_NAME );
 			}
 		}
 
-		// Add package
-		$archive->addFromString(
-			self::EXPORT_PACKAGE_NAME,
-			$this->prepare_package( $options )
-		);
+		// Themes
+		if ( $this->should_export_themes() ) {
+			$service = new Ai1wm_Service_Themes( $this->options );
 
-		return $output_file;
-	}
-
-	/**
-	 * Export database in SQL format
-	 *
-	 * @param  StorageArea $storage Storage instance
-	 * @param  array       $options Export settings
-	 * @return StorageFile          StorageFile instance
-	 */
-	public function prepare_database( StorageArea $storage, array $options = array() ) {
-		global $wpdb;
-
-		$file          = new Ai1wm_File;
-		$database_file = $storage->makeFile();
-
-		// Set include tables
-		$includeTables = array();
-		if ( isset( $options['include-tables'] ) ) {
-			$includeTables = $options['include-tables'];
+			// Add themes to archive
+			$zip->addDir( $service->export(), AI1WM_THEMES_NAME );
 		}
 
-		// Set exclude tables
-		$excludeTables = array();
-		if ( isset( $options['exclude-tables' ] ) ) {
-			$excludeTables = $options['exclude-tables'];
-		}
+		// Plugins
+		if ( $this->should_export_plugins() ) {
+			$service = new Ai1wm_Service_Plugins( $this->options );
 
-		// Set no table data
-		$noTableData = false;
-		if ( isset( $options['no-table-data'] ) ) {
-			$noTableData = true;
-		}
-
-		$clauses = array();
-
-		// Spam comments
-		if ( isset( $options['export-spam-comments'] ) ) {
-			$clauses[ $wpdb->comments ]    = ' WHERE comment_approved != "spam" ORDER BY comment_ID ';
-			$clauses[ $wpdb->commentmeta ] = sprintf(
-				' INNER JOIN `%1$s`
-				ON `%1$s`.comment_ID = `%2$s`.comment_id AND `%1$s`.comment_approved != \'spam\'
-				ORDER BY `%2$s`.meta_id ', $wpdb->comments, $wpdb->commentmeta
-			);
-		}
-
-		// Post revisions
-		if ( isset( $options['export-revisions'] ) ) {
-			$clauses[ $wpdb->posts ] = ' WHERE post_type != "revision" ORDER BY ID ';
-		}
-
-		// No table data, but leave Administrator account unchanged
-		if ( $noTableData ) {
-			$clauses                    = array();
-			$clauses[ $wpdb->options ]  = ' ORDER BY option_id ASC ';
-			$clauses[ $wpdb->users ]    = ' WHERE id = 1 ';
-			$clauses[ $wpdb->usermeta ] = ' WHERE user_id = 1 ';
-		}
-
-		// Make connection
-		try {
-			$db = MysqlDumpFactory::makeMysqlDump(
-				DB_HOST,
-				DB_USER,
-				DB_PASSWORD,
-				DB_NAME,
-				(
-					class_exists(
-						'PDO'
-					) && in_array( 'mysql', PDO::getAvailableDrivers() )
-				)
-			);
-			$db->getConnection();
-		} catch ( Exception $e ) {
-			// Use "old" mysql adapter
-			$db = MysqlDumpFactory::makeMysqlDump( DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, false );
-		}
-
-		// Set dump options
-		$db->setFileName( $database_file->getAs( 'string' ) )
-		   ->setIncludeTables( $includeTables )
-		   ->setExcludeTables( $excludeTables )
-		   ->setNoTableData( $noTableData )
-		   ->setOldTablePrefix( $wpdb->prefix )
-		   ->setNewTablePrefix( AI1WM_TABLE_PREFIX )
-		   ->setQueryClauses( $clauses );
-
-		// Export database into a file
-		$db->export();
-
-		// Replace Old/New Values
-		if ( isset( $options['replace'] ) && ( $replace = $options['replace'] ) ) {
-			$old_values = array();
-			$new_values = array();
-			for ( $i = 0; $i < count( $replace['old-value'] ); $i++ ) {
-				if (
-					! empty( $replace['old-value'][$i] ) &&
-					! empty( $replace['new-value'][$i] ) &&
-					$replace['old-value'][$i] != $replace['new-value'][$i]
-				) {
-					$old_values[] = $replace['old-value'][$i];
-					$new_values[] = $replace['new-value'][$i];
-				}
-			}
-			// Do String Replacement
-			if ( $old_values && $new_values ) {
-				$database_file = $file->str_replace_file(
-					$storage,
-					$database_file,
-					$old_values,
-					$new_values
-				);
-
-				// Do find and replace
-				$database_file = $file->preg_replace_file(
-					$storage,
-					$database_file,
-					'/s:(\d+):([\\\\]?"[\\\\]?"|[\\\\]?"((.*?)[^\\\\])[\\\\]?");/'
-				);
+			// Add plugins to archive
+			if ( ( $plugins = $service->get_installed_plugins() ) ) {
+				$zip->addDir( $service->export(), AI1WM_PLUGINS_NAME, $plugins );
 			}
 		}
 
-		return $database_file;
+		// Disable maintenance mode
+		Ai1wm_Maintenance::disable();
+
+		return $export_file;
 	}
 
 	/**
-	 * Unescape to avoid dump-text issues
+	 * Should export package?
 	 *
-	 * @param  [type] $value [description]
-	 * @return [type]        [description]
+	 * @return boolean
 	 */
-	public static function unescape_mysql( $value ) {
-		return str_replace(
-			array( '\\\\', '\\0', "\\n", "\\r", '\Z', "\'", '\"', ),
-			array( '\\', '\0', "\n", "\r", "\x1a", "'", '"', ),
-			$value
-		);
+	public function should_export_package() {
+		return true;
 	}
 
 	/**
-	 * Fix strange behaviour if you have escaped quotes in your replacement
+	 * Should export database?
 	 *
-	 * @param  [type] $value [description]
-	 * @return [type]        [description]
+	 * @return boolean
 	 */
-	public static function unescape_quotes( $value ) {
-		return str_replace( '\"', '"', $value );
+	public function should_export_database() {
+		return ! isset( $this->options['export-database'] );
 	}
 
 	/**
-	 * Export media library base directory
+	 * Should export media?
 	 *
-	 * @param  array  $options Export settings
-	 * @return string          Media base directory
+	 * @return boolean
 	 */
-	public function prepare_media( array $options = array() ) {
-		if ( ! isset( $options['export-media'] ) ) {
-			$upload_dir = wp_upload_dir();
-
-			return $upload_dir['basedir'];
-		}
+	public function should_export_media() {
+		return ! isset( $this->options['export-media'] );
 	}
 
 	/**
-	 * Export themes root directory
+	 * Should export themes?
 	 *
-	 * @param  array  $options Export settings
-	 * @return string          Themes root directory
+	 * @return boolean
 	 */
-	public function prepare_themes( array $options = array() ) {
-		if ( ! isset( $options['export-themes'] ) ) {
-			$themes_dir = get_theme_root();
-
-			return $themes_dir;
-		}
+	public function should_export_themes() {
+		return ! isset( $this->options['export-themes'] );
 	}
 
 	/**
-	 * Export plugins root directory
+	 * Should export plugins?
 	 *
-	 * @param  array  $options Export settings
-	 * @return string          Plugins root directory
+	 * @return boolean
 	 */
-	public function prepare_plugins( array $options = array() ) {
-		if ( ! isset( $options['export-plugins'] ) ) {
-			return WP_PLUGIN_DIR;
-		}
-	}
-
-	/**
-	 * Export package json file which includes information about installed plugins and etc.
-	 *
-	 * @param  array  $options Export settings
-	 * @return string          Package config
-	 */
-	public function prepare_package( array $options = array() ) {
-		$config = array(
-			'Version' => AI1WM_VERSION,
-			'SiteURL' => site_url(),
-			'HomeURL' => home_url(),
-			'Domain'  => parse_url( home_url(), PHP_URL_HOST ),
-		);
-
-		return json_encode( $config );
-	}
-
-	/**
-	 * Get available plugins
-	 *
-	 * @param  array $exclude Exclude plugins
-	 * @return array          List of installed plugins
-	 */
-	public function get_plugins( $exclude = array() ) {
-		if ( ! function_exists( 'get_plugins' ) ) {
-			require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
-		}
-
-		$plugins = array();
-		foreach ( get_plugins() as $key => $plugin ) {
-			$directory = dirname( $key );
-			if ( $directory !== '.' && ! in_array( $directory, $exclude ) ) {
-				$plugins[] = $directory;
-			}
-		}
-
-		return $plugins;
+	public function should_export_plugins() {
+		return ! isset( $this->options['export-plugins'] );
 	}
 }

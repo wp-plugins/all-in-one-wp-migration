@@ -23,15 +23,33 @@
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 ?>
+<div id="fb-root"></div>
+<script>
+	(function(d, s, id) {
+		var js, fjs = d.getElementsByTagName(s)[0];
+		if (d.getElementById(id)) return;
+		js = d.createElement(s); js.id = id;
+		js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&appId=597242117012725&version=v2.0";
+		fjs.parentNode.insertBefore(js, fjs);
+	}(document, 'script', 'facebook-jssdk'));
+</script>
+
 <div class="ai1wm-container">
 	<div class="ai1wm-row">
 		<div class="ai1wm-left">
+			<?php if ( Ai1wm_Maintenance::active() ): ?>
+				<div class="ai1wm-update-nag">
+					<?php echo _e( 'Maintenance Mode is <strong>ON</strong>, switch it to <a href="#" id="ai1wm-maintenance-off">OFF</a>' ); ?>
+				</div>
+			<?php endif; ?>
+
 			<div class="ai1wm-holder">
-				<h1><?php _e( 'Import Site Data' ); ?></h1>
+				<h1><i class="ai1wm-icon-publish"></i> <?php _e( 'Import Site' ); ?></h1>
 				<div class="ai1wm-report-problem">
-					<a href="#" id="ai1wm-report-problem-button" class="ai1wm-report-problem-button">
-						<i class="ai1wm-icon-exclamation"></i> <?php _e( 'Report a problem' ); ?>
-					</a>
+					<button id="ai1wm-report-problem-button" class="ai1wm-button-red">
+						<i class="ai1wm-icon-notification"></i> <?php _e( 'Report issue' ); ?>
+					</button>
+
 					<div class="ai1wm-report-problem-dialog">
 						<div class="ai1wm-field">
 							<input placeholder="<?php _e( 'Enter your email address..' ); ?>" type="text" id="ai1wm-report-email" class="ai1wm-report-email" />
@@ -45,51 +63,81 @@
 						</div>
 						<div class="ai1wm-field">
 							<div class="ai1wm-buttons">
-								<button type="submit" id="ai1wm-report-submit" class="ai1wm-button-gray">
+								<button type="submit" id="ai1wm-report-submit" class="ai1wm-button-blue">
 									<i class="ai1wm-icon-paperplane"></i>
-									<?php _e( 'SEND' ); ?>
+									<?php _e( 'Send' ); ?>
 								</button>
 								<a href="#" id="ai1wm-report-cancel" class="ai1wm-report-cancel"><?php _e( 'Cancel' ); ?></a>
 							</div>
 						</div>
 					</div>
 				</div>
-				<p>
+
+				<p class="ai1wm-clear">
 					<?php _e( 'Use the box below to upload the archive file.' ); ?><br />
-					<?php _e( 'When the file is uploaded successfully it will be automatically restored on the current WordPress instance.' ); ?>
+					<?php _e( 'When the file is successfully uploaded, it will be automatically restored on the current WordPress instance.' ); ?>
 				</p>
 
 				<?php if ( $is_accessible ): ?>
-					<div class="ai1wm-message ai1wm-upload-file-message"></div>
+					<div class="ai1wm-import-messages"></div>
 
-					<form action=""  method="post" enctype="multipart/form-data">
-						<div id="ai1wm-plupload-upload-ui" class="hide-if-no-js">
-							<div class="ai1wm-drag-drop-area" id="ai1wm-drag-drop-area">
-								<div class="ai1wm-drag-drop-inside">
-									<p class="ai1wm-upload-progress"></p>
-									<p class="ai1wm-drag-drop-info"><?php _e( 'Drop file here' ); ?></p>
-									<p><?php _e( 'or' ); ?></p>
-									<p class="ai1wm-drag-drop-buttons">
-										<button id="ai1wm-browse-button" class="button">
-											<i class="ai1wm-icon-file"></i>&nbsp;<?php _e( 'Select File' ); ?>
+					<div class="ai1wm-upload-form">
+						<form action=""  method="post" enctype="multipart/form-data">
+							<div class="hide-if-no-js" id="ai1wm-plupload-upload-ui">
+								<div class="ai1wm-drag-drop-area" id="ai1wm-drag-drop-area">
+									<div id="ai1wm-upload-init">
+										<p>
+											<i class="ai1wm-icon-cloud-upload"></i><br />
+											<?php _e( 'Drag & Drop to upload' ); ?>
+										</p>
+										<button id="ai1wm-browse-button" class="ai1wm-button-gray">
+											<?php _e( 'or, SELECT A FILE' ); ?>
 										</button>
-									</p>
+									</div>
 								</div>
 							</div>
-						</div>
+						</form>
 
-						<p class="max-upload-size">
+						<div id="ai1wm-upload-in-progress">
+							<div id="ai1wm-upload-progress">
+								<div id="ai1wm-upload-progress-bar"></div>
+							</div>
+							<p id="ai1wm-upload-text">
+								<?php _e( 'Uploading' ); ?>
+								<strong id="ai1wm-upload-file-name"></strong>
+							</p>
+							<p id="ai1wm-install-text">
+								<?php _e( 'Installing' ); ?>
+								<strong id="ai1wm-install-file-name"></strong>
+							</p>
+							<p id="ai1wm-complete-text">
+								<?php _e( 'Installation completed. Follow the instructions listed above.' ); ?>
+							</p>
+							<button id="ai1wm-upload-cancel" class="ai1wm-button-red">
+								<?php _e( 'Cancel' ); ?>
+							</button>
+						</div>
+					</div>
+
+					<p class="max-upload-size">
+						<span>
 							<?php _e( 'Maximum upload file size:' ); ?>
-							<strong><?php echo Ai1wm_Import::MAX_FILE_SIZE; ?></strong>
-						</p>
-					</form>
+							<span style="border-bottom: 1px solid #000;"><?php echo AI1WM_MAX_FILE_SIZE; ?></span>
+						</span>
+						<!-- <span class="ai1wm-unlimited-import">
+							<a href="https://servmask.com/get-unlimited" class="ai1wm-label">
+								<i class="ai1wm-icon-notification"></i>
+								Get unlimited
+							</a>
+						</span> -->
+					</p>
 				<?php else: ?>
 					<div class="ai1wm-message ai1wm-red-message">
 						<?php
 						printf(
 							_(
-								'Site could not be imported!<br />
-								Please make sure that storage directory <strong>%s</strong> has read and write permissions.'
+								'Site could not be imported!<br />' .
+								'Please make sure that storage directory <strong>%s</strong> has read and write permissions.'
 							),
 							AI1WM_STORAGE_PATH
 						);
@@ -101,30 +149,92 @@
 		<div class="ai1wm-right">
 			<div class="ai1wm-sidebar">
 				<div class="ai1wm-segment">
-					<div class="ai1wm-divider"><?php _e( 'Share' ); ?></div>
 					<div class="ai1wm-share-button-container">
-						<a class="ai1wm-share-button" target="_blank" href="https://www.twitter.com/intent/tweet?url=https://servmask.com/&text=Check+out+this+epic+WordPress+Migration+plugin+at&via=servmask"><i class="ai1wm-icon-twitter"></i></a>
-						<a class="ai1wm-share-button" target="_blank" href="https://www.facebook.com/sharer/sharer.php?p%5Burl%5D=https%3A%2F%2Fservmask.com&p%5Bimage%5D=https%3A%2F%2Fassets.servmask.com%2Fimg%2Ffavicon.png&s=100&p%5Btitle%5D=Check+out+this+epic+WordPress+Migration+plugin&p%5Bsummary%5D=The%20plugin%20allows%20you%20to%20export%20your%20database%2C%20media%20files%2C%20plugins%2C%20and%20themes.%20You%20can%20apply%20unlimited%20find%20and%20replace%20operations%20on%20your%20database%20and%20the%20plugin%20will%20also%20fix%20any%20serialization%20problems%20that%20occur%20during%20find%2Freplace%20operations."><i class="ai1wm-icon-facebook"></i></a>
+						<span>
+							<a
+								href="https://twitter.com/share"
+								class="twitter-share-button"
+								data-url="https://servmask.com"
+								data-text="Check this epic WordPress Migration plugin"
+								data-via="servmask"
+								data-related="servmask"
+								data-hashtags="servmask"
+							>
+								<?php _e( 'Tweet' ); ?>
+							</a>
+							<script>
+								!function (d,s,id) {
+									var js,
+										fjs = d.getElementsByTagName(s)[0],
+										p   = /^http:/.test(d.location) ? 'http' : 'https';
+
+									if (!d.getElementById(id)) {
+										js = d.createElement(s);
+										js.id = id;
+										js.src = p+'://platform.twitter.com/widgets.js';
+										fjs.parentNode.insertBefore(js, fjs);
+									}
+								}(document, 'script', 'twitter-wjs');
+							</script>
+						</span>
+						<span>
+							<div
+								class="fb-like ai1wm-top-negative-four"
+								data-href="https://www.facebook.com/servmaskproduct"
+								data-layout="button_count"
+								data-action="recommend"
+								data-show-faces="true"
+								data-share="false"
+							></div>
+						</span>
 					</div>
-					<div class="ai1wm-divider"><?php _e( 'Feedback' ); ?></div>
+
+					<h2><?php _e( 'Leave Feedback' ); ?></h2>
 
 					<div class="ai1wm-feedback">
-						<div class="ai1wm-field">
-							<input placeholder="<?php _e( 'Enter your email address..' ); ?>" type="text" id="ai1wm-feedback-email" class="ai1wm-feedback-email" />
-						</div>
-						<div class="ai1wm-field">
-							<textarea rows="3" id="ai1wm-feedback-message" class="ai1wm-feedback-message" placeholder="<?php _e( 'Leave plugin developers any feedback here..' ); ?>"></textarea>
-						</div>
-						<div class="ai1wm-field ai1wm-feedback-terms-segment">
-							<input type="checkbox" class="ai1wm-feedback-terms" id="ai1wm-feedback-terms" />
-							<label for="ai1wm-feedback-terms"><?php _e( 'I agree that by clicking the send button below my email address and comments will be send to a ServMask server.' ); ?></label>
-						</div>
-						<div class="ai1wm-field">
-							<div class="ai1wm-buttons">
-								<button type="submit" id="ai1wm-feedback-submit" class="ai1wm-button-blue">
-									<i class="ai1wm-icon-paperplane"></i>
-									<?php _e( 'SEND' ); ?>
-								</button>
+						<ul class="ai1wm-feedback-types">
+							<li>
+								<input type="radio" class="ai1wm-flat-radio-button ai1wm-feedback-type" id="ai1wm-feedback-type-1" name="ai1wm-feedback-type" value="review" />
+								<a id="ai1wm-feedback-type-link-1" href="https://wordpress.org/support/view/plugin-reviews/all-in-one-wp-migration?rate=5#postform" target="_blank">
+									<i></i>
+									<span><?php _e( 'I would like to review this plugin' ); ?></span>
+								</a>
+							</li>
+							<li>
+								<input type="radio" class="ai1wm-flat-radio-button ai1wm-feedback-type" id="ai1wm-feedback-type-2" name="ai1wm-feedback-type" value="suggestions" />
+								<label for="ai1wm-feedback-type-2">
+									<i></i>
+									<span><?php _e( 'I have ideas to improve this plugin' ); ?></span>
+								</label>
+							</li>
+							<li>
+								<input type="radio" class="ai1wm-flat-radio-button ai1wm-feedback-type" id="ai1wm-feedback-type-3" name="ai1wm-feedback-type" value="help-needed" />
+								<label for="ai1wm-feedback-type-3">
+									<i></i>
+									<span><?php _e( 'I need help with this plugin' ); ?></span>
+								</label>
+							</li>
+						</ul>
+
+						<div class="ai1wm-feedback-form">
+							<div class="ai1wm-field">
+								<input placeholder="<?php _e( 'Enter your email address..' ); ?>" type="text" id="ai1wm-feedback-email" class="ai1wm-feedback-email" />
+							</div>
+							<div class="ai1wm-field">
+								<textarea rows="3" id="ai1wm-feedback-message" class="ai1wm-feedback-message" placeholder="<?php _e( 'Leave plugin developers any feedback here..' ); ?>"></textarea>
+							</div>
+							<div class="ai1wm-field ai1wm-feedback-terms-segment">
+								<input type="checkbox" class="ai1wm-feedback-terms" id="ai1wm-feedback-terms" />
+								<label for="ai1wm-feedback-terms"><?php _e( 'I agree that by clicking the send button below my email address and comments will be send to a ServMask server.' ); ?></label>
+							</div>
+							<div class="ai1wm-field">
+								<div class="ai1wm-buttons">
+									<button type="submit" id="ai1wm-feedback-submit" class="ai1wm-button-blue">
+										<i class="ai1wm-icon-paperplane"></i>
+										<?php _e( 'Send' ); ?>
+									</button>
+									<a class="ai1wm-feedback-cancel" id="ai1wm-feedback-cancel" href="#"><?php _e( 'Cancel' ); ?></a>
+								</div>
 							</div>
 						</div>
 					</div>

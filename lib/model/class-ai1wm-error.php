@@ -25,10 +25,8 @@
 
 class Ai1wm_Error
 {
-	const ERROR_LIMIT       = 20;
-	const EXCEPTION_LIMIT   = 20;
-	const ERROR_HANDLER     = 'ai1wm_error_handler';
-	const EXCEPTION_HANDLER = 'ai1wm_exception_handler';
+	const ERROR_LIMIT     = 10;
+	const EXCEPTION_LIMIT = 10;
 
 	/**
 	 * Custom Error Handler
@@ -40,7 +38,7 @@ class Ai1wm_Error
 	 * @return void
 	 */
 	public static function error_handler( $code, $message, $file, $line ) {
-		$errors = get_option( self::ERROR_HANDLER, array() );
+		$errors = get_option( AI1WM_ERROR_HANDLER, array() );
 
 		// Limit errors
 		if ( count( $errors ) > self::ERROR_LIMIT ) {
@@ -56,7 +54,7 @@ class Ai1wm_Error
 			'time'    => time(),
 		);
 
-		update_option( self::ERROR_HANDLER, $errors );
+		Ai1wm_Logger::error( AI1WM_ERROR_HANDLER, $errors );
 	}
 
 	/**
@@ -66,7 +64,7 @@ class Ai1wm_Error
 	 * @return void
 	 */
 	public static function exception_handler( $e ) {
-		$exceptions = get_option( self::EXCEPTION_HANDLER, array() );
+		$exceptions = get_option( AI1WM_EXCEPTION_HANDLER, array() );
 
 		// Limit errors
 		if ( count( $exceptions ) > self::EXCEPTION_LIMIT ) {
@@ -82,6 +80,6 @@ class Ai1wm_Error
 			'time'    => time(),
 		);
 
-		update_option( self::EXCEPTION_HANDLER, $exceptions );
+		Ai1wm_Logger::error( AI1WM_EXCEPTION_HANDLER, $exceptions );
 	}
 }

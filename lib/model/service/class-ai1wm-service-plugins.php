@@ -23,21 +23,68 @@
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 
-// Include plugin bootstrap file
-require_once dirname( __FILE__ ) .
-	DIRECTORY_SEPARATOR .
-	'all-in-one-wp-migration.php';
+class Ai1wm_Service_Plugins implements Ai1wm_Service_Interface
+{
+	protected $options = array();
 
-/**
- * Trigger Uninstall process only if WP_UNINSTALL_PLUGIN is defined
- */
-if ( defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-	global $wpdb, $wp_filesystem;
+	public function __construct( array $options = array() ) {
+		$this->options = $options;
+	}
 
-	// delete any options or other data stored in the database here
-	delete_option( AI1WM_MAINTENANCE_MODE );
-	delete_option( AI1WM_EXPORT_OPTIONS );
-	delete_option( AI1WM_ERROR_HANDLER );
-	delete_option( AI1WM_EXCEPTION_HANDLER );
-	delete_option( AI1WM_MESSAGES );
+	/**
+	 * Import plugins
+	 *
+	 * @return void
+	 */
+	public function import() {
+		$storage = StorageArea::getInstance();
+
+		// Plugins directory
+		$plugins_dir = WP_PLUGIN_DIR;
+		if ( ! is_dir( $plugins_dir ) ) {
+			mkdir( $plugins_dir );
+		}
+
+		// Backup plugin files
+		$backup_plugins_to = $storage->makeDirectory();
+
+		StorageUtility::copy( $plugins_dir, $backup_plugins_to->getName(), array( AI1WM_PLUGIN_NAME ) );
+
+		// Flush plugin files
+		StorageUtility::flush( $plugins_dir, array( AI1WM_PLUGIN_NAME ) );
+
+		// Import plugin files
+		StorageUtility::copy( $storage->getRootPath() . AI1WM_PLUGINS_NAME, $plugins_dir );
+	}
+
+	/**
+	 * Export plugins
+	 *
+	 * @return string
+	 */
+	public function export() {
+		return WP_PLUGIN_DIR;
+	}
+
+	/**
+	 * Get installed plugins
+	 *
+	 * @param  array $exclude Exclude plugins
+	 * @return array
+	 */
+	public function get_installed_plugins( $exclude = array( AI1WM_PLUGIN_NAME ) ) {
+		if ( ! function_exists( 'get_plugins' ) ) {
+			require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+		}
+
+		$plugins = array();
+		foreach ( get_plugins() as $key => $plugin ) {
+			$directory = dirname( $key );
+			if ( $directory !== '.' && ! in_array( $directory, $exclude ) ) {
+				$plugins[] = $directory;
+			}
+		}
+
+		return $plugins;
+	}
 }
