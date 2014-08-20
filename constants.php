@@ -26,17 +26,12 @@
 // ==================
 // = Plugin Version =
 // ==================
-define( 'AI1WM_VERSION', '2.0.0' );
+define( 'AI1WM_VERSION', '2.0.1' );
 
 // ===============
 // = Plugin Name =
 // ===============
 define( 'AI1WM_PLUGIN_NAME', 'all-in-one-wp-migration' );
-
-// ===============
-// = Plugin PRO Basename =
-// ===============
-define( 'AI1WM_PRO_PLUGIN_BASENAME', 'all-in-one-wp-migration-pro/all-in-one-wp-migration-pro.php' );
 
 // ===============
 // = Storage Index =

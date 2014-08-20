@@ -101,10 +101,6 @@ class Ai1wm_Service_Database implements Ai1wm_Service_Interface
 			$new_values[] = sprintf( '%s://%s', $new_domain['scheme'], $new_domain['host'] );
 		}
 
-		// Get plugin basename
-		$old_values[] = AI1WM_PRO_PLUGIN_BASENAME;
-		$new_values[] = AI1WM_PLUGIN_BASENAME;
-
 		$database_file = StorageArea::getInstance()->makeFile( AI1WM_DATABASE_NAME );
 
 		// Import database

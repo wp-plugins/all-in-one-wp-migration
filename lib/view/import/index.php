@@ -119,17 +119,19 @@
 						</div>
 					</div>
 
-					<p class="max-upload-size">
-						<span>
-							<?php _e( 'Maximum upload file size:' ); ?>
-							<span style="border-bottom: 1px solid #000;"><?php echo AI1WM_MAX_FILE_SIZE; ?></span>
-						</span>
-						<!-- <span class="ai1wm-unlimited-import">
-							<a href="https://servmask.com/get-unlimited" class="ai1wm-label">
-								<i class="ai1wm-icon-notification"></i>
-								Get unlimited
-							</a>
-						</span> -->
+					<p>
+						<?php _e( 'Maximum upload file size:' ); ?>
+						<?php if ( $max_file_size ): ?>
+							<span class="ai1wm-max-upload-size"><?php echo $max_file_size; ?></span>
+							<span class="ai1wm-unlimited-import">
+								<a href="https://servmask.com/get-unlimited" class="ai1wm-label">
+									<i class="ai1wm-icon-notification"></i>
+									<?php _e( 'Get unlimited' ); ?>
+								</a>
+							</span>
+						<?php else: ?>
+							<span class="ai1wm-max-upload-size"><?php _e( 'Unlimited' ); ?></span>
+						<?php endif; ?>
 					</p>
 				<?php else: ?>
 					<div class="ai1wm-message ai1wm-red-message">

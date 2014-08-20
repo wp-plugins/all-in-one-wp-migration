@@ -71,11 +71,11 @@ class Ai1wm_Export_Controller
 			header( 'Content-Length: ' . $file->getSize() );
 
 			// Clear output buffering and read file content
-			while (@ob_end_clean());
+			while ( @ob_end_clean() );
 
 			// Load file content
 			$handle = fopen( $file->getName(), 'rb' );
-			while ( !feof( $handle ) ) {
+			while ( ! feof( $handle ) ) {
 				echo fread( $handle, 8192 );
 			}
 			fclose( $handle );

@@ -36,6 +36,7 @@ class Ai1wm_Import_Controller
 			'import/index',
 			array(
 				'is_accessible' => $is_accessible,
+				'max_file_size' => apply_filters( 'ai1wm_max_file_size', AI1WM_MAX_FILE_SIZE ),
 			)
 		);
 	}
