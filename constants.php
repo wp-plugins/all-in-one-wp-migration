@@ -24,14 +24,19 @@
  */
 
 // ==================
-// = Plugin VERSION =
+// = Plugin Version =
 // ==================
-define( 'AI1WM_VERSION', '1.9.2' );
+define( 'AI1WM_VERSION', '2.0.1' );
 
 // ===============
 // = Plugin Name =
 // ===============
 define( 'AI1WM_PLUGIN_NAME', 'all-in-one-wp-migration' );
+
+// ===============
+// = Storage Index =
+// ===============
+define( 'AI1WM_STORAGE_INDEX', 'index.php' );
 
 // ===============
 // = Storage Path =
@@ -52,6 +57,11 @@ define( 'AI1WM_CONTROLLER_PATH', AI1WM_LIB_PATH . DIRECTORY_SEPARATOR . 'control
 // = Model Path =
 // ==============
 define( 'AI1WM_MODEL_PATH', AI1WM_LIB_PATH . DIRECTORY_SEPARATOR . 'model' );
+
+// ==============
+// = Service Path =
+// ==============
+define( 'AI1WM_SERVICE_PATH', AI1WM_MODEL_PATH . DIRECTORY_SEPARATOR . 'service' );
 
 // =============
 // = View Path =
@@ -84,19 +94,91 @@ define( 'AI1WM_REPORT_URL', 'https://servmask.com/ai1wm/report/create' );
 define( 'AI1WM_TABLE_PREFIX', 'SERVMASK_PREFIX_' );
 
 // ==============
-// = ServMask Storage Prefix =
+// = Archive Database Name =
 // ==============
-define( 'AI1WM_STORAGE_PREFIX', 'wm_' );
+define( 'AI1WM_DATABASE_NAME', 'database.sql' );
+
+// ==============
+// = Archive Media Name =
+// ==============
+define( 'AI1WM_MEDIA_NAME', 'media' );
+
+// ==============
+// = Archive Sites Name =
+// ==============
+define( 'AI1WM_SITES_NAME', 'sites' );
+
+// ==============
+// = Archive Blogs Name =
+// ==============
+define( 'AI1WM_BLOGS_NAME', 'blogs.dir' );
+
+// ==============
+// = Archive Themes Name =
+// ==============
+define( 'AI1WM_THEMES_NAME', 'themes' );
+
+// ==============
+// = Archive Plugins Name =
+// ==============
+define( 'AI1WM_PLUGINS_NAME', 'plugins' );
+
+// ==============
+// = Archive Package Name =
+// ==============
+define( 'AI1WM_PACKAGE_NAME', 'package.json' );
+
+// ==============
+// = Export Options Key =
+// ==============
+define( 'AI1WM_EXPORT_OPTIONS', 'ai1wm_export_options' );
+
+// ==============
+// = Error Handler Key =
+// ==============
+define( 'AI1WM_ERROR_HANDLER', 'ai1wm_error_handler' );
+
+// ==============
+// = Exception Handler Key =
+// ==============
+define( 'AI1WM_EXCEPTION_HANDLER', 'ai1wm_exception_handler' );
+
+// ==============
+// = Maintenance Mode Key =
+// ==============
+define( 'AI1WM_MAINTENANCE_MODE', 'ai1wm_maintenance_mode' );
+
+// ==============
+// = Messages Key =
+// ==============
+define( 'AI1WM_MESSAGES', 'ai1wm_messages' );
+
+// ==============
+// = Max File Size =
+// ==============
+define( 'AI1WM_MAX_FILE_SIZE', '512MB' );
+
+// ==============
+// = Max Chunk Size =
+// ==============
+define( 'AI1WM_MAX_CHUNK_SIZE', '500KB' );
+
+// ==============
+// = Max Chunk Retries =
+// ==============
+define( 'AI1WM_MAX_CHUNK_RETRIES', '100' );
 
 // ===========================
 // = WP_CONTENT_DIR Constant =
 // ===========================
-if ( ! defined( 'WP_CONTENT_DIR' ) )
+if ( ! defined( 'WP_CONTENT_DIR' ) ) {
 	define( 'WP_CONTENT_DIR', ABSPATH . 'wp-content' );
+}
 
 // ==========================
 // = WP_PLUGIN_DIR Constant =
 // ==========================
-if ( ! defined( 'WP_PLUGIN_DIR' ) )
+if ( ! defined( 'WP_PLUGIN_DIR' ) ) {
 	define( 'WP_PLUGIN_DIR', WP_CONTENT_DIR . '/plugins' );
+}
 

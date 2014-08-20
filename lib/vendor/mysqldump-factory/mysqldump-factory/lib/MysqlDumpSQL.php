@@ -29,13 +29,14 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.3.0
+ * @version   GIT: 1.9.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'MysqlDumpInterface.php';
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'MysqlQueryAdapter.php';
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'MysqlFileAdapter.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'MysqlUtility.php';
 
 /**
  * MysqlDumpSQL class
@@ -46,7 +47,7 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'MysqlFileAdapter.php';
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.3.0
+ * @version   GIT: 1.9.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 class MysqlDumpSQL implements MysqlDumpInterface
@@ -70,6 +71,10 @@ class MysqlDumpSQL implements MysqlDumpInterface
     protected $oldTablePrefix   = null;
 
     protected $newTablePrefix   = null;
+
+    protected $oldReplaceValues = array();
+
+    protected $newReplaceValues = array();
 
     protected $queryClauses     = array();
 
@@ -211,6 +216,52 @@ class MysqlDumpSQL implements MysqlDumpInterface
     }
 
     /**
+     * Set old replace values
+     *
+     * @param  array $values List of values
+     * @return MysqlDumpPDO
+     */
+    public function setOldReplaceValues($values)
+    {
+        $this->oldReplaceValues = $values;
+
+        return $this;
+    }
+
+    /**
+     * Get old replace values
+     *
+     * @return array
+     */
+    public function getOldReplaceValues()
+    {
+        return $this->oldReplaceValues;
+    }
+
+    /**
+     * Set new replace values
+     *
+     * @param  array $values List of values
+     * @return MysqlDumpPDO
+     */
+    public function setNewReplaceValues($values)
+    {
+        $this->newReplaceValues = $values;
+
+        return $this;
+    }
+
+    /**
+     * Get new replace values
+     *
+     * @return array
+     */
+    public function getNewReplaceValues()
+    {
+        return $this->newReplaceValues;
+    }
+
+    /**
      * Set query clauses
      *
      * @param  array $clauses List of SQL query clauses
@@ -287,7 +338,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
      */
     public function setNoTableData($flag)
     {
-        $this->noTableData = $flag;
+        $this->noTableData = (bool) $flag;
 
         return $this;
     }
@@ -310,7 +361,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
      */
     public function setAddDropTable($flag)
     {
-        $this->addDropTable = $flag;
+        $this->addDropTable = (bool) $flag;
 
         return $this;
     }
@@ -333,7 +384,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
      */
     public function setExtendedInsert($flag)
     {
-        $this->extendedInsert = $flag;
+        $this->extendedInsert = (bool) $flag;
 
         return $this;
     }
@@ -387,6 +438,9 @@ class MysqlDumpSQL implements MysqlDumpInterface
                 // Replace insert into prefix
                 $line = $this->replaceInsertIntoPrefix($line);
 
+                // Replace table values
+                $line = $this->replaceTableValues($line);
+
                 $query .= $line;
                 if (preg_match('/;\s*$/', $line)) {
                     // Run SQL query
@@ -419,6 +473,41 @@ class MysqlDumpSQL implements MysqlDumpInterface
         return $tables;
     }
 
+    /**
+     * Replace table values
+     *
+     * @param  string $input Table value
+     * @return string
+     */
+    public function replaceTableValues($input)
+    {
+        $old = $this->getOldReplaceValues();
+        $new = $this->getNewReplaceValues();
+
+        $oldValues = array();
+        $newValues = array();
+
+        // Replace strings
+        for ($i = 0; $i < count($old); $i++) {
+            if (!empty($old[$i]) && ($old[$i] != $new[$i]) && !in_array($old[$i], $oldValues)) {
+                $oldValues[] = '/\b' . preg_quote($old[$i], '/') . '\b/i';
+                $newValues[] = $new[$i];
+            }
+        }
+
+        // Replace table prefix
+        $oldValues[] = '/\b' . preg_quote($this->getOldTablePrefix(), '/') . '/i';
+        $newValues[] = $this->getNewTablePrefix();
+
+        // Replace table values
+        $input = preg_replace($oldValues, $newValues, $input);
+
+        // Verify serialization
+        return MysqlUtility::pregReplace(
+            $input,
+            '/s:(\d+):([\\\\]?"[\\\\]?"|[\\\\]?"((.*?)[^\\\\])[\\\\]?");/'
+        );
+    }
 
     /**
      * Replace table name prefix
@@ -428,7 +517,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
      */
     public function replaceTableNamePrefix($input)
     {
-        $pattern = '/^(' . $this->getOldTablePrefix() . ')(.+)/i';
+        $pattern = '/^(' . preg_quote($this->getOldTablePrefix(), '/') . ')(.+)/i';
         $replace = $this->getNewTablePrefix() . '\2';
 
         return preg_replace($pattern, $replace, $input);
@@ -442,7 +531,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
      */
     public function replaceCreateTablePrefix($input)
     {
-        $pattern = '/^CREATE TABLE `(' . $this->getOldTablePrefix() . ')(.+)`/Ui';
+        $pattern = '/^CREATE TABLE `(' . preg_quote($this->getOldTablePrefix(), '/') . ')(.+)`/Ui';
         $replace = 'CREATE TABLE `' . $this->getNewTablePrefix() . '\2`';
 
         return preg_replace($pattern, $replace, $input);
@@ -456,7 +545,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
      */
     public function replaceInsertIntoPrefix($input)
     {
-        $pattern = '/^INSERT INTO `(' . $this->getOldTablePrefix() . ')(.+)`/Ui';
+        $pattern = '/^INSERT INTO `(' . preg_quote($this->getOldTablePrefix(), '/') . ')(.+)`/Ui';
         $replace = 'INSERT INTO `' . $this->getNewTablePrefix() . '\2`';
 
         return preg_replace($pattern, $replace, $input);
@@ -563,7 +652,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
         $result = mysql_unbuffered_query($query, $this->getConnection());
         while ($row = mysql_fetch_assoc($result)) {
             if (isset($row['Create Table'])) {
-                // Replace table prefix
+                // Replace table name prefix
                 $tableName = $this->replaceTableNamePrefix($tableName);
 
                 $this->fileAdapter->write("-- " .
@@ -576,8 +665,11 @@ class MysqlDumpSQL implements MysqlDumpInterface
                     $this->fileAdapter->write("DROP TABLE IF EXISTS `$tableName`;\n\n");
                 }
 
-                // Replace table prefix
-                $createTable = $this->replaceCreateTablePrefix($row['Create Table'], false);
+                // Replace create table prefix
+                $createTable = $this->replaceCreateTablePrefix($row['Create Table']);
+
+                // Strip table constraints
+                $createTable = $this->stripTableConstraints($createTable);
 
                 $this->fileAdapter->write($createTable . ";\n\n");
 
@@ -609,7 +701,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
             return;
         }
 
-        // Replace table prefix
+        // Replace table name prefix
         $tableName = $this->replaceTableNamePrefix($tableName);
 
         $this->fileAdapter->write(
@@ -623,7 +715,7 @@ class MysqlDumpSQL implements MysqlDumpInterface
         while ($row = mysql_fetch_row($result)) {
             $items = array();
             foreach ($row as $value) {
-                $items[] = is_null($value) ? 'NULL' : "'" . mysql_real_escape_string($value) . "'";
+                $items[] = is_null($value) ? 'NULL' : "'" . mysql_real_escape_string($this->replaceTableValues($value)) . "'";
             }
 
             if ($insertFirst || !$this->getExtendedInsert()) {

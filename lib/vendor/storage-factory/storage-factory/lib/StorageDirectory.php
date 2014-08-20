@@ -29,11 +29,12 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/borislav-angelov/storage-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 2.1.0
+ * @version   GIT: 2.6.0
  * @link      https://github.com/borislav-angelov/storage-factory/
  */
 
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'StorageAbstract.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'StorageUtility.php';
 
 /**
  * StorageDirectory class
@@ -44,7 +45,7 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'StorageAbstract.php';
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/borislav-angelov/storage-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 2.1.0
+ * @version   GIT: 2.6.0
  * @link      https://github.com/borislav-angelov/storage-factory/
  */
 class StorageDirectory extends StorageAbstract
@@ -56,17 +57,9 @@ class StorageDirectory extends StorageAbstract
      */
     public function __construct($name = null, $path = null) {
         if (empty($name)) {
-            if (empty($path)) {
-                $this->directory = $this->getRootPath() . DIRECTORY_SEPARATOR . uniqid() . DIRECTORY_SEPARATOR;
-            } else {
-                $this->directory = $path . DIRECTORY_SEPARATOR . uniqid() . DIRECTORY_SEPARATOR;
-            }
+            $this->directory = $path . DIRECTORY_SEPARATOR . uniqid() . DIRECTORY_SEPARATOR;
         } else {
-            if (empty($path)) {
-                $this->directory = $this->getRootPath() . DIRECTORY_SEPARATOR . $name . DIRECTORY_SEPARATOR;
-            } else {
-                $this->directory = $path . DIRECTORY_SEPARATOR . $name . DIRECTORY_SEPARATOR;
-            }
+            $this->directory = $path . DIRECTORY_SEPARATOR . $name . DIRECTORY_SEPARATOR;
         }
 
         // Create directory
@@ -76,132 +69,32 @@ class StorageDirectory extends StorageAbstract
     }
 
     /**
-     * Get a file or directory as resource
+     * Get directory name
      *
-     * @param  string Get a file or directory as resource or absolute path
-     * @return mixed
+     * @return string
      */
-    public function getAs($type = 'string') {
-        if ($type === 'string') {
-            return $this->directory;
-        } else {
-            throw new Exception('Unable to retrieve directory as ' . $type . '. Make sure the method is implemented');
-        }
-    }
-
-
-    /**
-     * Copy a file or directory from source to destination path
-     *
-     * @param  string $from    Copy files and directories FROM
-     * @param  string $to      Copy files and directories TO
-     * @param  array  $exclude List of directories to exclude
-     * @return void
-     */
-    public static function copy($from, $to, $exclude = array()) {
-        // Use Recursive functions
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($from),
-            RecursiveIteratorIterator::SELF_FIRST
-        );
-
-        // Prepare filter pattern
-        $filter_pattern = null;
-        if (is_array($exclude)) {
-            $filters = array();
-            foreach ($exclude as $filter) {
-                $filters[] = sprintf(
-                    '(%s(%s.*)?)',
-                    preg_quote($filter, '/'),
-                    preg_quote(DIRECTORY_SEPARATOR, '/')
-                );
-            }
-
-            $filter_pattern = implode('|', $filters);
-        }
-
-        foreach ($iterator as $item) {
-            // Skip dots
-            if ($iterator->isDot()) {
-                continue;
-            }
-
-            // Validate filter pattern
-            if ($filter_pattern) {
-                if (preg_match('/^' . $filter_pattern . '$/', $iterator->getSubPathName())) {
-                    continue;
-                }
-            }
-
-            if ($item->isDir()) {
-                mkdir($to . DIRECTORY_SEPARATOR . $iterator->getSubPathName());
-            } else {
-                copy($item, $to . DIRECTORY_SEPARATOR . $iterator->getSubPathName());
-            }
-        }
+    public function getName() {
+        return $this->directory;
     }
 
     /**
-     * Delete a file or directory from a given path
+     * Get directory resource
      *
-     * @param  string  $path    Absolute path
-     * @param  array   $exclude Exclude files and directories
+     * @return resource
+     */
+    public function getResource() {
+        return opendir($this->directory);
+    }
+
+    /**
+     * Delete directory
+     *
      * @return boolean
-     */
-    public static function flush($path, $exclude = array()) {
-        // Use Recursive functions
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($path),
-            RecursiveIteratorIterator::CHILD_FIRST
-        );
-
-        // Prepare filter pattern
-        $filter_pattern = null;
-        if (is_array($exclude)) {
-            $filters = array();
-            foreach ($exclude as $filter) {
-                $filters[] = sprintf(
-                    '(%s(%s.*)?)',
-                    preg_quote($filter, '/'),
-                    preg_quote(DIRECTORY_SEPARATOR, '/')
-                );
-            }
-
-            $filter_pattern = implode('|', $filters);
-        }
-
-        foreach ($iterator as $item) {
-            // Skip dots
-            if ($iterator->isDot()) {
-                continue;
-            }
-
-            // Validate filter pattern
-            if ($filter_pattern) {
-                if (preg_match('/^' . $filter_pattern . '$/', $iterator->getSubPathName())) {
-                    continue;
-                }
-            }
-
-            if ($item->isDir()) {
-                rmdir($path . DIRECTORY_SEPARATOR . $iterator->getSubPathName());
-            } else {
-                unlink($path . DIRECTORY_SEPARATOR . $iterator->getSubPathName());
-            }
-        }
-    }
-
-    /**
-     * Delete a file or directory
-     *
-     * @return void
      */
     public function delete() {
         // Remove child files and directories
-        self::flush($this->directory);
-
-        // Remove parent directory
-        rmdir($this->directory);
+        if (StorageUtility::flush($this->directory)) {
+            return rmdir($this->directory);
+        }
     }
-
 }

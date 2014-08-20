@@ -23,21 +23,77 @@
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 
-// Include plugin bootstrap file
-require_once dirname( __FILE__ ) .
-	DIRECTORY_SEPARATOR .
-	'all-in-one-wp-migration.php';
+class Ai1wm_Service_Sites implements Ai1wm_Service_Interface
+{
+	protected $options = array();
 
-/**
- * Trigger Uninstall process only if WP_UNINSTALL_PLUGIN is defined
- */
-if ( defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-	global $wpdb, $wp_filesystem;
+	public function __construct( array $options = array() ) {
+		$this->options = $options;
+	}
 
-	// delete any options or other data stored in the database here
-	delete_option( AI1WM_MAINTENANCE_MODE );
-	delete_option( AI1WM_EXPORT_OPTIONS );
-	delete_option( AI1WM_ERROR_HANDLER );
-	delete_option( AI1WM_EXCEPTION_HANDLER );
-	delete_option( AI1WM_MESSAGES );
+	/**
+	 * Import sites (Network mode)
+	 *
+	 * @return void
+	 */
+	public function import() {
+		global $wp_version;
+
+		$storage = StorageArea::getInstance();
+
+		if ( version_compare( $wp_version, '3.5', '<' ) ) {
+			// Blogs.dir directory
+			$blogs_dir = WP_CONTENT_DIR . DIRECTORY_SEPARATOR . AI1WM_BLOGS_NAME;
+			if ( ! is_dir( $blogs_dir ) ) {
+				mkdir( $blogs_dir );
+			}
+
+			// Backup blogs.dir files
+			$backup_blogs_to = $storage->makeDirectory();
+
+			StorageUtility::copy( $blogs_dir, $backup_blogs_to->getName() );
+
+			// Flush blogs.dir files
+			StorageUtility::flush( $blogs_dir );
+
+			// Import blogs.dir files
+			StorageUtility::copy( $storage->getRootPath() . AI1WM_SITES_NAME, $blogs_dir );
+		} else {
+			// Media directory
+			$upload_dir     = wp_upload_dir();
+			$upload_basedir = $upload_dir['basedir'];
+			if ( ! is_dir( $upload_basedir ) ) {
+				mkdir( $upload_basedir );
+			}
+
+			// Sites directory
+			$sites_dir = $upload_basedir . DIRECTORY_SEPARATOR . AI1WM_SITES_NAME;
+			if ( ! is_dir( $sites_dir ) ) {
+				mkdir( $sites_dir );
+			}
+
+			// Backup sites files
+			$backup_sites_to = $storage->makeDirectory();
+
+			StorageUtility::copy( $sites_dir, $backup_sites_to->getName() );
+
+			// Flush sites files
+			StorageUtility::flush( $sites_dir );
+
+			// Import sites files
+			StorageUtility::copy( $storage->getRootPath() . AI1WM_SITES_NAME, $sites_dir );
+		}
+	}
+
+	/**
+	 * Export sites (Network mode)
+	 *
+	 * @return string
+	 */
+	public function export() {
+		$blogs_dir = WP_CONTENT_DIR . DIRECTORY_SEPARATOR . AI1WM_BLOGS_NAME;
+		if ( is_dir( $blogs_dir ) ) {
+			return $blogs_dir;
+		}
+	}
 }

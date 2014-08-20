@@ -25,38 +25,70 @@
 
 class Ai1wm_Message
 {
-	const MESSAGE_INFO       = 'info';
-	const MESSAGE_INFO_CLOSE = 'ai1wm_message_info_close';
+	protected $messages = array();
 
-	/**
-	 * Close message dialog by type
-	 *
-	 * @param  string $type Type of message
-	 * @return array
-	 */
-	public function close_message( $type ) {
-		$errors = array();
+	public function __construct() {
+		$this->messages = array(
+			'SiteURLDepricated' => _(
+				'Since version 1.8.0, Site URL is deprecated.' .
+				'Upon import, the plugin auto-detects Site URL and makes necessary changes to the database.'
+			),
+		);
 
-		if ( $type == self::MESSAGE_INFO ) {
-			update_option( self::MESSAGE_INFO_CLOSE, true );
-		} else {
-			$errors[] = 'Unregonized message type.';
+		// Prepare messages
+		$msgs = array();
+		$keys = get_option( AI1WM_MESSAGES );
+		foreach ( array_keys( $this->messages ) as $key ) {
+			if ( ! isset( $keys[$key] ) ) {
+				$msgs[$key] = true;
+			}
 		}
 
-		return array( 'errors' => $errors );
+		// Update messages
+		if ( $msgs ) {
+			update_option( AI1WM_MESSAGES, $msgs );
+		}
 	}
 
 	/**
-	 * Is message dialog closed
+	 * Get list of all active messages
 	 *
-	 * @param  string  $type Type of message
-	 * @return boolean
+	 * @return array
 	 */
-	public function is_closed( $type  ) {
-		if ( $type == self::MESSAGE_INFO ) {
-			return get_option( self::MESSAGE_INFO_CLOSE );
+	public function get_messages() {
+		$msgs = array();
+		$keys = get_option( AI1WM_MESSAGES );
+		foreach ( $keys as $key => $active ) {
+			if ( isset( $this->messages[$key] ) && $active ) {
+				$msgs[$key] = $this->messages[$key];
+			}
 		}
 
-		return false;
+		return $msgs;
+	}
+
+	/**
+	 * Close message by key
+	 *
+	 * @param  string  $key Message key
+	 * @return array
+	 */
+	public function close_message( $key ) {
+		$errors = array();
+
+		$keys = get_option( AI1WM_MESSAGES );
+		if ( isset( $keys[$key] ) ) {
+			// Deactivate message from the list
+			$keys[$key] = false;
+
+			// Update keys
+			if ( ! update_option( AI1WM_MESSAGES, $keys ) ) {
+				$errors[] = 'Something went wrong! Please try again later.';
+			}
+		} else {
+			$errors[] = 'Message key does not exist in the list.';
+		}
+
+		return array( 'errors' => $errors );
 	}
 }

@@ -28,8 +28,8 @@ class Ai1wm_Template extends Bandar
 	/**
 	 * Renders a file and returns its contents bacl
 	 * @param  string $file View to render
-	 * @param  [type] $args [description]
-	 * @return [type]       [description]
+	 * @param  array  $args Set of arguments
+	 * @return string       Rendered view
 	 */
 	public static function render( $view, $args = array() ) {
 		parent::render( $view, $args );

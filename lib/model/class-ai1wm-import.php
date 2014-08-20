@@ -25,339 +25,180 @@
 
 class Ai1wm_Import
 {
-	const MAX_FILE_SIZE     = '512MB';
-	const MAX_CHUNK_SIZE    = '500KB';
-	const MAX_CHUNK_RETRIES = 100;
-	const MAINTENANCE_MODE  = 'ai1wm_maintenance_mode';
+	protected $options = array();
+
+	public function __construct( array $options = array() ) {
+		$this->options = $options;
+	}
 
 	/**
-	 * Import archive file (database, media, package.json)
+	 * Import site
 	 *
-	 * @param  array $input_file Upload file parameters
-	 * @param  array $options    Additional upload settings
-	 * @return array             List of messages
+	 * @return StorageFile
 	 */
-	public function import( $input_file, $options = array() ) {
-		global $wpdb;
-		$errors = array();
+	public function import() {
+		global $wp_version;
 
-		if ( empty( $input_file['error'] ) ) {
+		$storage = StorageArea::getInstance();
+
+		// Create import file
+		$import_file = $storage->makeFile( $this->options['import']['file'] );
+
+		// Extract archive
+		try {
 			try {
-				$storage = new StorageArea;
-
-				// Flush storage directory
-				if ( $options['chunk'] === 0 ) {
-					StorageDirectory::flush( AI1WM_STORAGE_PATH, array( '.gitignore' ) );
-				}
-
-				// Partial file path
-				$upload_file = $storage->makeFile( $options['name'] )->getAs( 'string' );
-
-				// Open partial file
-				$out = fopen( $upload_file, $options['chunk'] == 0 ? 'wb' : 'ab' );
-				if ( $out ) {
-					// Read binary input stream and append it to temp file
-					$in = fopen( $input_file['tmp_name'], 'rb' );
-					if ( $in ) {
-						while ( $buff = fread( $in, 4096 ) ) {
-							fwrite( $out, $buff );
-						}
-					}
-
-					fclose( $in );
-					fclose( $out );
-
-					// Remove temporary uploaded file
-					unlink( $input_file['tmp_name'] );
-				} else {
-					$errors[] = sprintf(
-						_(
-							'Site could not be imported!<br />
-							Please make sure that storage directory <strong>%s</strong> has read and write permissions.'
-						),
-						AI1WM_STORAGE_PATH
-					);
-
-					// Clear storage
-					$storage->flush();
-				}
+				$zip = ZipFactory::makeZipArchiver( $import_file->getName(), ! class_exists( 'ZipArchive' ) );
+				$zip->extractTo( $storage->getRootPath() );
+				$zip->close();
 			} catch ( Exception $e ) {
-				$errors[] = sprintf(
-					_(
-						'Site could not be imported!<br />
-						Please make sure that storage directory <strong>%s</strong> has read and write permissions.'
-					),
-					AI1WM_STORAGE_PATH
-				);
+				$zip = ZipFactory::makeZipArchiver( $import_file->getName(), true );
+				$zip->extractTo( $storage->getRootPath() );
+				$zip->close();
+			}
+		} catch ( Exception $e ) {
+			throw new Ai1wm_Import_Exception(
+				_(
+					'Site could not be imported!<br />' .
+					'Archive file is broken or is not compatible with the plugin! Please verify your archive file.'
+				)
+			);
+		}
 
-				// Clear storage
-				$storage->flush();
+		// Verify package
+		if ( $this->should_import_package() ) {
+
+			// Enable maintenance mode
+			Ai1wm_Maintenance::enable();
+
+			// Database
+			if ( $this->should_import_database() ) {
+				$service = new Ai1wm_Service_Database( $this->options );
+				$service->import();
 			}
 
-			// Check if file has been uploaded
-			if ( empty( $errors ) && ( ! $options['chunks'] || $options['chunk'] == $options['chunks'] - 1 ) ) {
-				// Create temporary directory
-				$extract_to = $storage->makeDirectory()->getAs( 'string' );
-
-				// Extract archive to a temporary directory
-				try {
-					try {
-						$archive = ZipFactory::makeZipArchiver( $upload_file, ! class_exists( 'ZipArchive' ) );
-						$archive->extractTo( $extract_to );
-						$archive->close();
-					} catch ( Exception $e ) {
-						$archive = ZipFactory::makeZipArchiver( $upload_file, true );
-						$archive->extractTo( $extract_to );
-						$archive->close();
-					}
-				} catch ( Exception $e ) {
-					$errors[] = _(
-						'Archive file is broken or is not compatible with
-						"All In One WP Migration" plugin! Please verify your archive file.'
-					);
-				}
-
-				if ( empty( $errors ) ) {
-					// Verify whether this archive is valid
-					if ( $this->is_valid( $extract_to ) ) {
-						// Enable maintenance mode
-						$this->maintenance_mode( true );
-
-						// Parse package config file
-						$config = $this->parse_package( $extract_to . Ai1wm_Export::EXPORT_PACKAGE_NAME );
-
-						// Database import
-						if ( is_file( $extract_to . Ai1wm_Export::EXPORT_DATABASE_NAME ) ) {
-							// Backup database
-							$model         = new Ai1wm_Export;
-							$database_file = $model->prepare_database( $storage );
-
-							try {
-								$db = MysqlDumpFactory::makeMysqlDump(
-									DB_HOST,
-									DB_USER,
-									DB_PASSWORD,
-									DB_NAME,
-									(
-										class_exists(
-											'PDO'
-										) && in_array( 'mysql', PDO::getAvailableDrivers() )
-									)
-								);
-								$db->getConnection();
-							} catch ( Exception $e ) {
-								// Use "old" mysql adapter
-								$db = MysqlDumpFactory::makeMysqlDump( DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, false );
-							}
-
-							// Flush database
-							$db->flush();
-
-							$old_values = array();
-							$new_values = array();
-
-							// Get Site URL
-							if ( isset( $config['SiteURL'] ) && ( $config['SiteURL'] != site_url() ) ) {
-								$old_values[] = $config['SiteURL'];
-								$new_values[] = site_url();
-							}
-
-							// Get Home URL
-							if ( isset( $config['HomeURL'] ) && ( $config['HomeURL'] != home_url() ) ) {
-								$old_values[] = $config['HomeURL'];
-								$new_values[] = home_url();
-							}
-
-							// Get Domain
-							if ( isset( $config['Domain'] ) && ( $config['Domain'] != ( $domain = parse_url( home_url(), PHP_URL_HOST ) ) ) ) {
-								$old_values[] = $config['Domain'];
-								$new_values[] = $domain;
-							}
-
-							$file          = new Ai1wm_File;
-							$database_file = $storage->makeFile( Ai1wm_Export::EXPORT_DATABASE_NAME, $extract_to );
-
-							// Replace Old/New Values
-							if ( $old_values && $new_values ) {
-								$database_file = $file->str_replace_file(
-									$storage,
-									$database_file,
-									$old_values,
-									$new_values
-								);
-
-								$database_file = $file->preg_replace_file(
-									$storage,
-									$database_file,
-									'/s:(\d+):([\\\\]?"[\\\\]?"|[\\\\]?"((.*?)[^\\\\])[\\\\]?");/'
-								);
-							}
-
-							// Import database
-							$db->setOldTablePrefix( AI1WM_TABLE_PREFIX )
-							   ->setNewTablePrefix( $wpdb->prefix )
-							   ->import( $database_file->getAs( 'string' ) );
-						}
-
-						// Media import
-						if ( is_dir( $extract_to . Ai1wm_Export::EXPORT_MEDIA_NAME ) ) {
-							// Media base directory
-							$upload_dir     = wp_upload_dir();
-							$upload_basedir = $upload_dir['basedir'] . DIRECTORY_SEPARATOR;
-							if ( ! is_dir( $upload_basedir ) ) {
-								mkdir( $upload_basedir );
-							}
-
-							// Backup media files
-							$backup_media_to = $storage->makeDirectory()->getAs( 'string' );
-
-							StorageDirectory::copy( $upload_basedir, $backup_media_to );
-
-							// Flush media files
-							StorageDirectory::flush( $upload_basedir );
-
-							// Import media files
-							StorageDirectory::copy( $extract_to . Ai1wm_Export::EXPORT_MEDIA_NAME, $upload_basedir );
-						}
-
-						// Themes import
-						if ( is_dir( $extract_to . Ai1wm_Export::EXPORT_THEMES_NAME ) ) {
-							// Themes base directory
-							$themes_dir     = get_theme_root();
-							$themes_basedir = $themes_dir . DIRECTORY_SEPARATOR;
-							if ( ! is_dir( $themes_basedir ) ) {
-								mkdir( $themes_basedir );
-							}
-
-							// Backup themes files
-							$backup_themes_to = $storage->makeDirectory()->getAs( 'string' );
-
-							StorageDirectory::copy( $themes_basedir, $backup_themes_to );
-
-							// Flush themes files
-							StorageDirectory::flush( $themes_basedir );
-
-							// Import themes files
-							StorageDirectory::copy( $extract_to . Ai1wm_Export::EXPORT_THEMES_NAME, $themes_basedir );
-						}
-
-						// Plugins import
-						if ( is_dir( $extract_to . Ai1wm_Export::EXPORT_PLUGINS_NAME ) ) {
-							// Backup plugin files
-							$backup_plugins_to = $storage->makeDirectory()->getAs( 'string' );
-
-							StorageDirectory::copy( WP_PLUGIN_DIR, $backup_plugins_to, array( AI1WM_PLUGIN_NAME ) );
-
-							// Flush plugin files
-							StorageDirectory::flush( WP_PLUGIN_DIR, array( AI1WM_PLUGIN_NAME ) );
-
-							// Import plugin files
-							StorageDirectory::copy( $extract_to . Ai1wm_Export::EXPORT_PLUGINS_NAME, WP_PLUGIN_DIR );
-						}
-
-						// Disable maintenance mode
-						$this->maintenance_mode( false );
-					} else {
-						$errors[] = _( 'File is not compatible with "All In One WP Migration" plugin! Please verify your archive file.' );
-					}
-				}
-
-				// Clear storage
-				$storage->flush();
+			// Media
+			if ( $this->should_import_media() ) {
+				$service = new Ai1wm_Service_Media( $this->options );
+				$service->import();
 			}
+
+			// Sites (Network mode)
+			if ( $this->should_import_sites() ) {
+				$service = new Ai1wm_Service_Sites( $this->options );
+				$service->import();
+			}
+
+			// Themes
+			if ( $this->should_import_themes() ) {
+				$service = new Ai1wm_Service_Themes( $this->options );
+				$service->import();
+			}
+
+			// Plugins
+			if ( $this->should_import_plugins() ) {
+				$service = new Ai1wm_Service_Plugins( $this->options );
+				$service->import();
+			}
+
+			// Disable maintenance mode
+			Ai1wm_Maintenance::disable();
+
 		} else {
-			$errors[] = $this->code_to_message( $input_file['error'] );
+			throw new Ai1wm_Import_Exception(
+				_(
+					'Site could not be imported!<br />' .
+					'Archive file is not compatible with the plugin! Please verify your archive file.'
+				)
+			);
 		}
 
-		return array( 'errors' => $errors );
-	}
-
-
-	/**
-	 * Enable or disable WordPress maintenance mode
-	 *
-	 * @param  boolean $enabled Enable or disable maintenance mode
-	 * @return boolean          True if option value has changed, false if not or if update failed
-	 */
-	public function maintenance_mode( $enabled = true ) {
-		return update_option( self::MAINTENANCE_MODE, $enabled );
+		return $import_file;
 	}
 
 	/**
-	 * Verify whether directory contains necessary archive files
+	 * Should import package?
 	 *
-	 * @param  string $path Archive path
-	 * @return boolean      Compatible archive
+	 * @return boolean
 	 */
-	public function is_valid( $path ) {
-		$required_objects = array(
-			Ai1wm_Export::EXPORT_PACKAGE_NAME,
-		);
+	public function should_import_package() {
+		global $wp_version;
 
-		// Verify whether file or directory exist
-		foreach ( $required_objects as $object ) {
-			if ( ! file_exists( $path . $object ) ) {
-				return false;
-			}
+		// Has package.json file?
+		if ( ! is_file( StorageArea::getInstance()->getRootPath() . AI1WM_PACKAGE_NAME ) ) {
+			return false;
 		}
 
-		return true;
-	}
-
-	/**
-	 * Parse package config file
-	 *
-	 * @param  string $file Path to package config file
-	 * @return array        Config parameters
-	 */
-	public function parse_package( $file ) {
-		// Get config file
-		$data = file_get_contents( $file );
-
-		return json_decode( $data, true );
-	}
-
-	/**
-	 * Display message for upload error code
-	 *
-	 * @param  integer $code Upload error code
-	 * @return string        Error message
-	 */
-	public function code_to_message( $code ) {
-		switch ( $code ) {
-			case UPLOAD_ERR_INI_SIZE:
-				$message = _( 'The uploaded file exceeds the upload_max_filesize directive in php.ini' );
-				break;
-
-			case UPLOAD_ERR_FORM_SIZE:
-				$message = _( 'The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form' );
-				break;
-
-			case UPLOAD_ERR_PARTIAL:
-				$message = _( 'The uploaded file was only partially uploaded' );
-				break;
-
-			case UPLOAD_ERR_NO_FILE:
-				$message = _( 'No file was uploaded' );
-				break;
-
-			case UPLOAD_ERR_NO_TMP_DIR:
-				$message = _( 'Missing a temporary folder' );
-				break;
-
-			case UPLOAD_ERR_CANT_WRITE:
-				$message = _( 'Failed to write file to disk' );
-				break;
-
-			case UPLOAD_ERR_EXTENSION:
-				$message = _( 'File upload stopped by extension' );
-				break;
-
-			default:
-				$message = _( 'Unknown upload error' );
-				break;
+		// Force import
+		if ( isset( $this->options['import']['force'] ) ) {
+			return true;
 		}
 
-		return $message;
+		// Get configuration
+		$service = new Ai1wm_Service_Package( $this->options );
+		$config  = $service->import();
+
+		// Verify WordPress version
+		if ( version_compare( $config['WordPress']['Version'], $wp_version, '<=' ) ) {
+			return true;
+		} else {
+			throw new Ai1wm_Import_Exception(
+				sprintf(
+					_(
+						'You are trying to import data from WordPress v%1$s into WordPress v%2$s, while the process might work,' .
+						'we do not recommend this. You should update your WordPress to version %1$s or above and then import the file.' .
+						'If you still want to proceed, after making a backup, using the plugin,' .
+						'<button type="button" class="ai1wm-button-green-small" id="ai1wm-force-import" data-name="%3$s">CLICK HERE TO CONTINUE</button>'
+					),
+					$config['WordPress']['Version'],
+					$wp_version,
+					$this->options['import']['file']
+				)
+			);
+		}
+	}
+
+	/**
+	 * Should import database?
+	 *
+	 * @return boolean
+	 */
+	public function should_import_database() {
+		return is_file( StorageArea::getInstance()->getRootPath() . AI1WM_DATABASE_NAME );
+	}
+
+	/**
+	 * Should import media?
+	 *
+	 * @return boolean
+	 */
+	public function should_import_media() {
+		return is_dir( StorageArea::getInstance()->getRootPath() . AI1WM_MEDIA_NAME );
+	}
+
+	/**
+	 * Should import sites?
+	 *
+	 * @return boolean
+	 */
+	public function should_import_sites() {
+		return is_dir( StorageArea::getInstance()->getRootPath() . AI1WM_SITES_NAME );
+	}
+
+	/**
+	 * Should import themes?
+	 *
+	 * @return boolean
+	 */
+	public function should_import_themes() {
+		return is_dir( StorageArea::getInstance()->getRootPath() . AI1WM_THEMES_NAME );
+	}
+
+	/**
+	 * Should import plugins?
+	 *
+	 * @return boolean
+	 */
+	public function should_import_plugins() {
+		return is_dir( StorageArea::getInstance()->getRootPath() . AI1WM_PLUGINS_NAME );
 	}
 }

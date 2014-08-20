@@ -27,23 +27,20 @@ class Ai1wm_Export_Controller
 {
 	public static function index() {
 		try {
-			$storage       = new StorageArea;
-			$is_accessible = $storage->makeFile();
-			$storage->flush();
+			$is_accessible = StorageArea::getInstance()->getRootPath();
 		} catch ( Exception $e ) {
 			$is_accessible = false;
 		}
 
-		// Message
-		$message   = new Ai1wm_Message;
-		$is_closed = $message->is_closed( Ai1wm_Message::MESSAGE_INFO );
+		// Messages
+		$model    = new Ai1wm_Message;
+		$messages = $model->get_messages();
 
 		Ai1wm_Template::render(
 			'export/index',
 			array(
-				'list_plugins'  => get_plugins(),
+				'messages'      => $messages,
 				'is_accessible' => $is_accessible,
-				'is_closed'     => $is_closed,
 			)
 		);
 	}
@@ -55,36 +52,60 @@ class Ai1wm_Export_Controller
 
 		// Get options
 		if ( isset( $_POST['options'] ) && ( $options = $_POST['options'] ) ) {
-			$storage = new StorageArea;
 
-			// Export archive
-			$model = new Ai1wm_Export;
-			$file  = $model->export( $storage, $options );
+			// Log options
+			Ai1wm_Logger::debug( AI1WM_EXPORT_OPTIONS, $options );
+
+			// Export site
+			$model = new Ai1wm_Export( $options );
+			$file  = $model->export();
 
 			// Send the file to the user
 			header( 'Content-Description: File Transfer' );
 			header( 'Content-Type: application/octet-stream' );
-			header(
-				sprintf(
-					'Content-Disposition: attachment; filename=%s-%s.%s',
-					Ai1wm_Export::EXPORT_ARCHIVE_NAME,
-					time(),
-					'zip'
-				)
-			);
+			header( 'Content-Disposition: attachment; filename=' . self::filename() );
 			header( 'Content-Transfer-Encoding: binary' );
 			header( 'Expires: 0' );
 			header( 'Cache-Control: must-revalidate' );
 			header( 'Pragma: public' );
-			header( 'Content-Length: ' . filesize( $file->getAs( 'string' ) ) );
+			header( 'Content-Length: ' . $file->getSize() );
 
 			// Clear output buffering and read file content
-			if ( ob_get_length() > 0 ) {
-				@ob_end_clean();
+			while ( @ob_end_clean() );
+
+			// Load file content
+			$handle = fopen( $file->getName(), 'rb' );
+			while ( ! feof( $handle ) ) {
+				echo fread( $handle, 8192 );
 			}
-			readfile( $file->getAs( 'string' ) );
-			$storage->flush();
+			fclose( $handle );
+
+			// Flush storage
+			StorageArea::getInstance()->flush();
 			exit;
 		}
+	}
+
+	public static function filename() {
+		$url  = parse_url( home_url() );
+		$name = array();
+
+		// Add domain
+		if ( isset( $url['host'] ) ) {
+			$name[] = $url['host'];
+		}
+
+		// Add path
+		if ( isset( $url['path'] ) ) {
+			$name[] = $url['path'];
+		}
+
+		// Add year, month and day
+		$name[] = date('Ymd');
+
+		// Add hours, minutes and seconds
+		$name[] = date('His');
+
+		return sprintf( '%s.zip', implode( '-', $name ) );
 	}
 }

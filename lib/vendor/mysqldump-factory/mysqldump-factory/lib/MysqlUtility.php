@@ -2,7 +2,7 @@
 /* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
 /**
- * MysqlQueryAdapter class
+ * Utility class file
  *
  * PHP version 5
  *
@@ -34,7 +34,7 @@
  */
 
 /**
- * MysqlQueryAdapter class
+ * Utility class
  *
  * @category  Databases
  * @package   MysqlDumpFactory
@@ -45,65 +45,55 @@
  * @version   GIT: 1.9.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
-class MysqlQueryAdapter
+class MysqlUtility
 {
-    public function __construct($type)
-    {
-        $this->type = $type;
+    /**
+     * Find and replace input with pattern
+     *
+     * @param  string $input   Value
+     * @param  string $pattern Pattern
+     * @return string
+     */
+    public static function pregReplace($input, $pattern) {
+        // PHP doesn't garbage collect functions created by create_function()
+        static $callback = null;
+
+        if ($callback === null) {
+            $callback = create_function(
+                '$matches',
+                "return isset(\$matches[3]) ? 's:' .
+                    strlen(MysqlUtility::unescapeMysql(\$matches[3])) .
+                    ':\"' .
+                    MysqlUtility::unescapeQuotes(\$matches[3]) .
+                    '\";' : \$matches[0];
+                "
+            );
+        }
+
+        return preg_replace_callback($pattern, $callback, $input);
     }
 
-    public function set_names($encoding = 'utf8')
-    {
-        return "SET NAMES '$encoding'";
+    /**
+     * Unescape to avoid dump-text issues
+     *
+     * @param  string $input Text
+     * @return string
+     */
+    public static function unescapeMysql($input) {
+        return str_replace(
+            array('\\\\', '\\0', "\\n", "\\r", '\Z', "\'", '\"'),
+            array('\\', '\0', "\n", "\r", "\x1a", "'", '"'),
+            $input
+        );
     }
 
-    public function show_create_table($tableName)
-    {
-        return "SHOW CREATE TABLE `$tableName`";
-    }
-
-    public function drop_table($tableName)
-    {
-        return "DROP TABLE IF EXISTS `$tableName`";
-    }
-
-    public function show_tables($databaseName)
-    {
-        return "SELECT TABLE_NAME AS table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA = '$databaseName'";
-    }
-
-    public function show_views($databaseName)
-    {
-        return "SELECT VIEW_NAME AS view_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'VIEW' AND TABLE_SCHEMA='$databaseName'";
-    }
-
-    public function start_transaction()
-    {
-        return "SET GLOBAL TRANSACTION ISOLATION LEVEL REPEATABLE READ; START TRANSACTION";
-    }
-
-    public function commit_transaction()
-    {
-        return "SET GLOBAL TRANSACTION ISOLATION LEVEL REPEATABLE READ; START TRANSACTION";
-    }
-
-    public function lock_table($tableName)
-    {
-        return "LOCK TABLES `$tableName` READ LOCAL";
-    }
-
-    public function unlock_tables()
-    {
-        return "UNLOCK TABLES";
-    }
-
-    public function start_add_lock_table($tableName)
-    {
-        return "LOCK TABLES `$tableName` WRITE;\n";
-    }
-
-    public function end_add_lock_tables()
-    {
-        return "UNLOCK TABLES;\n";
+    /**
+     * Fix strange behaviour if you have escaped quotes in your replacement
+     *
+     * @param  string $input Text
+     * @return string
+     */
+    public static function unescapeQuotes($input) {
+        return str_replace('\"', '"', $input);
     }
 }

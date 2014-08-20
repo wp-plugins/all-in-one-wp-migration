@@ -90,6 +90,14 @@ require_once AI1WM_CONTROLLER_PATH .
 
 require_once AI1WM_MODEL_PATH .
 			DIRECTORY_SEPARATOR .
+			'class-ai1wm-maintenance.php';
+
+require_once AI1WM_MODEL_PATH .
+			DIRECTORY_SEPARATOR .
+			'class-ai1wm-logger.php';
+
+require_once AI1WM_MODEL_PATH .
+			DIRECTORY_SEPARATOR .
 			'class-ai1wm-template.php';
 
 require_once AI1WM_MODEL_PATH .
@@ -99,10 +107,6 @@ require_once AI1WM_MODEL_PATH .
 require_once AI1WM_MODEL_PATH .
 			DIRECTORY_SEPARATOR .
 			'class-ai1wm-import.php';
-
-require_once AI1WM_MODEL_PATH .
-			DIRECTORY_SEPARATOR .
-			'class-ai1wm-file.php';
 
 require_once AI1WM_MODEL_PATH .
 			DIRECTORY_SEPARATOR .
@@ -119,3 +123,39 @@ require_once AI1WM_MODEL_PATH .
 require_once AI1WM_MODEL_PATH .
 			DIRECTORY_SEPARATOR .
 			'class-ai1wm-message.php';
+
+require_once AI1WM_SERVICE_PATH .
+			DIRECTORY_SEPARATOR .
+			'class-ai1wm-service-interface.php';
+
+require_once AI1WM_SERVICE_PATH .
+			DIRECTORY_SEPARATOR .
+			'class-ai1wm-service-database.php';
+
+require_once AI1WM_SERVICE_PATH .
+			DIRECTORY_SEPARATOR .
+			'class-ai1wm-service-media.php';
+
+require_once AI1WM_SERVICE_PATH .
+			DIRECTORY_SEPARATOR .
+			'class-ai1wm-service-package.php';
+
+require_once AI1WM_SERVICE_PATH .
+			DIRECTORY_SEPARATOR .
+			'class-ai1wm-service-plugins.php';
+
+require_once AI1WM_SERVICE_PATH .
+			DIRECTORY_SEPARATOR .
+			'class-ai1wm-service-sites.php';
+
+require_once AI1WM_SERVICE_PATH .
+			DIRECTORY_SEPARATOR .
+			'class-ai1wm-service-themes.php';
+
+require_once AI1WM_EXCEPTION_PATH .
+			DIRECTORY_SEPARATOR .
+			'class-ai1wm-import-exception.php';
+
+require_once AI1WM_EXCEPTION_PATH .
+			DIRECTORY_SEPARATOR .
+			'class-ai1wm-export-exception.php';

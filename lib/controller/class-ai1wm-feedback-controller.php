@@ -26,6 +26,12 @@
 class Ai1wm_Feedback_Controller
 {
 	public static function leave_feedback() {
+		// Set Type
+		$type = null;
+		if ( isset( $_POST['type'] ) ) {
+			$type = trim( $_POST['type'] );
+		}
+
 		// Set E-mail
 		$email = null;
 		if ( isset( $_POST['email'] ) ) {
@@ -46,7 +52,7 @@ class Ai1wm_Feedback_Controller
 
 		// Send Feedback
 		$model  = new Ai1wm_Feedback;
-		$result = $model->leave_feedback( $email, $message, $terms );
+		$result = $model->leave_feedback( $type, $email, $message, $terms );
 
 		echo json_encode( $result );
 		exit;
