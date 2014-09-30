@@ -2,7 +2,7 @@
 Contributors: yani.iliev, bangelov, mirkov
 Tags: db migration, migration, wordpress migration, db backup, db restore, website backup, website restore, website migration, website deploy, wordpress deploy, db backup, database export, database serialization, database find replace
 Requires at least: 3.3
-Tested up to: 3.9.2
+Tested up to: 4.0
 Stable tag: 2.0.1
 License: GPLv2 or later
 
