@@ -48,6 +48,11 @@ class Ai1wm_Import_Controller
 		set_error_handler( array( 'Ai1wm_Error', 'error_handler' ) );
 		set_exception_handler( array( 'Ai1wm_Error', 'exception_handler' ) );
 
+		// Verify capabilities
+		if ( ! current_user_can( 'import' ) ) {
+			wp_die( 'Unable to process the request.' );
+		}
+
 		$messages = array();
 
 		if ( isset( $_FILES['upload-file'] ) || isset( $_REQUEST['force'] ) ) {
