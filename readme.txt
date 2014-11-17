@@ -1,5 +1,5 @@
 === All-in-One WP Migration ===
-Contributors: yani.iliev, bangelov, mirkov
+Contributors: yani.iliev, bangelov, pimjitsawang
 Tags: db migration, migration, wordpress migration, db backup, db restore, website backup, website restore, website migration, website deploy, wordpress deploy, db backup, database export, database serialization, database find replace
 Requires at least: 3.3
 Tested up to: 4.0
@@ -15,8 +15,8 @@ You can apply unlimited find and replace operations on your database and the plu
 
 All in One WP Plugin is the first plugin to offer true mobile experience on WordPress versions 3.3 and up.
 
-= Multisite compatible =
-* The plugin menu is available for the network administrator only `wp-admin/network/admin.php?page=site-migration-export`
+= Not yet Multisite compatible =
+* Support for multisites is comming soon
 
 = Works on Windows OS and IIS =
 * Tested the plugin on Windows 7 and Windows Server 2012 with the default available IIS
