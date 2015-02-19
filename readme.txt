@@ -40,7 +40,7 @@ All in One WP Plugin is the first plugin to offer true mobile experience on Word
 * Your export files are archived using the fast ZipArchive pecl extension. If your server doesn't have it, we fall back to PclZIP which is included in WordPress
 
 = WordPress v3.3 Support =
-* We tested every WordPress version from `3.3` up to `3.9.2`
+* We tested every WordPress version from `3.3` up to `4.1`
 
 * [Get free help from us here](https://servmask.com/#contactModal)
 * [Report a bug or request a feature](https://servmask.com/#contactModal)
