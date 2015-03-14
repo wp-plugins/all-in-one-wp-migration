@@ -71,7 +71,7 @@ class Ai1wm_Main_Controller
 			add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 		}
 		add_action( 'admin_head', array( $this, 'admin_head' ) );
-		add_action( 'init', array( $this, 'router' ) );
+		add_action( 'admin_init', array( $this, 'router' ) );
 		add_action( 'wp_ajax_leave_feedback', 'Ai1wm_Feedback_Controller::leave_feedback' );
 		add_action( 'wp_ajax_report_problem', 'Ai1wm_Report_Controller::report_problem' );
 		add_action( 'wp_ajax_import', 'Ai1wm_Import_Controller::import' );
@@ -316,15 +316,15 @@ class Ai1wm_Main_Controller
 		if ( isset( $_POST['options']['action'] ) && ( $action = $_POST['options']['action'] ) ) {
 			switch ( $action ) {
 				case 'export':
-					Ai1wm_Export_Controller::export();
+					if ( current_user_can( 'export' ) ) {
+						Ai1wm_Export_Controller::export();
+					}
 					break;
 
 				case 'staging':
-					Ai1wm_Staging_Controller::deploy();
 					break;
 
 				case 'production':
-					Ai1wm_Production_Controller::deploy();
 					break;
 			}
 		}
