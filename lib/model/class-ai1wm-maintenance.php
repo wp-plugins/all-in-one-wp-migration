@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (C) 2014 ServMask Inc.
  *
@@ -22,16 +23,15 @@
  * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
+class Ai1wm_Maintenance {
 
-class Ai1wm_Maintenance
-{
 	/**
 	 * Enable WordPress maintenance mode
 	 *
 	 * @return boolean
 	 */
 	public static function enable() {
-		return update_option( AI1WM_MAINTENANCE_MODE, true );
+		return update_site_option( AI1WM_MAINTENANCE_MODE, true );
 	}
 
 	/**
@@ -40,11 +40,11 @@ class Ai1wm_Maintenance
 	 * @return boolean
 	 */
 	public static function disable() {
-		update_option( AI1WM_MAINTENANCE_MODE, false );
+		return update_site_option( AI1WM_MAINTENANCE_MODE, false );
 	}
 
 	public static function active() {
-		return get_option( AI1WM_MAINTENANCE_MODE );
+		return get_site_option( AI1WM_MAINTENANCE_MODE );
 	}
 
 	/**
@@ -54,15 +54,14 @@ class Ai1wm_Maintenance
 	 */
 	public static function display() {
 		if ( self::active() ) {
-			$title = _( 'Maintenance Mode' );
+			$title = __( 'Maintenance Mode', AI1WM_PLUGIN_NAME );
 			$body  = sprintf(
 				'<h1>%s</h1><p>%s<br /><strong>%s%s</strong></p>',
-				_( 'Website Under Maintenance' ),
-				_( 'Hi, our Website is currently undergoing scheduled maintenance' ),
-				_( 'Please check back very soon. ' ),
-				_( 'Sorry for the inconvenience!' )
+				__( 'Website Under Maintenance', AI1WM_PLUGIN_NAME ),
+				__( 'Hi, our Website is currently undergoing scheduled maintenance', AI1WM_PLUGIN_NAME ),
+				__( 'Please check back very soon. ', AI1WM_PLUGIN_NAME ),
+				__( 'Sorry for the inconvenience!', AI1WM_PLUGIN_NAME )
 			);
-
 			wp_die( $body, $title );
 		}
 	}

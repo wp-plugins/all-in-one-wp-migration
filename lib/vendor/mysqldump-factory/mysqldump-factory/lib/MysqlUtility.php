@@ -29,7 +29,7 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.9.0
+ * @version   GIT: 2.2.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 
@@ -42,58 +42,58 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.9.0
+ * @version   GIT: 2.2.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 class MysqlUtility
 {
-    /**
-     * Find and replace input with pattern
-     *
-     * @param  string $input   Value
-     * @param  string $pattern Pattern
-     * @return string
-     */
-    public static function pregReplace($input, $pattern) {
-        // PHP doesn't garbage collect functions created by create_function()
-        static $callback = null;
+	/**
+	 * Find and replace input with pattern
+	 *
+	 * @param  string $input   Value
+	 * @param  string $pattern Pattern
+	 * @return string
+	 */
+	public static function pregReplace($input, $pattern) {
+		// PHP doesn't garbage collect functions created by create_function()
+		static $callback = null;
 
-        if ($callback === null) {
-            $callback = create_function(
-                '$matches',
-                "return isset(\$matches[3]) ? 's:' .
-                    strlen(MysqlUtility::unescapeMysql(\$matches[3])) .
-                    ':\"' .
-                    MysqlUtility::unescapeQuotes(\$matches[3]) .
-                    '\";' : \$matches[0];
-                "
-            );
-        }
+		if ($callback === null) {
+			$callback = create_function(
+				'$matches',
+				"return isset(\$matches[3]) ? 's:' .
+					strlen(MysqlUtility::unescapeMysql(\$matches[3])) .
+					':\"' .
+					MysqlUtility::unescapeQuotes(\$matches[3]) .
+					'\";' : \$matches[0];
+				"
+			);
+		}
 
-        return preg_replace_callback($pattern, $callback, $input);
-    }
+		return preg_replace_callback($pattern, $callback, $input);
+	}
 
-    /**
-     * Unescape to avoid dump-text issues
-     *
-     * @param  string $input Text
-     * @return string
-     */
-    public static function unescapeMysql($input) {
-        return str_replace(
-            array('\\\\', '\\0', "\\n", "\\r", '\Z', "\'", '\"'),
-            array('\\', '\0', "\n", "\r", "\x1a", "'", '"'),
-            $input
-        );
-    }
+	/**
+	 * Unescape to avoid dump-text issues
+	 *
+	 * @param  string $input Text
+	 * @return string
+	 */
+	public static function unescapeMysql($input) {
+		return str_replace(
+			array('\\\\', '\\0', "\\n", "\\r", '\Z', "\'", '\"'),
+			array('\\', '\0', "\n", "\r", "\x1a", "'", '"'),
+			$input
+		);
+	}
 
-    /**
-     * Fix strange behaviour if you have escaped quotes in your replacement
-     *
-     * @param  string $input Text
-     * @return string
-     */
-    public static function unescapeQuotes($input) {
-        return str_replace('\"', '"', $input);
-    }
+	/**
+	 * Fix strange behaviour if you have escaped quotes in your replacement
+	 *
+	 * @param  string $input Text
+	 * @return string
+	 */
+	public static function unescapeQuotes($input) {
+		return str_replace('\"', '"', $input);
+	}
 }

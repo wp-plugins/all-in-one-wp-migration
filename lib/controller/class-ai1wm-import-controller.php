@@ -22,173 +22,125 @@
  * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
+class Ai1wm_Import_Controller {
 
-class Ai1wm_Import_Controller
-{
 	public static function index() {
+		Ai1wm_Template::render( 'import/index' );
+	}
+
+	public static function import( array $args = array() ) {
 		try {
-			$is_accessible = StorageArea::getInstance()->getRootPath();
-		} catch ( Exception $e ) {
-			$is_accessible = false;
-		}
 
-		Ai1wm_Template::render(
-			'import/index',
-			array(
-				'is_accessible' => $is_accessible,
-				'max_file_size' => apply_filters( 'ai1wm_max_file_size', AI1WM_MAX_FILE_SIZE ),
-			)
-		);
-	}
-
-	public static function import() {
-		global $wp_rewrite;
-
-		// Set default handlers
-		set_error_handler( array( 'Ai1wm_Error', 'error_handler' ) );
-		set_exception_handler( array( 'Ai1wm_Error', 'exception_handler' ) );
-
-		// Verify capabilities
-		if ( ! current_user_can( 'import' ) ) {
-			wp_die( 'Unable to process the request.' );
-		}
-
-		$messages = array();
-
-		if ( isset( $_FILES['upload-file'] ) || isset( $_REQUEST['force'] ) ) {
-			$options = array(
-				'chunk'   => 0,
-				'chunks'  => 1,
-				'import'  => array(
-					'file'  => null,
-					'force' => null,
-				),
-			);
-
-			// Ordinal number of the current chunk in the set (starts with zero)
-			if ( isset( $_REQUEST['chunk'] ) ) {
-				$options['chunk'] = intval( $_REQUEST['chunk'] );
+			// Set arguments
+			if ( empty( $args ) ) {
+				$args = $_REQUEST;
 			}
 
-			// Total number of chunks in the file
-			if ( isset( $_REQUEST['chunks'] ) ) {
-				$options['chunks'] = intval( $_REQUEST['chunks'] );
+			// Set storage path
+			if ( empty( $args['storage'] ) ) {
+				$args['storage'] = uniqid();
 			}
 
-			// Import file
-			if ( isset( $_REQUEST['name'] ) ) {
-				$options['import']['file'] = $_REQUEST['name'];
+			// Set secret key
+			$secret_key = null;
+			if ( isset( $args['secret_key'] ) ) {
+				$secret_key = $args['secret_key'];
 			}
 
-			// Force file
-			if ( isset( $_REQUEST['force'] ) ) {
-				$options['import']['force'] = $_REQUEST['force'];
-			}
-
-			try {
-				// Upload file
-				if ( self::upload( $options ) ) {
-
-					// Import site
-					$model = new Ai1wm_Import( $options );
-					if ( $model->import() ) {
-						$messages[] = array(
-							'type' => 'success',
-							'text' => sprintf(
-								_(
-									'Your data has been imported successfuly!<br />' .
-									'You need to perform two more steps:<br />' .
-									'<strong>1. You must save your permalinks structure twice. <a class="ai1wm-no-underline" href="%s#submit" target="_blank">Permalinks Settings</a></strong> (opens a new window)<br />' .
-									'<strong>2. <a class="ai1wm-no-underline" href="https://wordpress.org/support/view/plugin-reviews/all-in-one-wp-migration?rate=5#postform" target="_blank">Review the plugin</a>.</strong> (opens a new window)'
-								),
-								admin_url( 'options-permalink.php' )
-							),
-						);
-
-						// Flush storage
-						StorageArea::getInstance()->flush();
-					}
-				}
-			} catch ( Exception $e ) {
-				$messages[] = array(
-					'type' => 'error',
-					'text' => $e->getMessage(),
-				);
-			}
-		}
-
-		// Regenerate permalinks
-		$wp_rewrite->flush_rules( true );
-
-		// Display messages
-		echo json_encode( $messages );
-		exit;
-	}
-
-	public static function upload( $options ) {
-		$storage = StorageArea::getInstance();
-
-		// Partial upload file
-		$partial_file = $storage->makeFile( $options['import']['file'] );
-
-		// Upload file
-		if ( isset( $_FILES['upload-file'] ) ) {
-
-			// Has any upload error?
-			if ( empty( $_FILES['upload-file']['error'] ) ) {
-
-				// Flush storage
-				if ( $options['chunk'] === 0 ) {
-					$storage->flush();
-				}
-
-				// Open partial file
-				$out = fopen( $partial_file->getName(), $options['chunk'] == 0 ? 'wb' : 'ab' );
-				if ( $out ) {
-					// Read binary input stream and append it to temp file
-					$in = fopen( $_FILES['upload-file']['tmp_name'], 'rb' );
-					if ( $in ) {
-						while ( $buff = fread( $in, 4096 ) ) {
-							fwrite( $out, $buff );
-						}
-					}
-
-					fclose( $in );
-					fclose( $out );
-
-					// Remove temporary uploaded file
-					unlink( $_FILES['upload-file']['tmp_name'] );
-				} else {
-					throw new Ai1wm_Import_Exception(
-						sprintf(
-							_(
-								'Site could not be imported!<br />' .
-								'Please make sure that storage directory <strong>%s</strong> has read and write permissions.'
-							),
-							AI1WM_STORAGE_PATH
-						)
-					);
-
-					// Flush storage
-					$storage->flush();
-				}
-			} else {
+			// Verify secret key by using the value in the database, not in cache
+			if ( $secret_key !== get_site_option( AI1WM_SECRET_KEY, false, false ) ) {
 				throw new Ai1wm_Import_Exception(
 					sprintf(
-						_(
-							'Site could not be imported!<br />' .
-							'Please contact ServMask Support and report the following error code: %d'
-						),
-						$_FILES['upload-file']['error']
+						__( 'Unable to authenticate your request with secret_key = <strong>"%s"</strong>', AI1WM_PLUGIN_NAME ),
+						$secret_key
 					)
 				);
 			}
+
+			// Set provider
+			$provider = null;
+			if ( isset( $args['provider'] ) ) {
+				$provider = $args['provider'];
+			}
+
+			$class = "Ai1wm_Import_$provider";
+			if ( ! class_exists( $class ) ) {
+				throw new Ai1wm_Import_Exception(
+					sprintf(
+						__( 'Unknown provider: <strong>"%s"</strong>', AI1WM_PLUGIN_NAME ),
+						$class
+					)
+				);
+			}
+
+			// Set method
+			$method = null;
+			if ( isset( $args['method'] ) ) {
+				$method = $args['method'];
+			}
+
+			// Initialize provider
+			$provider = new $class( $args );
+			if ( ! method_exists( $provider, $method ) ) {
+				throw new Ai1wm_Import_Exception(
+					sprintf(
+						__( 'Unknown method: <strong>"%s"</strong>', AI1WM_PLUGIN_NAME ),
+						$method
+					)
+				);
+			}
+
+			// Invoke method
+			echo json_encode( $provider->$method() );
+			exit;
+		} catch ( Exception $e ) {
+			// Log the error
+			Ai1wm_Log::error( 'Exception while importing: ' . $e->getMessage() );
+
+			// Set the status to failed
+			Ai1wm_Status::set(
+				array(
+					'type'    => 'error',
+					'title'   => __( 'Unable to import', AI1WM_PLUGIN_NAME ),
+					'message' => $e->getMessage(),
+				)
+			);
+
+			// End the process
+			wp_die( 'Exception while importing: ' . $e->getMessage() );
+		}
+	}
+
+	public static function buttons() {
+		return array(
+			apply_filters( 'ai1wm_import_file', Ai1wm_Template::get_content( 'import/button-file' ) ),
+			apply_filters( 'ai1wm_import_dropbox', Ai1wm_Template::get_content( 'import/button-dropbox' ) ),
+			apply_filters( 'ai1wm_import_gdrive', Ai1wm_Template::get_content( 'import/button-gdrive' ) ),
+			apply_filters( 'ai1wm_import_s3', Ai1wm_Template::get_content( 'import/button-s3' ) ),
+			apply_filters( 'ai1wm_import_ftp', Ai1wm_Template::get_content( 'import/button-ftp' ) ),
+		);
+	}
+
+	public static function max_chunk_size() {
+		return min(
+			self::parse_size( ini_get( 'post_max_size' ) ),
+			self::parse_size( ini_get( 'upload_max_filesize' ) ),
+			self::parse_size( AI1WM_MAX_CHUNK_SIZE )
+		);
+	}
+
+	protected static function parse_size( $size ) {
+		$suffixes = array(
+			''  => 1,
+			'k' => 1000,
+			'm' => 1000000,
+			'g' => 1000000000,
+		);
+
+		if ( preg_match( '/([0-9]+)\s*(k|m|g)?(b?(ytes?)?)/i', $size, $match ) ) {
+			return $match[1] * $suffixes[strtolower( $match[2] )];
 		}
 
-		// Upload completed?
-		if ( ! $options['chunks'] || $options['chunk'] == $options['chunks'] - 1 ) {
-			return $partial_file;
-		}
-		exit;
+		return AI1WM_MAX_CHUNK_SIZE;
 	}
 }

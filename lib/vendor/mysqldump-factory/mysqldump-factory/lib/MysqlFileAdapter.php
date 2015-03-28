@@ -29,7 +29,7 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.9.0
+ * @version   GIT: 2.2.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 
@@ -42,33 +42,33 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.9.0
+ * @version   GIT: 2.2.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 class MysqlFileAdapter
 {
-    protected $fileHandler = null;
+	protected $fileHandler = null;
 
-    public function open($fileName)
-    {
-        $this->fileHandler = fopen($fileName, 'wb');
-        if (false === $this->fileHandler) {
-            throw new Exception('Output file is not writable', 2);
-        }
-    }
+	public function open($fileName)
+	{
+		$this->fileHandler = fopen($fileName, 'wb');
+		if (false === $this->fileHandler) {
+			throw new Exception('Output file is not writable', 2);
+		}
+	}
 
-    public function write($str)
-    {
-        $bytesWritten = 0;
-        if (false === ($bytesWritten = fwrite($this->fileHandler, $str))) {
-            throw new Exception('Writting to file failed! Probably, there is no more free space left?', 4);
-        }
+	public function write($str)
+	{
+		$bytesWritten = 0;
+		if (false === ($bytesWritten = fwrite($this->fileHandler, $str))) {
+			throw new Exception('Writting to file failed! Probably, there is no more free space left?', 4);
+		}
 
-        return $bytesWritten;
-    }
+		return $bytesWritten;
+	}
 
-    public function close()
-    {
-        return fclose($this->fileHandler);
-    }
+	public function close()
+	{
+		return fclose($this->fileHandler);
+	}
 }

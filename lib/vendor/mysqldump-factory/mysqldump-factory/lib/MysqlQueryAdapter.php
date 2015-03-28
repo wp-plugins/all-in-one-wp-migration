@@ -29,7 +29,7 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.9.0
+ * @version   GIT: 2.2.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 
@@ -42,68 +42,81 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.9.0
+ * @version   GIT: 2.2.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 class MysqlQueryAdapter
 {
-    public function __construct($type)
-    {
-        $this->type = $type;
-    }
+	public function __construct($type)
+	{
+		$this->type = $type;
+	}
 
-    public function set_names($encoding = 'utf8')
-    {
-        return "SET NAMES '$encoding'";
-    }
+	public function set_names($encoding = 'utf8')
+	{
+		return "SET NAMES '$encoding'";
+	}
 
-    public function show_create_table($tableName)
-    {
-        return "SHOW CREATE TABLE `$tableName`";
-    }
+	public function set_foreign_key($enabled = 0)
+	{
+		return "SET FOREIGN_KEY_CHECKS = $enabled";
+	}
 
-    public function drop_table($tableName)
-    {
-        return "DROP TABLE IF EXISTS `$tableName`";
-    }
+	public function show_create_table($tableName)
+	{
+		return "SHOW CREATE TABLE `$tableName`";
+	}
 
-    public function show_tables($databaseName)
-    {
-        return "SELECT TABLE_NAME AS table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA = '$databaseName'";
-    }
+	public function drop_table($tableName)
+	{
+		return "DROP TABLE IF EXISTS `$tableName`";
+	}
 
-    public function show_views($databaseName)
-    {
-        return "SELECT VIEW_NAME AS view_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'VIEW' AND TABLE_SCHEMA='$databaseName'";
-    }
+	public function show_tables($databaseName)
+	{
+		return "SHOW TABLES FROM `$databaseName`";
+	}
 
-    public function start_transaction()
-    {
-        return "SET GLOBAL TRANSACTION ISOLATION LEVEL REPEATABLE READ; START TRANSACTION";
-    }
+	public function show_views($databaseName) {
+		return "SHOW FULL TABLES FROM `$databaseName` WHERE TABLE_TYPE = 'VIEW'";
+	}
 
-    public function commit_transaction()
-    {
-        return "SET GLOBAL TRANSACTION ISOLATION LEVEL REPEATABLE READ; START TRANSACTION";
-    }
+	public function show_tables_information_schema($databaseName) {
+		return "SELECT TABLE_NAME AS table_name FROM `INFORMATION_SCHEMA`.`TABLES` WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA = '$databaseName'";
+	}
 
-    public function lock_table($tableName)
-    {
-        return "LOCK TABLES `$tableName` READ LOCAL";
-    }
+	public function show_views_information_schema($databaseName)
+	{
+		return "SELECT VIEW_NAME AS view_name FROM `INFORMATION_SCHEMA`.`TABLES` WHERE TABLE_TYPE = 'VIEW' AND TABLE_SCHEMA = '$databaseName'";
+	}
 
-    public function unlock_tables()
-    {
-        return "UNLOCK TABLES";
-    }
+	public function start_transaction()
+	{
+		return "START TRANSACTION";
+	}
 
-    public function start_add_lock_table($tableName)
-    {
-        return "LOCK TABLES `$tableName` WRITE;\n";
-    }
+	public function commit_transaction()
+	{
+		return "COMMIT";
+	}
 
-    public function end_add_lock_tables()
-    {
-        return "UNLOCK TABLES;\n";
-    }
+	public function rollback_transaction()
+	{
+		return "ROLLBACK";
+	}
+
+	public function lock_table_read($tableName)
+	{
+		return "LOCK TABLES `$tableName` READ";
+	}
+
+	public function lock_table_write($tableName)
+	{
+		return "LOCK TABLES `$tableName` WRITE";
+	}
+
+	public function unlock_tables()
+	{
+		return "UNLOCK TABLES";
+	}
 }

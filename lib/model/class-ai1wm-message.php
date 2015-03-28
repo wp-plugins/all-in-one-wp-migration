@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (C) 2014 ServMask Inc.
  *
@@ -22,31 +23,31 @@
  * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
+class Ai1wm_Message {
 
-class Ai1wm_Message
-{
 	protected $messages = array();
 
 	public function __construct() {
 		$this->messages = array(
-			'SiteURLDepricated' => _(
+			'SiteURLDepricated' => __(
 				'Since version 1.8.0, Site URL is deprecated.' .
-				'Upon import, the plugin auto-detects Site URL and makes necessary changes to the database.'
+				'Upon import, the plugin auto-detects Site URL and makes necessary changes to the database.',
+				AI1WM_PLUGIN_NAME
 			),
 		);
 
 		// Prepare messages
 		$msgs = array();
-		$keys = get_option( AI1WM_MESSAGES );
+		$keys = get_site_option( AI1WM_MESSAGES );
 		foreach ( array_keys( $this->messages ) as $key ) {
-			if ( ! isset( $keys[$key] ) ) {
-				$msgs[$key] = true;
+			if ( ! isset( $keys[ $key ] ) ) {
+				$msgs[ $key ] = true;
 			}
 		}
 
 		// Update messages
 		if ( $msgs ) {
-			update_option( AI1WM_MESSAGES, $msgs );
+			update_site_option( AI1WM_MESSAGES, $msgs );
 		}
 	}
 
@@ -57,10 +58,10 @@ class Ai1wm_Message
 	 */
 	public function get_messages() {
 		$msgs = array();
-		$keys = get_option( AI1WM_MESSAGES );
+		$keys = get_site_option( AI1WM_MESSAGES );
 		foreach ( $keys as $key => $active ) {
-			if ( isset( $this->messages[$key] ) && $active ) {
-				$msgs[$key] = $this->messages[$key];
+			if ( isset( $this->messages[ $key ] ) && $active ) {
+				$msgs[ $key ] = $this->messages[ $key ];
 			}
 		}
 
@@ -70,19 +71,19 @@ class Ai1wm_Message
 	/**
 	 * Close message by key
 	 *
-	 * @param  string  $key Message key
+	 * @param  string $key Message key
+	 *
 	 * @return array
 	 */
 	public function close_message( $key ) {
 		$errors = array();
-
-		$keys = get_option( AI1WM_MESSAGES );
-		if ( isset( $keys[$key] ) ) {
+		$keys = get_site_option( AI1WM_MESSAGES );
+		if ( isset( $keys[ $key ] ) ) {
 			// Deactivate message from the list
-			$keys[$key] = false;
+			$keys[ $key ] = false;
 
 			// Update keys
-			if ( ! update_option( AI1WM_MESSAGES, $keys ) ) {
+			if ( ! update_site_option( AI1WM_MESSAGES, $keys ) ) {
 				$errors[] = 'Something went wrong! Please try again later.';
 			}
 		} else {
