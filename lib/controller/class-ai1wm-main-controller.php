@@ -39,6 +39,7 @@ class Ai1wm_Main_Controller {
 			array( $this, 'activation_hook' )
 		);
 
+
 		// Activate hooks
 		$this->activate_actions()
 			 ->activate_filters()
@@ -71,8 +72,10 @@ class Ai1wm_Main_Controller {
 	 *
 	 * @return boolean
 	 */
-	private function generate_secret_key() {
-		return update_site_option( AI1WM_SECRET_KEY, wp_generate_password( 12, false ) );
+	public function generate_secret_key() {
+		if ( false === get_site_option( AI1WM_SECRET_KEY, false, false ) ) {
+			return update_site_option( AI1WM_SECRET_KEY, wp_generate_password( 12, false ) );
+		}
 	}
 
 	/**
@@ -96,6 +99,7 @@ class Ai1wm_Main_Controller {
 		add_action( 'admin_init', array( $this, 'http_authentication' ) );
 		add_action( 'admin_head', array( $this, 'admin_head' ) );
 		add_action( 'get_header', array( $this, 'get_header' ) );
+		add_action( 'init',       array( $this, 'generate_secret_key' ) );
 
 		return $this;
 	}
