@@ -29,7 +29,7 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.9.0
+ * @version   GIT: 2.2.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 
@@ -42,28 +42,28 @@
  * @author    Bobby Angelov <bobby@servmask.com>
  * @copyright 2014 Yani Iliev, Bobby Angelov
  * @license   https://raw.github.com/yani-/mysqldump-factory/master/LICENSE The MIT License (MIT)
- * @version   GIT: 1.9.0
+ * @version   GIT: 2.2.0
  * @link      https://github.com/yani-/mysqldump-factory/
  */
 class MysqlDumpFactory
 {
-    public static function makeMysqlDump($hostname = 'localhost', $username = '', $password = '', $database = '', $pdo = false)
-    {
-        // is PDO class available?
-        if ($pdo) {
-            require_once
-                dirname(__FILE__) .
-                DIRECTORY_SEPARATOR .
-                'MysqlDumpPDO.php';
+	public static function makeMysqlDump($hostname = 'localhost', $username = '', $password = '', $database = '', $pdo = false)
+	{
+		// is PDO class available?
+		if ($pdo) {
+			require_once
+				dirname(__FILE__) .
+				DIRECTORY_SEPARATOR .
+				'MysqlDumpPDO.php';
 
-            return new MysqlDumpPDO($hostname, $username, $password, $database);
-        } else {
-            require_once
-                dirname(__FILE__) .
-                DIRECTORY_SEPARATOR .
-                'MysqlDumpSQL.php';
+			return new MysqlDumpPDO($hostname, $username, $password, $database);
+		} else {
+			require_once
+				dirname(__FILE__) .
+				DIRECTORY_SEPARATOR .
+				'MysqlDumpSQL.php';
 
-            return new MysqlDumpSQL($hostname, $username, $password, $database);
-        }
-    }
+			return new MysqlDumpSQL($hostname, $username, $password, $database);
+		}
+	}
 }

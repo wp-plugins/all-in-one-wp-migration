@@ -23,25 +23,52 @@
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 
+$local = array(
+	'ИЛИЕВ™',
+	'dev.servmask.com',
+	'Borislav-MacBook-Pro.local',
+);
+
+if ( function_exists( 'gethostname' ) && in_array( gethostname(), $local ) ) {
+	define( 'AI1WM_DEBUG', true );
+} else {
+	define( 'AI1WM_DEBUG', false );
+}
+
 // ==================
 // = Plugin Version =
 // ==================
-define( 'AI1WM_VERSION', '2.0.5' );
+define( 'AI1WM_VERSION', '3.0.1' );
 
 // ===============
 // = Plugin Name =
 // ===============
 define( 'AI1WM_PLUGIN_NAME', 'all-in-one-wp-migration' );
 
-// ===============
-// = Storage Index =
-// ===============
-define( 'AI1WM_STORAGE_INDEX', 'index.php' );
+// =================
+// = Directory Index =
+// =================
+define( 'AI1WM_DIRECTORY_INDEX', 'index.php' );
+
+// ================
+// = Storage Path =
+// ================
+define( 'AI1WM_STORAGE_PATH', AI1WM_PATH . DIRECTORY_SEPARATOR . 'storage' );
+
+// ==================
+// = Error Log Path =
+// ==================
+define( 'AI1WM_LOG_FILE', AI1WM_STORAGE_PATH . DIRECTORY_SEPARATOR . 'error.log' );
 
 // ===============
-// = Storage Path =
+// = Status Path =
 // ===============
-define( 'AI1WM_STORAGE_PATH', AI1WM_PATH . DIRECTORY_SEPARATOR . 'storage' );
+define( 'AI1WM_STATUS_FILE', AI1WM_STORAGE_PATH . DIRECTORY_SEPARATOR . 'status.php' );
+
+// ================
+// = Backups Path =
+// ================
+define( 'AI1WM_BACKUPS_PATH', AI1WM_PATH . DIRECTORY_SEPARATOR . 'backups' );
 
 // ============
 // = Lib Path =
@@ -58,15 +85,20 @@ define( 'AI1WM_CONTROLLER_PATH', AI1WM_LIB_PATH . DIRECTORY_SEPARATOR . 'control
 // ==============
 define( 'AI1WM_MODEL_PATH', AI1WM_LIB_PATH . DIRECTORY_SEPARATOR . 'model' );
 
-// ==============
+// ================
 // = Service Path =
-// ==============
+// ================
 define( 'AI1WM_SERVICE_PATH', AI1WM_MODEL_PATH . DIRECTORY_SEPARATOR . 'service' );
 
 // =============
 // = View Path =
 // =============
-define( 'BANDAR_TEMPLATES_PATH', AI1WM_LIB_PATH . DIRECTORY_SEPARATOR . 'view' );
+define( 'AI1WM_TEMPLATES_PATH', AI1WM_LIB_PATH . DIRECTORY_SEPARATOR . 'view' );
+
+// ===================
+// = Set Bandar Path =
+// ===================
+define( 'BANDAR_TEMPLATES_PATH', AI1WM_TEMPLATES_PATH );
 
 // ==================
 // = Exception Path =
@@ -78,95 +110,105 @@ define( 'AI1WM_EXCEPTION_PATH', AI1WM_LIB_PATH . DIRECTORY_SEPARATOR . 'exceptio
 // ===============
 define( 'AI1WM_VENDOR_PATH', AI1WM_LIB_PATH . DIRECTORY_SEPARATOR . 'vendor' );
 
-// ==============
+// =========================
 // = ServMask Feedback Url =
-// ==============
+// =========================
 define( 'AI1WM_FEEDBACK_URL', 'https://servmask.com/ai1wm/feedback/create' );
 
-// ==============
+// =======================
 // = ServMask Report Url =
-// ==============
+// =======================
 define( 'AI1WM_REPORT_URL', 'https://servmask.com/ai1wm/report/create' );
 
-// ==============
+// ==============================
+// = ServMask Archive Tools Url =
+// ==============================
+define( 'AI1WM_ARCHIVE_TOOLS_URL', 'https://servmask.com/archive/tools' );
+
+// =========================
 // = ServMask Table Prefix =
-// ==============
+// =========================
 define( 'AI1WM_TABLE_PREFIX', 'SERVMASK_PREFIX_' );
 
-// ==============
+// =========================
 // = Archive Database Name =
-// ==============
+// =========================
 define( 'AI1WM_DATABASE_NAME', 'database.sql' );
 
-// ==============
-// = Archive Media Name =
-// ==============
-define( 'AI1WM_MEDIA_NAME', 'media' );
-
-// ==============
-// = Archive Sites Name =
-// ==============
-define( 'AI1WM_SITES_NAME', 'sites' );
-
-// ==============
-// = Archive Blogs Name =
-// ==============
-define( 'AI1WM_BLOGS_NAME', 'blogs.dir' );
-
-// ==============
-// = Archive Themes Name =
-// ==============
-define( 'AI1WM_THEMES_NAME', 'themes' );
-
-// ==============
-// = Archive Plugins Name =
-// ==============
-define( 'AI1WM_PLUGINS_NAME', 'plugins' );
-
-// ==============
+// ========================
 // = Archive Package Name =
-// ==============
+// ========================
 define( 'AI1WM_PACKAGE_NAME', 'package.json' );
 
-// ==============
+// ========================
+// = Archive Status Name  =
+// ========================
+define( 'AI1WM_STATUS_NAME', 'status.php' );
+
+// ========================
+// = Archive FileMap Name =
+// ========================
+define( 'AI1WM_FILEMAP_NAME', 'filemap.list' );
+
+// ======================
 // = Export Options Key =
-// ==============
+// ======================
 define( 'AI1WM_EXPORT_OPTIONS', 'ai1wm_export_options' );
 
-// ==============
+// =====================
 // = Error Handler Key =
-// ==============
+// =====================
 define( 'AI1WM_ERROR_HANDLER', 'ai1wm_error_handler' );
 
-// ==============
+// =========================
 // = Exception Handler Key =
-// ==============
+// =========================
 define( 'AI1WM_EXCEPTION_HANDLER', 'ai1wm_exception_handler' );
 
-// ==============
+// ========================
 // = Maintenance Mode Key =
-// ==============
+// ========================
 define( 'AI1WM_MAINTENANCE_MODE', 'ai1wm_maintenance_mode' );
 
 // ==============
-// = Messages Key =
+// = Secret Key =
 // ==============
+define( 'AI1WM_SECRET_KEY', 'ai1wm_secret_key' );
+
+// =============
+// = Auth User =
+// =============
+define( 'AI1WM_AUTH_USER', 'ai1wm_auth_user' );
+
+// =================
+// = Auth Password =
+// =================
+define( 'AI1WM_AUTH_PASSWORD', 'ai1wm_auth_password' );
+
+// ================
+// = Messages Key =
+// ================
 define( 'AI1WM_MESSAGES', 'ai1wm_messages' );
 
-// ==============
+// =================
+// = Support Email =
+// =================
+define( 'AI1WM_SUPPORT_EMAIL', 'support@servmask.com' );
+
+// =================
 // = Max File Size =
-// ==============
-define( 'AI1WM_MAX_FILE_SIZE', '512MB' );
+// =================
+define( 'AI1WM_MAX_FILE_SIZE', 536870912 );
 
-// ==============
+// ==================
 // = Max Chunk Size =
-// ==============
-define( 'AI1WM_MAX_CHUNK_SIZE', '500KB' );
+// ==================
+define( 'AI1WM_MAX_CHUNK_SIZE', 5242880 );
 
-// ==============
+// =====================
 // = Max Chunk Retries =
-// ==============
-define( 'AI1WM_MAX_CHUNK_RETRIES', '100' );
+// =====================
+define( 'AI1WM_MAX_CHUNK_RETRIES', 10 );
 
 // ===========================
 // = WP_CONTENT_DIR Constant =

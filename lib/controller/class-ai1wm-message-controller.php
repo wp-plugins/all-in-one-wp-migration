@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (C) 2014 ServMask Inc.
  *
@@ -22,9 +23,8 @@
  * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
+class Ai1wm_Message_Controller {
 
-class Ai1wm_Message_Controller
-{
 	public static function close_message() {
 		$errors = array();
 
@@ -37,7 +37,6 @@ class Ai1wm_Message_Controller
 		// Close message
 		$model  = new Ai1wm_Message;
 		$result = $model->close_message( $key );
-
 		echo json_encode( $result );
 		exit;
 	}

@@ -25,13 +25,14 @@
 
 class Ai1wm_Service_Database implements Ai1wm_Service_Interface
 {
-	protected $options    = array();
+	protected $args       = array();
+
+	protected $storage    = null;
 
 	protected $connection = null;
 
-	public function __construct( array $options = array() ) {
-		// Set options
-		$this->options = $options;
+	public function __construct( array $args = array() ) {
+		$this->args = $args;
 
 		// Make connection
 		try {
@@ -68,49 +69,143 @@ class Ai1wm_Service_Database implements Ai1wm_Service_Interface
 	public function import() {
 		global $wpdb;
 
-		// Backup database
-		$this->export();
-
-		// Flush database
-		$this->connection->flush();
-
 		// Get configuration
-		$service = new Ai1wm_Service_Package( $this->options );
+		$service = new Ai1wm_Service_Package( $this->args );
 		$config  = $service->import();
 
 		$old_values = array();
 		$new_values = array();
 
 		// Get Site URL
-		if ( isset( $config['SiteURL'] ) && ( $config['SiteURL'] != site_url() ) ) {
+		if ( isset( $config['SiteURL'] ) && ( $config['SiteURL'] !== site_url() ) ) {
 			$old_values[] = $config['SiteURL'];
 			$new_values[] = site_url();
-		}
-
-		// Get Home URL
-		if ( isset( $config['HomeURL'] ) && ( $config['HomeURL'] != home_url() ) ) {
-			$old_values[] = $config['HomeURL'];
-			$new_values[] = home_url();
 
 			// Get Domain
-			$old_domain = parse_url( $config['HomeURL'] );
-			$new_domain = parse_url( home_url() );
+			$old_domain = parse_url( $config['SiteURL'] );
+			$new_domain = parse_url( site_url() );
 
 			// Replace Domain
 			$old_values[] = sprintf( '%s://%s', $old_domain['scheme'], $old_domain['host'] );
 			$new_values[] = sprintf( '%s://%s', $new_domain['scheme'], $new_domain['host'] );
+
+			// Replace Host
+			if ( stripos( site_url(), $old_domain['host'] ) === false && stripos( home_url(), $old_domain['host'] ) === false ) {
+				$old_values[] = $old_domain['host'];
+				$new_values[] = $new_domain['host'];
+			}
+
+			// Replace Path
+			$old_values[] = isset( $old_domain['path'] ) && ( $old_domain['path'] !== '/' ) ? trailingslashit( $old_domain['path'] ) : null;
+			$new_values[] = isset( $new_domain['path'] ) ? trailingslashit( $new_domain['path'] ) : '/';
 		}
 
-		$database_file = StorageArea::getInstance()->makeFile( AI1WM_DATABASE_NAME );
+		// Get Home URL
+		if ( isset( $config['HomeURL'] ) && ( $config['HomeURL'] !== home_url() ) ) {
+			$old_values[] = $config['HomeURL'];
+			$new_values[] = home_url();
+		}
+
+		// Get WordPress Content
+		if ( isset( $config['WordPress']['Content'] ) && ( $config['WordPress']['Content'] !== WP_CONTENT_DIR ) ) {
+			$old_values[] = $config['WordPress']['Content'];
+			$new_values[] = WP_CONTENT_DIR;
+		}
+
+		// Get user details
+		if ( isset( $config['Import']['User']['Id'] ) && ( $id = $config['Import']['User']['Id'] ) ) {
+			$meta = get_userdata( $id );
+			$user = array(
+				'user_login'           => $meta->user_login,
+				'user_pass'            => $meta->user_pass,
+				'user_nicename'        => $meta->user_nicename,
+				'user_url'             => $meta->user_url,
+				'user_email'           => $meta->user_email,
+				'display_name'         => $meta->display_name,
+				'nickname'             => $meta->nickname,
+				'first_name'           => $meta->first_name,
+				'last_name'            => $meta->last_name,
+				'description'          => $meta->description,
+				'rich_editing'         => $meta->rich_editing,
+				'user_registered'      => $meta->user_registered,
+				'jabber'               => $meta->jabber,
+				'aim'                  => $meta->aim,
+				'yim'                  => $meta->yim,
+				'show_admin_bar_front' => $meta->show_admin_bar_front,
+			);
+		} else {
+			$user = array();
+		}
+
+		// Flush database
+		$this->connection->flush();
 
 		// Import database
 		$this->connection->setOldTablePrefix( AI1WM_TABLE_PREFIX )
 						 ->setNewTablePrefix( $wpdb->prefix )
 						 ->setOldReplaceValues( $old_values )
 						 ->setNewReplaceValues( $new_values )
-						 ->import( $database_file->getName() );
+						 ->import( $this->storage()->database() );
 
-		return $database_file->getName();
+		// Set new user identity
+		if ( isset( $config['Export']['User']['Id'] ) && ( $id = $config['Export']['User']['Id'] ) ) {
+
+			// Update user login and password
+			if ( isset( $user['user_login'] ) && isset( $user['user_pass'] ) ) {
+				$wpdb->update(
+					$wpdb->users,
+					array( 'user_login' => $user['user_login'], 'user_pass' => $user['user_pass'] ),
+					array( 'ID' => $id ),
+					array( '%s', '%s' ),
+					array( '%d' )
+				);
+
+				// Unset user login
+				unset( $user['user_login'] );
+
+				// Unset user password
+				unset( $user['user_pass'] );
+			}
+
+			// Update user details
+			$result = wp_update_user( array( 'ID' => $id ) + $user );
+
+			// Log the error
+			if ( is_wp_error( $result ) ) {
+				Ai1wm_Log::error( 'Exception while importing user identity: ' . $result->get_error_message() );
+			}
+		}
+
+		// Set the new secret key value, and sanitize it
+		$value = sanitize_option( AI1WM_SECRET_KEY, $this->args['secret_key'] );
+
+		// Handle both multi sites and single sites
+		if ( is_multisite() ) {
+			$result = $wpdb->update(
+				$wpdb->sitemeta,
+				array( 'meta_value' => $value ),
+				array( 'site_id' => $wpdb->siteid, 'meta_key' => AI1WM_SECRET_KEY )
+			);
+		} else {
+			$result = $wpdb->update(
+				$wpdb->options,
+				array( 'option_value' => $value ),
+				array( 'option_name' => AI1WM_SECRET_KEY )
+			);
+		}
+
+		// if we were not able to import the secret key, the import can be considered successful
+		// but we have to let the user know
+		if ( false === $result ) {
+			throw new Ai1wm_Import_Exception(
+				__(
+					'Your data was imported successfully but we couldn\'t reach the end of import process. You must ' .
+					'refresh this page, login, and save permalinks manually. If you run into any issues, let us ' .
+					'know at support@servmask.com',
+					AI1WM_PLUGIN_NAME
+				)
+			);
+		}
 	}
 
 	/**
@@ -121,24 +216,22 @@ class Ai1wm_Service_Database implements Ai1wm_Service_Interface
 	public function export() {
 		global $wpdb;
 
-		$database_file = StorageArea::getInstance()->makeFile();
-
 		// Set include tables
 		$include_tables = array();
-		if ( isset( $this->options['include-tables'] ) ) {
-			$include_tables = $this->options['include-tables'];
+		if ( isset( $this->args['options']['include-tables'] ) ) {
+			$include_tables = $this->args['options']['include-tables'];
 		}
 
 		// Set exclude tables
 		$exclude_tables = array();
-		if ( isset( $this->options['exclude-tables' ] ) ) {
-			$exclude_tables = $this->options['exclude-tables'];
+		if ( isset( $this->args['options']['exclude-tables' ] ) ) {
+			$exclude_tables = $this->args['options']['exclude-tables'];
 		}
 
 		$clauses = array();
 
 		// Spam comments
-		if ( isset( $this->options['export-spam-comments'] ) ) {
+		if ( isset( $this->args['options']['no-spam-comments'] ) ) {
 			$clauses[ $wpdb->comments ]    = " WHERE comment_approved != 'spam' ";
 			$clauses[ $wpdb->commentmeta ] = sprintf(
 				" WHERE comment_id IN ( SELECT comment_ID FROM `%s` WHERE comment_approved != 'spam' ) ",
@@ -147,12 +240,12 @@ class Ai1wm_Service_Database implements Ai1wm_Service_Interface
 		}
 
 		// Post revisions
-		if ( isset( $this->options['export-revisions'] ) ) {
+		if ( isset( $this->args['options']['no-revisions'] ) ) {
 			$clauses[ $wpdb->posts ] = " WHERE post_type != 'revision' ";
 		}
 
 		// No table data, but leave Admin account
-		$no_table_data = isset( $this->options['no-table-data'] );
+		$no_table_data = isset( $this->args['options']['no-table-data'] );
 		if ( $no_table_data ) {
 			$clauses                    = array();
 			$clauses[ $wpdb->users ]    = ' WHERE id = 1 ';
@@ -162,7 +255,7 @@ class Ai1wm_Service_Database implements Ai1wm_Service_Interface
 		// Find and replace
 		$old_values = array();
 		$new_values = array();
-		if ( isset( $this->options['replace'] ) && ( $replace = $this->options['replace'] ) ) {
+		if ( isset( $this->args['options']['replace'] ) && ( $replace = $this->args['options']['replace'] ) ) {
 			for ( $i = 0; $i < count( $replace['old-value'] ); $i++ ) {
 				if ( isset( $replace['old-value'][$i] ) && isset( $replace['new-value'][$i] ) ) {
 					$old_values[] = $replace['old-value'][$i];
@@ -172,7 +265,7 @@ class Ai1wm_Service_Database implements Ai1wm_Service_Interface
 		}
 
 		// Set dump options
-		$this->connection->setFileName( $database_file->getName() )
+		$this->connection->setFileName( $this->storage()->database() )
 						 ->setIncludeTables( $include_tables )
 						 ->setExcludeTables( $exclude_tables )
 						 ->setNoTableData( $no_table_data )
@@ -184,7 +277,18 @@ class Ai1wm_Service_Database implements Ai1wm_Service_Interface
 
 		// Export database
 		$this->connection->export();
+	}
 
-		return $database_file->getName();
+	/*
+	 * Get storage object
+	 *
+	 * @return Ai1wm_Storage
+	 */
+	protected function storage() {
+		if ( $this->storage === null ) {
+			$this->storage = new Ai1wm_Storage( $this->args );
+		}
+
+		return $this->storage;
 	}
 }

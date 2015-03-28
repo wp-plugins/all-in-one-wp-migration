@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (C) 2014 ServMask Inc.
  *
@@ -22,9 +23,8 @@
  * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
+class Ai1wm_Feedback {
 
-class Ai1wm_Feedback
-{
 	/**
 	 * Submit customer feedback to ServMask.com
 	 *
@@ -32,11 +32,11 @@ class Ai1wm_Feedback
 	 * @param  string  $email   User E-mail
 	 * @param  string  $message User Message
 	 * @param  integer $terms   User Accept Terms
+	 *
 	 * @return array
 	 */
 	public function leave_feedback( $type, $email, $message, $terms ) {
 		$errors = array();
-
 		// Submit feedback to ServMask
 		if ( empty( $type ) ) {
 			$errors[] = 'Feedback type is invalid.';
@@ -51,16 +51,15 @@ class Ai1wm_Feedback
 				AI1WM_FEEDBACK_URL,
 				array(
 					'body' => array(
-						'type'                => $type,
-						'email'               => $email,
-						'message'             => $message,
-						'export_options'      => json_encode( get_option( AI1WM_EXPORT_OPTIONS, array() ) ),
-						'error_handler'       => json_encode( get_option( AI1WM_ERROR_HANDLER, array() ) ),
-						'exception_handler'   => json_encode( get_option( AI1WM_EXCEPTION_HANDLER, array() ) ),
+						'type'              => $type,
+						'email'             => $email,
+						'message'           => $message,
+						'export_options'    => json_encode( get_site_option( AI1WM_EXPORT_OPTIONS, array() ) ),
+						'error_handler'     => json_encode( get_site_option( AI1WM_ERROR_HANDLER, array() ) ),
+						'exception_handler' => json_encode( get_site_option( AI1WM_EXCEPTION_HANDLER, array() ) ),
 					),
 				)
 			);
-
 			if ( is_wp_error( $response ) ) {
 				$errors[] = 'Something went wrong: ' . $response->get_error_message();
 			}

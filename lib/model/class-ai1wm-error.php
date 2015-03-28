@@ -23,8 +23,8 @@
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
 
-class Ai1wm_Error
-{
+class Ai1wm_Error {
+
 	const ERROR_LIMIT     = 10;
 	const EXCEPTION_LIMIT = 10;
 
@@ -38,7 +38,7 @@ class Ai1wm_Error
 	 * @return void
 	 */
 	public static function error_handler( $code, $message, $file, $line ) {
-		$errors = get_option( AI1WM_ERROR_HANDLER, array() );
+		$errors = get_site_option( AI1WM_ERROR_HANDLER, array() );
 
 		// Limit errors
 		if ( count( $errors ) > self::ERROR_LIMIT ) {
@@ -64,7 +64,7 @@ class Ai1wm_Error
 	 * @return void
 	 */
 	public static function exception_handler( $e ) {
-		$exceptions = get_option( AI1WM_EXCEPTION_HANDLER, array() );
+		$exceptions = get_site_option( AI1WM_EXCEPTION_HANDLER, array() );
 
 		// Limit errors
 		if ( count( $exceptions ) > self::EXCEPTION_LIMIT ) {

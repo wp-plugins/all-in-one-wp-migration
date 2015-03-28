@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (C) 2014 ServMask Inc.
  *
@@ -22,9 +23,8 @@
  * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
+class Ai1wm_Report_Controller {
 
-class Ai1wm_Report_Controller
-{
 	public static function report_problem() {
 		// Set E-mail
 		$email = null;
@@ -47,7 +47,6 @@ class Ai1wm_Report_Controller
 		// Send Feedback
 		$model  = new Ai1wm_Report;
 		$result = $model->report_problem( $email, $message, $terms );
-
 		echo json_encode( $result );
 		exit;
 	}

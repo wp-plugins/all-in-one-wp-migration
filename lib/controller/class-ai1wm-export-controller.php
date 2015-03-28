@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (C) 2014 ServMask Inc.
  *
@@ -22,90 +23,110 @@
  * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
+class Ai1wm_Export_Controller {
 
-class Ai1wm_Export_Controller
-{
 	public static function index() {
-		try {
-			$is_accessible = StorageArea::getInstance()->getRootPath();
-		} catch ( Exception $e ) {
-			$is_accessible = false;
-		}
-
-		// Messages
-		$model    = new Ai1wm_Message;
-		$messages = $model->get_messages();
+		// Get message model
+		$model = new Ai1wm_Message;
 
 		Ai1wm_Template::render(
 			'export/index',
 			array(
-				'messages'      => $messages,
-				'is_accessible' => $is_accessible,
+				'messages' => $model->get_messages(),
 			)
 		);
 	}
 
-	public static function export() {
-		// Set default handlers
-		set_error_handler( array( 'Ai1wm_Error', 'error_handler' ) );
-		set_exception_handler( array( 'Ai1wm_Error', 'exception_handler' ) );
+	public static function export( array $args = array() ) {
+		try {
 
-		// Get options
-		if ( isset( $_POST['options'] ) && ( $options = $_POST['options'] ) ) {
-
-			// Log options
-			Ai1wm_Logger::debug( AI1WM_EXPORT_OPTIONS, $options );
-
-			// Export site
-			$model = new Ai1wm_Export( $options );
-			$file  = $model->export();
-
-			// Send the file to the user
-			header( 'Content-Description: File Transfer' );
-			header( 'Content-Type: application/octet-stream' );
-			header( 'Content-Disposition: attachment; filename=' . self::filename() );
-			header( 'Content-Transfer-Encoding: binary' );
-			header( 'Expires: 0' );
-			header( 'Cache-Control: must-revalidate' );
-			header( 'Pragma: public' );
-			header( 'Content-Length: ' . $file->getSize() );
-
-			// Clear output buffering and read file content
-			while ( @ob_end_clean() );
-
-			// Load file content
-			$handle = fopen( $file->getName(), 'rb' );
-			while ( ! feof( $handle ) ) {
-				echo fread( $handle, 8192 );
+			// Set arguments
+			if ( empty( $args ) ) {
+				$args = $_REQUEST;
 			}
-			fclose( $handle );
 
-			// Flush storage
-			StorageArea::getInstance()->flush();
+			// Set storage path
+			if ( empty( $args['storage'] ) ) {
+				$args['storage'] = uniqid();
+			}
+
+			// Set secret key
+			$secret_key = null;
+			if ( isset( $args['secret_key'] ) ) {
+				$secret_key = $args['secret_key'];
+			}
+
+			// Verify secret key by using the value in the database, not in cache
+			if ( $secret_key !== get_site_option( AI1WM_SECRET_KEY, false, false ) ) {
+				throw new Ai1wm_Export_Exception(
+					sprintf(
+						__( 'Unable to authenticate your request with secret_key = %s', AI1WM_PLUGIN_NAME ),
+						$secret_key
+					)
+				);
+			}
+
+			// Set provider
+			$provider = null;
+			if ( isset( $args['provider'] ) ) {
+				$provider = $args['provider'];
+			}
+
+			$class = "Ai1wm_Export_$provider";
+			if ( ! class_exists( $class ) ) {
+				throw new Ai1wm_Export_Exception(
+					sprintf(
+						__( 'Unknown provider: <strong>"%s"</strong>', AI1WM_PLUGIN_NAME ),
+						$class
+					)
+				);
+			}
+
+			// Set method
+			$method = null;
+			if ( isset( $args['method'] ) ) {
+				$method = $args['method'];
+			}
+
+			// Initialize provider
+			$provider = new $class( $args );
+			if ( ! method_exists( $provider, $method ) ) {
+				throw new Ai1wm_Export_Exception(
+					sprintf(
+						__( 'Unknown method: <strong>"%s"</strong>', AI1WM_PLUGIN_NAME ),
+						$method
+					)
+				);
+			}
+
+			// Invoke method
+			echo json_encode( $provider->$method() );
 			exit;
+		} catch ( Exception $e ) {
+			// Log the error
+			Ai1wm_Log::error( 'Exception while exporting: ' . $e->getMessage() );
+
+			// Set the status to failed
+			Ai1wm_Status::set(
+				array(
+					'type'    => 'error',
+					'title'   => __( 'Unable to export', AI1WM_PLUGIN_NAME ),
+					'message' => $e->getMessage(),
+				)
+			);
+
+			// End the process
+			wp_die( 'Exception while exporting: ' . $e->getMessage() );
 		}
 	}
 
-	public static function filename() {
-		$url  = parse_url( home_url() );
-		$name = array();
-
-		// Add domain
-		if ( isset( $url['host'] ) ) {
-			$name[] = $url['host'];
-		}
-
-		// Add path
-		if ( isset( $url['path'] ) ) {
-			$name[] = $url['path'];
-		}
-
-		// Add year, month and day
-		$name[] = date('Ymd');
-
-		// Add hours, minutes and seconds
-		$name[] = date('His');
-
-		return sprintf( '%s.zip', implode( '-', $name ) );
+	public static function buttons() {
+		return array(
+			apply_filters( 'ai1wm_export_file', Ai1wm_Template::get_content( 'export/button-file' ) ),
+			apply_filters( 'ai1wm_export_dropbox', Ai1wm_Template::get_content( 'export/button-dropbox' ) ),
+			apply_filters( 'ai1wm_export_gdrive', Ai1wm_Template::get_content( 'export/button-gdrive' ) ),
+			apply_filters( 'ai1wm_export_s3', Ai1wm_Template::get_content( 'export/button-s3' ) ),
+			apply_filters( 'ai1wm_export_ftp', Ai1wm_Template::get_content( 'export/button-ftp' ) ),
+		);
 	}
 }
