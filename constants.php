@@ -38,7 +38,7 @@ if ( function_exists( 'gethostname' ) && in_array( gethostname(), $local ) ) {
 // ==================
 // = Plugin Version =
 // ==================
-define( 'AI1WM_VERSION', '3.0.1' );
+define( 'AI1WM_VERSION', '3.1.1' );
 
 // ===============
 // = Plugin Name =
