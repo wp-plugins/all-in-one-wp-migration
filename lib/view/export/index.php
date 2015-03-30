@@ -55,6 +55,8 @@
 
 					<?php do_action( 'ai1wm_export_left_options' ); ?>
 
+					<?php include AI1WM_TEMPLATES_PATH . '/export/advanced-settings.php'; ?>
+
 					<?php include AI1WM_TEMPLATES_PATH . '/export/export-buttons.php'; ?>
 
 					<?php do_action( 'ai1wm_export_left_end' ); ?>

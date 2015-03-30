@@ -79,21 +79,37 @@ abstract class Ai1wm_Export_Abstract {
 		) );
 
 		// Enable maintenance mode
-		if ( apply_filters( 'ai1wm-enable-maintenance-on-export', false ) ) {
+		if ( $this->should_enable_maintenance() ) {
 			Ai1wm_Maintenance::enable();
 		}
 
-		// Set exclude filters
-		$exclude = apply_filters( 'ai1wm_exclude_content_from_export', array(
-			'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration',
-			'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-dropbox-extension',
-			'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-gdrive-extension',
-			'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-s3-extension',
-			'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-multisite-extension',
-			'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-unlimited-extension',
-			'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-pro-extension',
-			'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-ftp-extension',
-		) );
+		$filters = array();
+
+		// Exclude media
+		if ( $this->should_exclude_media() ) {
+			$filters = array_merge( $filters, array( 'uploads' ) );
+		}
+
+		// Exclude themes
+		if ( $this->should_exclude_themes() ) {
+			$filters = array_merge( $filters, array( 'themes' ) );
+		}
+
+		// Exclude plugins
+		if ( $this->should_exclude_plugins() ) {
+			$filters = array_merge( $filters, array( 'plugins' ) );
+		} else {
+			$filters = array_merge( $filters, array(
+				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration',
+				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-dropbox-extension',
+				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-gdrive-extension',
+				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-s3-extension',
+				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-multisite-extension',
+				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-unlimited-extension',
+				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-pro-extension',
+				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-ftp-extension',
+			) );
+		}
 
 		// Create map file
 		$filemap = fopen( $this->storage()->filemap(), 'a+' );
@@ -107,7 +123,7 @@ abstract class Ai1wm_Export_Abstract {
 				new Ai1wm_Recursive_Directory_Iterator(
 					WP_CONTENT_DIR
 				),
-				$exclude
+				apply_filters( 'ai1wm_exclude_content_from_export', $filters )
 			),
 			RecursiveIteratorIterator::SELF_FIRST
 		);
@@ -208,7 +224,11 @@ abstract class Ai1wm_Export_Abstract {
 	 */
 	public function database() {
 		// Set exclude database
-		if ( apply_filters( 'ai1wm_exclude_database_from_export', false ) ) {
+		if ( $this->should_exclude_database() ) {
+			// Disable maintenance mode
+			Ai1wm_Maintenance::disable();
+
+			// Redirect
 			return $this->route_to( 'export' );
 		}
 
@@ -230,9 +250,7 @@ abstract class Ai1wm_Export_Abstract {
 		Ai1wm_Status::set( array( 'message' => __( 'Done exporting database.', AI1WM_PLUGIN_NAME ) ) );
 
 		// Disable maintenance mode
-		if ( apply_filters( 'ai1wm_enable_maintenance_on_export', false ) ) {
-			Ai1wm_Maintenance::disable();
-		}
+		Ai1wm_Maintenance::disable();
 
 		// Redirect
 		$this->route_to( 'export' );
@@ -389,5 +407,50 @@ abstract class Ai1wm_Export_Abstract {
 				'headers'    => $headers,
 			)
 		);
+	}
+
+	/**
+	 * Should exclude database?
+	 *
+	 * @return boolean
+	 */
+	protected function should_exclude_database() {
+		return isset( $this->args['options']['no-database'] );
+	}
+
+	/**
+	 * Should exclude media?
+	 *
+	 * @return boolean
+	 */
+	protected function should_exclude_media() {
+		return isset( $this->args['options']['no-media'] );
+	}
+
+	/**
+	 * Should exclude themes?
+	 *
+	 * @return boolean
+	 */
+	protected function should_exclude_themes() {
+		return isset( $this->args['options']['no-themes'] );
+	}
+
+	/**
+	 * Should exclude plugins?
+	 *
+	 * @return boolean
+	 */
+	protected function should_exclude_plugins() {
+		return isset( $this->args['options']['no-plugins'] );
+	}
+
+	/**
+	 * Should enable maintenance?
+	 *
+	 * @return boolean
+	 */
+	protected function should_enable_maintenance() {
+		return isset( $this->args['options']['maintenance-mode'] );
 	}
 }
