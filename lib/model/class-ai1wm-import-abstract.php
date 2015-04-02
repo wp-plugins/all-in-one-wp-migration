@@ -425,16 +425,29 @@ abstract class Ai1wm_Import_Abstract {
 		// HTTP authentication
 		$auth_user     = get_site_option( AI1WM_AUTH_USER, false, false );
 		$auth_password = get_site_option( AI1WM_AUTH_PASSWORD, false, false );
-		if ( $auth_user !== false && $auth_password !== false ) {
+		if ( ! empty( $auth_user ) && ! empty( $auth_password ) ) {
 			$headers['Authorization'] = 'Basic ' . base64_encode( $auth_user . ':' . $auth_password );
 		}
 
+		// Resolve domain
+		$url = admin_url( 'admin-ajax.php?action=ai1wm_import' );
+		$parsed_url = parse_url( $url, PHP_URL_HOST );
+
+		if ( false !== $parsed_url ) {
+			$ip = gethostbyname( $parsed_url );
+
+			if ( $ip !== $parsed_url ) {
+				$url = preg_replace( sprintf( '/%s/', preg_quote( $parsed_url, '-' ) ), $ip, $url, 1 );
+				$headers['Host'] = $parsed_url;
+			}
+		}
+
 		// HTTP request
-		remove_all_filters( 'http_request_args', 1 );
+		remove_all_filters( 'http_request_args' );
 		wp_remote_post(
-			admin_url( 'admin-ajax.php?action=ai1wm_import' ),
+			$url,
 			array(
-				'timeout'    => 5,
+				'timeout'    => apply_filters( 'ai1wm_http_timeout', 5 ),
 				'blocking'   => false,
 				'sslverify'  => apply_filters( 'https_local_ssl_verify', false ),
 				'user-agent' => 'ai1wm',

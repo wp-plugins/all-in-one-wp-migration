@@ -52,39 +52,41 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'MysqlUtility.php';
  */
 class MysqlDumpSQL implements MysqlDumpInterface
 {
-	protected $hostname         = null;
+	protected $hostname            = null;
 
-	protected $username         = null;
+	protected $username            = null;
 
-	protected $password         = null;
+	protected $password            = null;
 
-	protected $database         = null;
+	protected $database            = null;
 
-	protected $fileName         = 'dump.sql';
+	protected $fileName            = 'database.sql';
 
-	protected $fileAdapter      = null;
+	protected $fileAdapter         = null;
 
-	protected $queryAdapter     = null;
+	protected $queryAdapter        = null;
 
-	protected $connection       = null;
+	protected $connection          = null;
 
-	protected $oldTablePrefix   = null;
+	protected $oldTablePrefix      = null;
 
-	protected $newTablePrefix   = null;
+	protected $newTablePrefix      = null;
 
-	protected $oldReplaceValues = array();
+	protected $oldReplaceValues    = array();
 
-	protected $newReplaceValues = array();
+	protected $newReplaceValues    = array();
 
-	protected $queryClauses     = array();
+	protected $queryClauses        = array();
 
-	protected $includeTables    = array();
+	protected $ignoreTableReplaces = array();
 
-	protected $excludeTables    = array();
+	protected $includeTables       = array();
 
-	protected $noTableData      = false;
+	protected $excludeTables       = array();
 
-	protected $addDropTable     = false;
+	protected $noTableData         = false;
+
+	protected $addDropTable        = false;
 
 	/**
 	 * Define MySQL credentials for the current connection
@@ -283,6 +285,29 @@ class MysqlDumpSQL implements MysqlDumpInterface
 	public function getQueryClauses()
 	{
 		return $this->queryClauses;
+	}
+
+	/**
+	 * Set ignore table replaces
+	 *
+	 * @param  array $tables List of SQL tables
+	 * @return MysqlDumpPDO
+	 */
+	public function setIgnoreTableReplaces($tables)
+	{
+		$this->ignoreTableReplaces = $tables;
+
+		return $this;
+	}
+
+	/**
+	 * Get ignore table replaces
+	 *
+	 * @return array
+	 */
+	public function getIgnoreTableReplaces()
+	{
+		return $this->ignoreTableReplaces;
 	}
 
 	/**
@@ -703,31 +728,68 @@ class MysqlDumpSQL implements MysqlDumpInterface
 			return;
 		}
 
-		// Replace table name prefix
-		$tableName = $this->replaceTableNamePrefix($tableName);
+		// Get results
+		$result = mysql_unbuffered_query($query, $this->getConnection());
 
-		$this->fileAdapter->write(
-			"--\n" .
-			"-- Dumping data for table `$tableName`\n" .
-			"--\n\n"
-		);
+		// Get ignore table replaces
+		$ignoreTableReplaces = $this->getIgnoreTableReplaces();
 
 		// Generate insert statements
-		$result = mysql_unbuffered_query($query, $this->getConnection());
-		while ($row = mysql_fetch_row($result)) {
-			$items = array();
-			foreach ($row as $value) {
-				$items[] = is_null($value) ? 'NULL' : "'" . mysql_real_escape_string($this->replaceTableValues($value)) . "'";
+		if (isset($ignoreTableReplaces[$tableName])) {
+
+			// Replace table name prefix
+			$tableName = $this->replaceTableNamePrefix($tableName);
+
+			$this->fileAdapter->write(
+				"--\n" .
+				"-- Dumping data for table `$tableName`\n" .
+				"--\n\n"
+			);
+
+			// Generate insert statements
+			while ($row = mysql_fetch_row($result)) {
+				$items = array();
+				foreach ($row as $value) {
+					$items[] = is_null($value) ? 'NULL' : "'" . mysql_real_escape_string($value) . "'";
+				}
+
+				// Set table values
+				$tableValues = implode(',', $items);
+
+				// Write insert statements
+				$this->fileAdapter->write("INSERT INTO `$tableName` VALUES ($tableValues);\n");
 			}
 
-			// Set table values
-			$tableValues = implode(',', $items);
+			// Close result cursor
+			mysql_free_result($result);
 
-			// Write insert statements
-			$this->fileAdapter->write("INSERT INTO `$tableName` VALUES ($tableValues);\n");
+		} else {
+
+			// Replace table name prefix
+			$tableName = $this->replaceTableNamePrefix($tableName);
+
+			$this->fileAdapter->write(
+				"--\n" .
+				"-- Dumping data for table `$tableName`\n" .
+				"--\n\n"
+			);
+
+			// Generate insert statements
+			while ($row = mysql_fetch_row($result)) {
+				$items = array();
+				foreach ($row as $value) {
+					$items[] = is_null($value) ? 'NULL' : "'" . mysql_real_escape_string($this->replaceTableValues($value)) . "'";
+				}
+
+				// Set table values
+				$tableValues = implode(',', $items);
+
+				// Write insert statements
+				$this->fileAdapter->write("INSERT INTO `$tableName` VALUES ($tableValues);\n");
+			}
+
+			// Close result cursor
+			mysql_free_result($result);
 		}
-
-		// Close result cursor
-		mysql_free_result($result);
 	}
 }
