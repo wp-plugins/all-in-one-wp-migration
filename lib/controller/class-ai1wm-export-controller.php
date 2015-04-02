@@ -37,7 +37,7 @@ class Ai1wm_Export_Controller {
 		);
 	}
 
-	public static function export( array $args = array() ) {
+	public static function export( $args = array() ) {
 		try {
 
 			// Set arguments
