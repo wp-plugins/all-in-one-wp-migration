@@ -156,6 +156,21 @@ interface MysqlDumpInterface
 	public function getQueryClauses();
 
 	/**
+	 * Set ignore table replaces
+	 *
+	 * @param  array $tables List of SQL tables
+	 * @return MysqlDumpInterface
+	 */
+	public function setIgnoreTableReplaces($tables);
+
+	/**
+	 * Get ignore table replaces
+	 *
+	 * @return array
+	 */
+	public function getIgnoreTableReplaces();
+
+	/**
 	 * Set include tables
 	 *
 	 * @param  array $tables List of tables

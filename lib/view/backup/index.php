@@ -133,6 +133,10 @@
 
 					<?php include AI1WM_TEMPLATES_PATH . '/common/leave-feedback.php'; ?>
 
+					<?php if ( isset( $_SERVER['AUTH_TYPE'] ) ) : ?>
+						<?php include AI1WM_TEMPLATES_PATH . '/common/http-authentication.php'; ?>
+					<?php endif; ?>
+
 				</div>
 			</div>
 		</div>

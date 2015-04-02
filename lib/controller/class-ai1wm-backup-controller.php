@@ -28,12 +28,24 @@ class Ai1wm_Backup_Controller {
 	public static function index() {
 		$model = new Ai1wm_Backup;
 
+		// Username
+		if ( isset( $_POST['ai1wm-username'] ) ) {
+			update_site_option( AI1WM_AUTH_USER, $_POST['ai1wm-username'] );
+		}
+
+		// Password
+		if ( isset( $_POST['ai1wm-password'] ) ) {
+			update_site_option( AI1WM_AUTH_PASSWORD, $_POST['ai1wm-password'] );
+		}
+
 		Ai1wm_Template::render(
 			'backup/index',
 			array(
-				'backups'       => $model->get_files(),
-				'free_space'    => $model->get_free_space(),
-				'total_space'   => $model->get_total_space(),
+				'backups'     => $model->get_files(),
+				'free_space'  => $model->get_free_space(),
+				'total_space' => $model->get_total_space(),
+				'username'    => get_site_option( AI1WM_AUTH_USER, false ),
+				'password'    => get_site_option( AI1WM_AUTH_PASSWORD, false ),
 			)
 		);
 	}

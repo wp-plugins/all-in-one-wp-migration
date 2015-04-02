@@ -137,6 +137,15 @@ class Ai1wm_Service_Database implements Ai1wm_Service_Interface
 			$user = array();
 		}
 
+		// Get HTTP user
+		$auth_user = get_site_option( AI1WM_AUTH_USER, false, false );
+
+		// Get HTTP password
+		$auth_password = get_site_option( AI1WM_AUTH_PASSWORD, false, false );
+
+		// Get secret key
+		$secret_key = get_site_option( AI1WM_SECRET_KEY, false, false );
+
 		// Flush database
 		$this->connection->flush();
 
@@ -146,6 +155,9 @@ class Ai1wm_Service_Database implements Ai1wm_Service_Interface
 						 ->setOldReplaceValues( $old_values )
 						 ->setNewReplaceValues( $new_values )
 						 ->import( $this->storage()->database() );
+
+		// Clear WP options cache
+		wp_cache_flush();
 
 		// Set new user identity
 		if ( isset( $config['Export']['User']['Id'] ) && ( $id = $config['Export']['User']['Id'] ) ) {
@@ -176,36 +188,14 @@ class Ai1wm_Service_Database implements Ai1wm_Service_Interface
 			}
 		}
 
-		// Set the new secret key value, and sanitize it
-		$value = sanitize_option( AI1WM_SECRET_KEY, $this->args['secret_key'] );
+		// Set the new HTTP user
+		update_site_option( AI1WM_AUTH_USER, $auth_user );
 
-		// Handle both multi sites and single sites
-		if ( is_multisite() ) {
-			$result = $wpdb->update(
-				$wpdb->sitemeta,
-				array( 'meta_value' => $value ),
-				array( 'site_id' => $wpdb->siteid, 'meta_key' => AI1WM_SECRET_KEY )
-			);
-		} else {
-			$result = $wpdb->update(
-				$wpdb->options,
-				array( 'option_value' => $value ),
-				array( 'option_name' => AI1WM_SECRET_KEY )
-			);
-		}
+		// Set the new HTTP password
+		update_site_option( AI1WM_AUTH_PASSWORD, $auth_password );
 
-		// if we were not able to import the secret key, the import can be considered successful
-		// but we have to let the user know
-		if ( false === $result ) {
-			throw new Ai1wm_Import_Exception(
-				__(
-					'Your data was imported successfully but we couldn\'t reach the end of import process. You must ' .
-					'refresh this page, login, and save permalinks manually. If you run into any issues, let us ' .
-					'know at support@servmask.com',
-					AI1WM_PLUGIN_NAME
-				)
-			);
-		}
+		// Set the new secret key value
+		update_site_option( AI1WM_SECRET_KEY, $secret_key );
 	}
 
 	/**
@@ -273,7 +263,8 @@ class Ai1wm_Service_Database implements Ai1wm_Service_Interface
 						 ->setNewTablePrefix( AI1WM_TABLE_PREFIX )
 						 ->setOldReplaceValues( $old_values )
 						 ->setNewReplaceValues( $new_values )
-						 ->setQueryClauses( $clauses );
+						 ->setQueryClauses( $clauses )
+						 ->setIgnoreTableReplaces( array( $wpdb->postmeta => array() ) );
 
 		// Export database
 		$this->connection->export();

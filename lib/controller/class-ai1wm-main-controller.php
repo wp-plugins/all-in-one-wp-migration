@@ -354,6 +354,8 @@ class Ai1wm_Main_Controller {
 		// Set username
 		if ( isset( $_SERVER['PHP_AUTH_USER'] ) ) {
 			update_site_option( AI1WM_AUTH_USER, $_SERVER['PHP_AUTH_USER'] );
+		} else if ( isset( $_SERVER['REMOTE_USER'] ) ) {
+			update_site_option( AI1WM_AUTH_USER, $_SERVER['REMOTE_USER'] );
 		}
 
 		// Set password

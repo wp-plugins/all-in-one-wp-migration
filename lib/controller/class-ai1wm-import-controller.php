@@ -28,7 +28,7 @@ class Ai1wm_Import_Controller {
 		Ai1wm_Template::render( 'import/index' );
 	}
 
-	public static function import( array $args = array() ) {
+	public static function import( $args = array() ) {
 		try {
 
 			// Set arguments
