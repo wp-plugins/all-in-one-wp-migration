@@ -411,6 +411,32 @@ class MysqlDumpPDO implements MysqlDumpInterface
 	}
 
 	/**
+	 * Get MySQL collation name
+	 *
+	 * @param  string $collationName Collation name
+	 * @return string
+	 */
+	public function getCollation($collationName) {
+		try {
+			$result = $this->getConnection()->query(
+				"SELECT COLLATION_NAME AS CollationName FROM `INFORMATION_SCHEMA`.`COLLATIONS` WHERE COLLATION_NAME = '$collationName'"
+			);
+			while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+				if (isset($row['CollationName'])) {
+					return $row['CollationName'];
+				}
+			}
+		} catch (Exception $e) {
+			$result = $this->getConnection()->query("SHOW COLLATION LIKE '$collationName'");
+			while ($row = $result->fetch(PDO::FETCH_NUM)) {
+				if (isset($row[0])) {
+					return $row[0];
+				}
+			}
+		}
+	}
+
+	/**
 	 * Flush database
 	 *
 	 * @return void
@@ -436,6 +462,9 @@ class MysqlDumpPDO implements MysqlDumpInterface
 	 */
 	public function import($fileName)
 	{
+		// Set collation name
+		$collation = $this->getCollation('utf8mb4_unicode_ci');
+
 		$fileHandler = fopen($fileName, 'r');
 		if ($fileHandler) {
 			$query = null;
@@ -450,6 +479,11 @@ class MysqlDumpPDO implements MysqlDumpInterface
 
 				// Replace table values
 				$line = $this->replaceTableValues($line);
+
+				// Replace table collation
+				if (empty($collation)) {
+					$line = $this->replaceTableCollation($line);
+				}
 
 				$query .= $line;
 				if (preg_match('/;\s*$/', $line)) {
@@ -588,6 +622,20 @@ class MysqlDumpPDO implements MysqlDumpInterface
 	}
 
 	/**
+	 * Replace table collation
+	 *
+	 * @param  string $input SQL statement
+	 * @return string
+	 */
+	public function replaceTableCollation($input)
+	{
+		$pattern = array('utf8mb4_unicode_ci', 'utf8mb4');
+		$replace = array('utf8_general_ci', 'utf8');
+
+		return str_replace($pattern, $replace, $input);
+	}
+
+	/**
 	 * Strip table constraints
 	 *
 	 * @param  string $input SQL statement
@@ -596,8 +644,8 @@ class MysqlDumpPDO implements MysqlDumpInterface
 	public function stripTableConstraints($input)
 	{
 		$pattern = array(
-			'/\s+CONSTRAINT(.+),/i',
-			'/,\s+CONSTRAINT(.+)/i',
+			'/\s+CONSTRAINT(.+)REFERENCES(.+),/i',
+			'/,\s+CONSTRAINT(.+)REFERENCES(.+)/i',
 		);
 		$replace = '';
 

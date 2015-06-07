@@ -231,6 +231,14 @@ interface MysqlDumpInterface
 	public function getAddDropTable();
 
 	/**
+	 * Get MySQL collation name
+	 *
+	 * @param  string $collationName Collation name
+	 * @return string
+	 */
+	public function getCollation($collationName);
+
+	/**
 	 * Flush database
 	 *
 	 * @return void
@@ -283,6 +291,14 @@ interface MysqlDumpInterface
 	 * @return string
 	 */
 	public function replaceInsertIntoPrefix($input);
+
+	/**
+	 * Replace table collation
+	 *
+	 * @param  string $input SQL statement
+	 * @return string
+	 */
+	public function replaceTableCollation($input);
 
 	/**
 	 * Strip table constraints
