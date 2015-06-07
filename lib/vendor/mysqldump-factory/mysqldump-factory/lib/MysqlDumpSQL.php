@@ -403,6 +403,35 @@ class MysqlDumpSQL implements MysqlDumpInterface
 	}
 
 	/**
+	 * Get MySQL collation name
+	 *
+	 * @param  string $collationName Collation name
+	 * @return string
+	 */
+	public function getCollation($collationName) {
+		// Get collation name
+		$result = mysql_unbuffered_query(
+			"SELECT COLLATION_NAME AS CollationName FROM `INFORMATION_SCHEMA`.`COLLATIONS` WHERE COLLATION_NAME = '$collationName'",
+			$this->getConnection()
+		);
+
+		if ($result) {
+			while ($row = mysql_fetch_assoc($result)) {
+				if (isset($row['CollationName'])) {
+					return $row['CollationName'];
+				}
+			}
+		} else {
+			$result = mysql_unbuffered_query("SHOW COLLATION LIKE '$collationName'", $this->getConnection());
+			while ($row = mysql_fetch_row($result)) {
+				if (isset($row[0])) {
+					return $row[0];
+				}
+			}
+		}
+	}
+
+	/**
 	 * Flush database
 	 *
 	 * @return void
@@ -428,6 +457,9 @@ class MysqlDumpSQL implements MysqlDumpInterface
 	 */
 	public function import($fileName)
 	{
+		// Set collation name
+		$collation = $this->getCollation('utf8mb4_unicode_ci');
+
 		$fileHandler = fopen($fileName, 'r');
 		if ($fileHandler) {
 			$query = null;
@@ -442,6 +474,11 @@ class MysqlDumpSQL implements MysqlDumpInterface
 
 				// Replace table values
 				$line = $this->replaceTableValues($line);
+
+				// Replace table collation
+				if (empty($collation)) {
+					$line = $this->replaceTableCollation($line);
+				}
 
 				$query .= $line;
 				if (preg_match('/;\s*$/', $line)) {
@@ -575,6 +612,20 @@ class MysqlDumpSQL implements MysqlDumpInterface
 	}
 
 	/**
+	 * Replace table collation
+	 *
+	 * @param  string $input SQL statement
+	 * @return string
+	 */
+	public function replaceTableCollation($input)
+	{
+		$pattern = array('utf8mb4_unicode_ci', 'utf8mb4');
+		$replace = array('utf8_general_ci', 'utf8');
+
+		return str_replace($pattern, $replace, $input);
+	}
+
+	/**
 	 * Strip table constraints
 	 *
 	 * @param  string $input SQL statement
@@ -583,8 +634,8 @@ class MysqlDumpSQL implements MysqlDumpInterface
 	public function stripTableConstraints($input)
 	{
 		$pattern = array(
-			'/\s+CONSTRAINT(.+),/i',
-			'/,\s+CONSTRAINT(.+)/i',
+			'/\s+CONSTRAINT(.+)REFERENCES(.+),/i',
+			'/,\s+CONSTRAINT(.+)REFERENCES(.+)/i',
 		);
 		$replace = '';
 

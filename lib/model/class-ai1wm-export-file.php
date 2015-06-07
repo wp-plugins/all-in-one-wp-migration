@@ -56,7 +56,7 @@ class Ai1wm_Export_File extends Ai1wm_Export_Abstract {
 						size_format( filesize( $this->storage()->backup() ) )
 					)
 				),
-				$this->storage()->status() // status.php file
+				$this->storage()->status() // status.log file
 			);
 		}
 	}

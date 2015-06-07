@@ -38,7 +38,7 @@ if ( function_exists( 'gethostname' ) && in_array( gethostname(), $local ) ) {
 // ==================
 // = Plugin Version =
 // ==================
-define( 'AI1WM_VERSION', '3.2.2' );
+define( 'AI1WM_VERSION', '3.3' );
 
 // ===============
 // = Plugin Name =
@@ -63,7 +63,7 @@ define( 'AI1WM_LOG_FILE', AI1WM_STORAGE_PATH . DIRECTORY_SEPARATOR . 'error.log'
 // ===============
 // = Status Path =
 // ===============
-define( 'AI1WM_STATUS_FILE', AI1WM_STORAGE_PATH . DIRECTORY_SEPARATOR . 'status.php' );
+define( 'AI1WM_STATUS_FILE', AI1WM_STORAGE_PATH . DIRECTORY_SEPARATOR . 'status.log' );
 
 // ================
 // = Backups Path =
@@ -143,7 +143,7 @@ define( 'AI1WM_PACKAGE_NAME', 'package.json' );
 // ========================
 // = Archive Status Name  =
 // ========================
-define( 'AI1WM_STATUS_NAME', 'status.php' );
+define( 'AI1WM_STATUS_NAME', 'status.log' );
 
 // ========================
 // = Archive FileMap Name =
