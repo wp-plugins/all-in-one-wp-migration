@@ -34,7 +34,6 @@
  */
 
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'MysqlDumpInterface.php';
-require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'MysqlQueryAdapter.php';
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'MysqlFileAdapter.php';
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'MysqlUtility.php';
 
@@ -52,45 +51,35 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'MysqlUtility.php';
  */
 class MysqlDumpPDO implements MysqlDumpInterface
 {
-	protected $hostname            = null;
+	protected $hostname           = null;
 
-	protected $port                = null;
+	protected $port               = null;
 
-	protected $socket              = null;
+	protected $socket             = null;
 
-	protected $username            = null;
+	protected $username           = null;
 
-	protected $password            = null;
+	protected $password           = null;
 
-	protected $database            = null;
+	protected $database           = null;
 
-	protected $fileName            = 'database.sql';
+	protected $fileName           = 'database.sql';
 
-	protected $fileAdapter         = null;
+	protected $fileAdapter        = null;
 
-	protected $queryAdapter        = null;
+	protected $connection         = null;
 
-	protected $connection          = null;
+	protected $oldTablePrefix     = null;
 
-	protected $oldTablePrefix      = null;
+	protected $newTablePrefix     = null;
 
-	protected $newTablePrefix      = null;
+	protected $oldReplaceValues   = array();
 
-	protected $oldReplaceValues    = array();
+	protected $newReplaceValues   = array();
 
-	protected $newReplaceValues    = array();
+	protected $queryClauses       = array();
 
-	protected $queryClauses        = array();
-
-	protected $ignoreTableReplaces = array();
-
-	protected $includeTables       = array();
-
-	protected $excludeTables       = array();
-
-	protected $noTableData         = false;
-
-	protected $addDropTable        = false;
+	protected $tablePrefixColumns = array();
 
 	/**
 	 * Define MySQL credentials for the current connection
@@ -112,9 +101,6 @@ class MysqlDumpPDO implements MysqlDumpInterface
 		$this->username = $username;
 		$this->password = $password;
 		$this->database = $database;
-
-		// Set Query Adapter
-		$this->queryAdapter = new MysqlQueryAdapter('mysql');
 	}
 
 	/**
@@ -134,21 +120,12 @@ class MysqlDumpPDO implements MysqlDumpInterface
 		$this->fileAdapter->write($this->getHeader());
 
 		// Listing all tables from database
-		$tables = array();
-		foreach ($this->listTables() as $table) {
-			if (count($this->getIncludeTables()) === 0 || in_array($table, $this->getIncludeTables())) {
-				$tables[] = $table;
-			}
-		}
+		$tables = $this->listTables();
 
 		// Export Tables
 		foreach ($tables as $table) {
-			if (in_array($table, $this->getExcludeTables())) {
-				continue;
-			}
-
 			$isTable = $this->getTableStructure($table);
-			if (true === $isTable) {
+			if ($isTable) {
 				$this->listValues($table);
 			}
 		}
@@ -296,118 +273,80 @@ class MysqlDumpPDO implements MysqlDumpInterface
 	}
 
 	/**
-	 * Set ignore table replaces
+	 * Set table prefix columns
 	 *
-	 * @param  array $tables List of SQL tables
+	 * @param  string $table   Table name
+	 * @param  array  $columns Table columns
 	 * @return MysqlDumpPDO
 	 */
-	public function setIgnoreTableReplaces($tables)
+	public function setTablePrefixColumns($table, $columns)
 	{
-		$this->ignoreTableReplaces = $tables;
+		foreach ($columns as $column) {
+			$this->tablePrefixColumns[$table][$column] = true;
+		}
 
 		return $this;
 	}
 
 	/**
-	 * Get ignore table replaces
+	 * Get table prefix columns
 	 *
+	 * @param  string $table Table name
 	 * @return array
 	 */
-	public function getIgnoreTableReplaces()
+	public function getTablePrefixColumns($table)
 	{
-		return $this->ignoreTableReplaces;
+		if (isset($this->tablePrefixColumns[$table])) {
+			return $this->tablePrefixColumns[$table];
+		}
+
+		return array();
 	}
 
 	/**
-	 * Set include tables
+	 * Get MySQL version
 	 *
-	 * @param  array $tables List of tables
-	 * @return MysqlDumpPDO
+	 * @return string
 	 */
-	public function setIncludeTables($tables)
-	{
-		$this->includeTables = $tables;
-
-		return $this;
+	public function getVersion() {
+		try {
+			$result = $this->getConnection()->query("SELECT @@version AS VersionName");
+			while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+				if (isset($row['VersionName'])) {
+					return $row['VersionName'];
+				}
+			}
+		} catch (Exception $e) {
+			$result = $this->getConnection()->query("SHOW VARIABLES LIKE 'version'");
+			while ($row = $result->fetch(PDO::FETCH_NUM)) {
+				if (isset($row[1])) {
+					return $row[1];
+				}
+			}
+		}
 	}
 
 	/**
-	 * Get include tables
+	 * Get MySQL max allowed packaet
 	 *
-	 * @return array
+	 * @return integer
 	 */
-	public function getIncludeTables()
-	{
-		return $this->includeTables;
-	}
-
-	/**
-	 * Set exclude tables
-	 *
-	 * @param  array $tables List of tables
-	 * @return MysqlDumpPDO
-	 */
-	public function setExcludeTables($tables)
-	{
-		$this->excludeTables = $tables;
-
-		return $this;
-	}
-
-	/**
-	 * Get exclude tables
-	 *
-	 * @return array
-	 */
-	public function getExcludeTables()
-	{
-		return $this->excludeTables;
-	}
-
-	/**
-	 * Set no table data flag
-	 *
-	 * @param  bool $flag Do not export table data
-	 * @return MysqlDumpPDO
-	 */
-	public function setNoTableData($flag)
-	{
-		$this->noTableData = (bool) $flag;
-
-		return $this;
-	}
-
-	/**
-	 * Get no table data flag
-	 *
-	 * @return bool
-	 */
-	public function getNoTableData()
-	{
-		return $this->noTableData;
-	}
-
-	/**
-	 * Set add drop table flag
-	 *
-	 * @param  bool $flag Add drop table SQL clause
-	 * @return MysqlDumpPDO
-	 */
-	public function setAddDropTable($flag)
-	{
-		$this->addDropTable = (bool) $flag;
-
-		return $this;
-	}
-
-	/**
-	 * Get add drop table flag
-	 *
-	 * @return bool
-	 */
-	public function getAddDropTable()
-	{
-		return $this->addDropTable;
+	public function getMaxAllowedPacket() {
+		try {
+			$result = $this->getConnection()->query("SELECT @@max_allowed_packet AS MaxAllowedPacket");
+			while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+				if (isset($row['MaxAllowedPacket'])) {
+					return $row['MaxAllowedPacket'];
+				}
+			}
+		} catch (Exception $e) {
+			$result = $this->getConnection()->query("SHOW VARIABLES LIKE 'max_allowed_packet'");
+			while ($row = $result->fetch(PDO::FETCH_NUM)) {
+				if (isset($row[1])) {
+					return $row[1];
+				}
+			}
+		}
 	}
 
 	/**
@@ -443,14 +382,14 @@ class MysqlDumpPDO implements MysqlDumpInterface
 	 */
 	public function flush()
 	{
-		$deleteTables = array();
-		foreach ($this->listTables() as $table) {
-			$deleteTables[] = $this->queryAdapter->drop_table($table);
+		$dropTables = array();
+		foreach ($this->listTables() as $tableName) {
+			$dropTables[] = "DROP TABLE IF EXISTS `$tableName`";
 		}
 
 		// Drop tables
-		foreach ($deleteTables as $delete) {
-			$this->getConnection()->query($delete);
+		foreach ($dropTables as $dropQuery) {
+			$this->getConnection()->query($dropQuery);
 		}
 	}
 
@@ -463,37 +402,53 @@ class MysqlDumpPDO implements MysqlDumpInterface
 	public function import($fileName)
 	{
 		// Set collation name
-		$collation = $this->getCollation('utf8mb4_unicode_ci');
+		$collation = $this->getCollation('utf8mb4_general_ci');
 
+		// Set max allowed packet
+		$maxAllowedPacket = $this->getMaxAllowedPacket();
+
+		// Set file handler
 		$fileHandler = fopen($fileName, 'r');
-		if ($fileHandler) {
-			$query = null;
+		if ($fileHandler === false) {
+			throw new Exception('Unable to open database file');
+		}
 
-			// Read database file line by line
-			while (($line = fgets($fileHandler)) !== false) {
-				// Replace create table prefix
-				$line = $this->replaceCreateTablePrefix($line);
+		$passed = 0;
+		$failed = 0;
+		$query  = null;
 
-				// Replace insert into prefix
-				$line = $this->replaceInsertIntoPrefix($line);
+		// Read database file line by line
+		while (($line = fgets($fileHandler)) !== false) {
+			$query .= $line;
 
-				// Replace table values
-				$line = $this->replaceTableValues($line);
+			// End of query
+			if (preg_match('/;\s*$/', $query)) {
 
-				// Replace table collation
-				if (empty($collation)) {
-					$line = $this->replaceTableCollation($line);
-				}
+				// Check max allowed packet
+				if (strlen($query) <= $maxAllowedPacket) {
 
-				$query .= $line;
-				if (preg_match('/;\s*$/', $line)) {
+					// Replace table prefix
+					$query = $this->replaceTablePrefix($query);
+
+					// Replace table values
+					$query = $this->replaceTableValues($query, true);
+
+					// Replace table collation
+					if (empty($collation)) {
+						$query = $this->replaceTableCollation($query);
+					}
+
 					try {
 						// Run SQL query
 						$result = $this->getConnection()->query($query);
 						if ($result === false) {
 							throw new PDOException(var_export($this->getConnection()->errorinfo(), true));
+						} else {
+							$passed++;
 						}
 					} catch (PDOException $e) {
+						$failed++;
+
 						// Log the error
 						Ai1wm_Log::error(
 							sprintf(
@@ -504,13 +459,23 @@ class MysqlDumpPDO implements MysqlDumpInterface
 						);
 					}
 
-					// Empty query
-					$query = null;
+				} else {
+					$failed++;
 				}
-			}
 
-			return true;
+				$query = null;
+			}
 		}
+
+		// Close file handler
+		fclose($fileHandler);
+
+		// Check failed queries
+		if ((($failed / $passed) * 100) > 2) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -523,16 +488,16 @@ class MysqlDumpPDO implements MysqlDumpInterface
 		$tables = array();
 
 		try {
-			$query = $this->queryAdapter->show_tables_information_schema($this->database);
-			$result = $this->getConnection()->query($query);
+			$result = $this->getConnection()->query(
+				"SELECT TABLE_NAME AS TableName FROM `INFORMATION_SCHEMA`.`TABLES` WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA = '{$this->database}'"
+			);
 			while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-				if (isset($row['table_name'])) {
-					$tables[] = $row['table_name'];
+				if (isset($row['TableName'])) {
+					$tables[] = $row['TableName'];
 				}
 			}
 		} catch (Exception $e) {
-			$query = $this->queryAdapter->show_tables($this->database);
-			$result = $this->getConnection()->query($query);
+			$result = $this->getConnection()->query("SHOW TABLES FROM `{$this->database}`");
 			while ($row = $result->fetch(PDO::FETCH_NUM)) {
 				if (isset($row[0])) {
 					$tables[] = $row[0];
@@ -544,81 +509,113 @@ class MysqlDumpPDO implements MysqlDumpInterface
 	}
 
 	/**
-	 * Replace table values
+	 * Replace table prefix
 	 *
 	 * @param  string $input Table value
+	 * @param  boolean $first Replace first occurrence
+	 * @param  boolean $start Replace start occurrence
 	 * @return string
 	 */
-	public function replaceTableValues($input)
+	public function replaceTablePrefix($input, $first = false, $start = false)
 	{
+		// Get table prefix
+		$search = $this->getOldTablePrefix();
+		$replace = $this->getNewTablePrefix();
+
+		// Replace first occurrence
+		if ($first) {
+			$pos = strpos($input, $search);
+			if ($pos !== false) {
+				return substr_replace($input, $replace, $pos, strlen($search));
+			}
+
+			return $input;
+		} else if ($start) {
+			$pos = strpos($input, $search);
+			if ($pos === 0) {
+				return substr_replace($input, $replace, $pos, strlen($search));
+			}
+
+			return $input;
+		}
+
+		// Replace all occurrences
+		return str_replace($search, $replace, $input);
+	}
+
+	/**
+	 * Replace table values
+	 *
+	 * @param  string  $input Table value
+	 * @param  boolean $parse Parse value
+	 * @return string
+	 */
+	public function replaceTableValues($input, $parse = false)
+	{
+		// Get replace values
 		$old = $this->getOldReplaceValues();
 		$new = $this->getNewReplaceValues();
 
 		$oldValues = array();
 		$newValues = array();
 
-		// Replace strings
+		// Prepare replace values
 		for ($i = 0; $i < count($old); $i++) {
-			if (!empty($old[$i]) && ($old[$i] != $new[$i]) && !in_array($old[$i], $oldValues)) {
+			if (strpos($input, $old[$i]) !== false) {
 				$oldValues[] = $old[$i];
 				$newValues[] = $new[$i];
 			}
 		}
 
-		// Replace table prefix
-		$oldValues[] = $this->getOldTablePrefix();
-		$newValues[] = $this->getNewTablePrefix();
+		// Do replace values
+		if ($oldValues) {
+			if ($parse) {
+				// Parse and replace serialized values
+				$input = $this->parseSerializedValues($input);
 
-		// Replace table values
-		$input = str_replace($oldValues, $newValues, $input);
+				// Replace values
+				return MysqlUtility::replaceValues($oldValues, $newValues, $input);
+			}
 
-		// Verify serialization
-		return MysqlUtility::pregReplace(
-			$input,
-			'/s:(\d+):([\\\\]?"[\\\\]?"|[\\\\]?"((.*?)[^\\\\])[\\\\]?");/'
-		);
+			return MysqlUtility::replaceSerializedValues($oldValues, $newValues, $input);
+		}
+
+		return $input;
 	}
 
 	/**
-	 * Replace table name prefix
+	 * Parse serialized values
 	 *
-	 * @param  string $input Table name
+	 * @param  string $input Table value
 	 * @return string
 	 */
-	public function replaceTableNamePrefix($input)
+	public function parseSerializedValues($input)
 	{
-		$pattern = '/^(' . preg_quote($this->getOldTablePrefix(), '/') . ')(.+)/i';
-		$replace = $this->getNewTablePrefix() . '\2';
+		// Serialization format
+		$array  = '(a:\d+:{.*?})';
+		$string = '(s:\d+:".*?")';
+		$object = '(O:\d+:".+":\d+:{.*})';
 
-		return preg_replace($pattern, $replace, $input);
+		// Replace serialized values
+		return preg_replace_callback("/'($array|$string|$object)'/", array($this, 'replaceSerializedValues'), $input);
 	}
 
 	/**
-	 * Replace create table prefix
+	 * Replace serialized values (callback)
 	 *
-	 * @param  string $input SQL statement
+	 * @param  array  $matches List of matches
 	 * @return string
 	 */
-	public function replaceCreateTablePrefix($input)
+	public function replaceSerializedValues($matches)
 	{
-		$pattern = '/^CREATE TABLE `(' . preg_quote($this->getOldTablePrefix(), '/') . ')(.+)`/Ui';
-		$replace = 'CREATE TABLE `' . $this->getNewTablePrefix() . '\2`';
+		// Unescape MySQL special characters
+		$input = MysqlUtility::unescapeMysql($matches[1]);
 
-		return preg_replace($pattern, $replace, $input);
-	}
+		// Replace serialized values
+		$input = MysqlUtility::replaceSerializedValues($this->getOldReplaceValues(), $this->getNewReplaceValues(), $input);
 
-	/**
-	 * Replace insert into prefix
-	 *
-	 * @param  string $input SQL statement
-	 * @return string
-	 */
-	public function replaceInsertIntoPrefix($input)
-	{
-		$pattern = '/^INSERT INTO `(' . preg_quote($this->getOldTablePrefix(), '/') . ')(.+)`/Ui';
-		$replace = 'INSERT INTO `' . $this->getNewTablePrefix() . '\2`';
-
-		return preg_replace($pattern, $replace, $input);
+		// Prepare query values
+		return $this->getConnection()->quote($input);
 	}
 
 	/**
@@ -629,10 +626,7 @@ class MysqlDumpPDO implements MysqlDumpInterface
 	 */
 	public function replaceTableCollation($input)
 	{
-		$pattern = array('utf8mb4_unicode_ci', 'utf8mb4');
-		$replace = array('utf8_general_ci', 'utf8');
-
-		return str_replace($pattern, $replace, $input);
+		return str_replace('utf8mb4_general_ci', 'utf8_general_ci', $input);
 	}
 
 	/**
@@ -712,12 +706,10 @@ class MysqlDumpPDO implements MysqlDumpInterface
 		$connection->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
 
 		// Set default encoding
-		$query = $this->queryAdapter->set_names('utf8');
-		$connection->exec($query);
+		$connection->exec("SET NAMES 'utf8'");
 
 		// Set foreign key
-		$query = $this->queryAdapter->set_foreign_key(0);
-		$connection->exec($query);
+		$connection->exec("SET FOREIGN_KEY_CHECKS = 0");
 
 		return $connection;
 	}
@@ -750,34 +742,27 @@ class MysqlDumpPDO implements MysqlDumpInterface
 	 */
 	protected function getTableStructure($tableName)
 	{
-		$query = $this->queryAdapter->show_create_table($tableName);
-		$result = $this->getConnection()->query($query);
+		$result = $this->getConnection()->query("SHOW CREATE TABLE `$tableName`");
 		while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
 			if (isset($row['Create Table'])) {
-				// Replace table name prefix
-				$tableName = $this->replaceTableNamePrefix($tableName);
 
-				$this->fileAdapter->write("-- " .
-					"--------------------------------------------------------" .
-					"\n\n" .
-					"--\n" .
-					"-- Table structure for table `$tableName`\n--\n\n");
-
-				if ($this->getAddDropTable()) {
-					$this->fileAdapter->write("DROP TABLE IF EXISTS `$tableName`;\n\n");
-				}
-
-				// Replace create table prefix
-				$createTable = $this->replaceCreateTablePrefix($row['Create Table']);
+				// Replace table prefix
+				$createTable = $this->replaceTablePrefix($row['Create Table'], true);
 
 				// Strip table constraints
 				$createTable = $this->stripTableConstraints($createTable);
 
-				$this->fileAdapter->write($createTable . ";\n\n");
+				// Write table structure
+				$this->fileAdapter->write($createTable);
+
+				// Write end of statement
+				$this->fileAdapter->write(";\n\n");
 
 				return true;
 			}
 		}
+
+		return false;
 	}
 
 	/**
@@ -797,72 +782,40 @@ class MysqlDumpPDO implements MysqlDumpInterface
 			$query .= $queryClause;
 		}
 
-		// No table data
-		if ($this->getNoTableData() && !isset($clauses[$tableName])) {
-			return;
-		}
+		// Apply additional table prefix columns
+		$columns = $this->getTablePrefixColumns($tableName);
 
 		// Get results
 		$result = $this->getConnection()->query($query);
 
-		// Get ignore table replaces
-		$ignoreTableReplaces = $this->getIgnoreTableReplaces();
+		// Replace table name prefix
+		$tableName = $this->replaceTablePrefix($tableName, true);
 
 		// Generate insert statements
-		if (isset($ignoreTableReplaces[$tableName])) {
-
-			// Replace table name prefix
-			$tableName = $this->replaceTableNamePrefix($tableName);
-
-			$this->fileAdapter->write(
-				"--\n" .
-				"-- Dumping data for table `$tableName`\n" .
-				"--\n\n"
-			);
-
-			while ($row = $result->fetch(PDO::FETCH_NUM)) {
-				$items = array();
-				foreach ($row as $value) {
-					$items[] = is_null($value) ? 'NULL' : $this->getConnection()->quote($value);
+		while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+			$items = array();
+			foreach ($row as $key => $value) {
+				// Replace table prefix columns
+				if (isset($columns[$key])) {
+					$value = $this->replaceTablePrefix($value, false, true);
 				}
 
-				// Set table values
-				$tableValues = implode(',', $items);
-
-				// Write insert statements
-				$this->fileAdapter->write("INSERT INTO `$tableName` VALUES ($tableValues);\n");
+				// Replace table values
+				$items[] = is_null($value) ? 'NULL' : $this->getConnection()->quote($this->replaceTableValues($value));
 			}
 
-			// Close result cursor
-			$result->closeCursor();
+			// Set table values
+			$tableValues = implode(',', $items);
 
-		} else {
-
-			// Replace table name prefix
-			$tableName = $this->replaceTableNamePrefix($tableName);
-
-			$this->fileAdapter->write(
-				"--\n" .
-				"-- Dumping data for table `$tableName`\n" .
-				"--\n\n"
-			);
-
-			while ($row = $result->fetch(PDO::FETCH_NUM)) {
-				$items = array();
-				foreach ($row as $value) {
-					$items[] = is_null($value) ? 'NULL' : $this->getConnection()->quote($this->replaceTableValues($value));
-				}
-
-				// Set table values
-				$tableValues = implode(',', $items);
-
-				// Write insert statements
-				$this->fileAdapter->write("INSERT INTO `$tableName` VALUES ($tableValues);\n");
-			}
-
-			// Close result cursor
-			$result->closeCursor();
+			// Write insert statements
+			$this->fileAdapter->write("INSERT INTO `$tableName` VALUES ($tableValues);\n");
 		}
+
+		// Write end of statements
+		$this->fileAdapter->write("\n");
+
+		// Close result cursor
+		$result->closeCursor();
 	}
 
 	/**

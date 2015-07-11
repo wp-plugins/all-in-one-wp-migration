@@ -327,44 +327,6 @@ abstract class Ai1wm_Import_Abstract {
 	 */
 	protected function validate() {
 		if ( is_file( $this->storage()->package() ) ) {
-			// Set exclude filters
-			$exclude = apply_filters( 'ai1wm_exclude_content_from_import', array(
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-dropbox-extension',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-gdrive-extension',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-s3-extension',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-multisite-extension',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-unlimited-extension',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-pro-extension',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-ftp-extension',
-			) );
-
-			// Iterate over WP_CONTENT_DIR directory
-			$iterator = new RecursiveIteratorIterator(
-				new Ai1wm_Recursive_Exclude_Filter(
-					new Ai1wm_Recursive_Directory_Iterator(
-						WP_CONTENT_DIR
-					),
-					$exclude
-				),
-				RecursiveIteratorIterator::SELF_FIRST
-			);
-
-			foreach ( $iterator as $item ) {
-				if ( ! is_readable( $item->getPathname() ) || ! is_writable( $item->getPathname() ) ) {
-					throw new Ai1wm_Import_Exception(
-						sprintf(
-							__(
-								'Ensure that file permissions are correctly set-up - 775 or 777 to <strong>%s</strong> ' .
-								'directory and all files and folders that it contains.',
-								AI1WM_PLUGIN_NAME
-							),
-							WP_CONTENT_DIR
-						)
-					);
-				}
-			}
-
 			return true;
 		}
 
@@ -434,8 +396,16 @@ abstract class Ai1wm_Import_Abstract {
 		$parsed_url = parse_url( $url, PHP_URL_HOST );
 
 		if ( false !== $parsed_url ) {
-			$ip = gethostbyname( $parsed_url );
+			// Get server IP address
+			if ( ! empty( $_SERVER['SERVER_ADDR'] ) ) {
+				$ip = $_SERVER['SERVER_ADDR'];
+			} else if ( ! empty( $_SERVER['LOCAL_ADDR'] ) ) {
+				$ip = $_SERVER['LOCAL_ADDR'];
+			} else {
+				$ip = $_SERVER['SERVER_NAME'];
+			}
 
+			// Set IP address
 			if ( $ip !== $parsed_url ) {
 				$url = preg_replace( sprintf( '/%s/', preg_quote( $parsed_url, '-' ) ), $ip, $url, 1 );
 				$headers['Host'] = $parsed_url;
