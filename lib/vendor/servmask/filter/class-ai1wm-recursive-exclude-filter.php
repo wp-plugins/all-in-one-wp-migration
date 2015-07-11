@@ -28,8 +28,10 @@ class Ai1wm_Recursive_Exclude_Filter extends RecursiveFilterIterator {
 	protected $exclude = array();
 
 	public function __construct( RecursiveIterator $recursiveIterator, $exclude = array() ) {
-		$this->exclude = $exclude;
 		parent::__construct( $recursiveIterator );
+
+		// Set exclude filter
+		$this->exclude = $exclude;
 	}
 
 	public function accept() {

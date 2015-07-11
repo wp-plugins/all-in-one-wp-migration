@@ -78,12 +78,20 @@ abstract class Ai1wm_Export_Abstract {
 			'message' => __( 'Retrieving a list of all WordPress files...', AI1WM_PLUGIN_NAME )
 		) );
 
-		// Enable maintenance mode
-		if ( $this->should_enable_maintenance() ) {
-			Ai1wm_Maintenance::enable();
-		}
+		// Default filters
+		$filters = array(
+			'ai1wm-backups',
+			'managewp',
+		);
 
-		$filters = array( 'managewp' );
+		// Exclude index.php
+		$filters = array_merge( $filters, array(
+			'index.php',
+			'themes' . DIRECTORY_SEPARATOR . 'index.php',
+			'plugins' . DIRECTORY_SEPARATOR . 'index.php',
+			'uploads' . DIRECTORY_SEPARATOR . 'index.php',
+		) );
+
 
 		// Exclude media
 		if ( $this->should_exclude_media() ) {
@@ -106,7 +114,6 @@ abstract class Ai1wm_Export_Abstract {
 				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-s3-extension',
 				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-multisite-extension',
 				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-unlimited-extension',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-pro-extension',
 				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-ftp-extension',
 			) );
 		}
@@ -399,8 +406,16 @@ abstract class Ai1wm_Export_Abstract {
 		$parsed_url = parse_url( $url, PHP_URL_HOST );
 
 		if ( false !== $parsed_url ) {
-			$ip = gethostbyname( $parsed_url );
+			// Get server IP address
+			if ( ! empty( $_SERVER['SERVER_ADDR'] ) ) {
+				$ip = $_SERVER['SERVER_ADDR'];
+			} else if ( ! empty( $_SERVER['LOCAL_ADDR'] ) ) {
+				$ip = $_SERVER['LOCAL_ADDR'];
+			} else {
+				$ip = $_SERVER['SERVER_NAME'];
+			}
 
+			// Set IP address
 			if ( $ip !== $parsed_url ) {
 				$url = preg_replace( sprintf( '/%s/', preg_quote( $parsed_url, '-' ) ), $ip, $url, 1 );
 				$headers['Host'] = $parsed_url;
