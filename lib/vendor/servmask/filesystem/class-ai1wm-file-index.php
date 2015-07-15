@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (C) 2014 ServMask Inc.
  *
@@ -23,41 +22,29 @@
  * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
-class Ai1wm_Export_File extends Ai1wm_Export_Abstract {
+class Ai1wm_File_Index {
 
-	public function export() {
-		// Set progress
-		Ai1wm_Status::set( array( 'message' => __( 'Renaming exported file...', AI1WM_PLUGIN_NAME ) ) );
-
-		// Close achive file
-		$archive = new Ai1wm_Compressor( $this->storage()->archive() );
-
-		// Append EOF block
-		$archive->close( true );
-
-		// Rename archive file
-		if ( rename( $this->storage()->archive(), $this->storage()->backup() ) ) {
-
-			// Set progress
-			Ai1wm_Status::set(
-				array(
-					'type'    => 'download',
-					'message' => sprintf(
-						__(
-							'<a href="%s/%s" class="ai1wm-button-green ai1wm-emphasize">' .
-							'<span>Download %s</span>' .
-							'<em>Size: %s</em>' .
-							'</a>',
-							AI1WM_PLUGIN_NAME
-						),
-						AI1WM_BACKUPS_URL,
-						basename( $this->storage()->backup() ),
-						parse_url( home_url(), PHP_URL_HOST ),
-						size_format( filesize( $this->storage()->backup() ) )
-					)
-				),
-				$this->storage()->status() // status.html file
-			);
+	/**
+	 * Create a index.php file
+	 *
+	 * The method will create index.php file with contents '<?php // silence is golden' without the single quotes
+	 * at the path specified by the argument. The file is only created if it doesn't exist.
+	 *
+	 * @param  string  $file Path to the index.php file
+	 * @return boolean
+	 */
+	public static function create( $file ) {
+		if ( ! is_file( $file ) ) {
+			// File doesn't exist attempt to create it
+			$handle = fopen( $file, 'w' );
+			// Check if we were able to open the file
+			if ( false === $handle ) {
+				return false;
+			}
+			fwrite( $handle, '<?php // silence is golden' );
+			fclose( $handle );
 		}
+
+		return true;
 	}
 }

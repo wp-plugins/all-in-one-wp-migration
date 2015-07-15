@@ -292,7 +292,7 @@ class Ai1wm_Main_Controller {
 		}
 
 		// Create index.php in storage folder
-		$this->create_index_file( AI1WM_STORAGE_PATH );
+		Ai1wm_File_Index::create( AI1WM_STORAGE_INDEX );
 
 		// Check if backups folder exist
 		if ( ! file_exists( AI1WM_BACKUPS_PATH ) ) {
@@ -308,7 +308,7 @@ class Ai1wm_Main_Controller {
 		}
 
 		// Create index.php in backups folder
-		$this->create_index_file( AI1WM_BACKUPS_PATH );
+		Ai1wm_File_Index::create( AI1WM_BACKUPS_INDEX );
 	}
 
 	/**

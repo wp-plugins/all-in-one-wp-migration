@@ -50,7 +50,7 @@ require_once AI1WM_VENDOR_PATH .
 			DIRECTORY_SEPARATOR .
 			'filesystem' .
 			DIRECTORY_SEPARATOR .
-			'class-ai1wm-file.php';
+			'class-ai1wm-file-index.php';
 
 require_once AI1WM_VENDOR_PATH .
 			DIRECTORY_SEPARATOR .
@@ -67,6 +67,14 @@ require_once AI1WM_VENDOR_PATH .
 			'iterator' .
 			 DIRECTORY_SEPARATOR .
 			'class-ai1wm-recursive-directory-iterator.php';
+
+require_once AI1WM_VENDOR_PATH .
+			DIRECTORY_SEPARATOR .
+			'servmask' .
+			DIRECTORY_SEPARATOR .
+			'filter' .
+			DIRECTORY_SEPARATOR .
+			'class-ai1wm-extension-filter.php';
 
 require_once AI1WM_VENDOR_PATH .
 			DIRECTORY_SEPARATOR .
