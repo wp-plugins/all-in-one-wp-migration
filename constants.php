@@ -38,7 +38,7 @@ if ( function_exists( 'gethostname' ) && in_array( gethostname(), $local ) ) {
 // ==================
 // = Plugin Version =
 // ==================
-define( 'AI1WM_VERSION', '3.4' );
+define( 'AI1WM_VERSION', '3.5' );
 
 // ===============
 // = Plugin Name =
@@ -226,3 +226,66 @@ define( 'AI1WM_STORAGE_INDEX', AI1WM_STORAGE_PATH . DIRECTORY_SEPARATOR . 'index
 // = Backups Index File =
 // ======================
 define( 'AI1WM_BACKUPS_INDEX', AI1WM_BACKUPS_PATH . DIRECTORY_SEPARATOR . 'index.php' );
+
+// ====================================
+// = WP Migration Plugin Base Dir =
+// ====================================
+if ( defined( AI1WM_PLUGIN_BASENAME ) ) {
+	define( 'AI1WM_PLUGIN_BASEDIR', dirname( AI1WM_PLUGIN_BASENAME ) );
+} else {
+	define( 'AI1WM_PLUGIN_BASEDIR', 'all-in-one-wp-migration' );
+}
+
+// ==============================
+// = Dropbox Extension Base Dir =
+// ==============================
+if ( defined( AI1WMDE_PLUGIN_BASENAME ) ) {
+	define( 'AI1WMDE_PLUGIN_BASEDIR', dirname( AI1WMDE_PLUGIN_BASENAME ) );
+} else {
+	define( 'AI1WMDE_PLUGIN_BASEDIR', 'all-in-one-wp-migration-dropbox-extension' );
+}
+
+// ===================================
+// = Google Drive Extension Base Dir =
+// ===================================
+if ( defined( AI1WMGE_PLUGIN_BASENAME ) ) {
+	define( 'AI1WMGE_PLUGIN_BASEDIR', dirname( AI1WMGE_PLUGIN_BASENAME ) );
+} else {
+	define( 'AI1WMGE_PLUGIN_BASEDIR', 'all-in-one-wp-migration-gdrive-extension' );
+}
+
+// ================================
+// = Amazon S3 Extension Base Dir =
+// ================================
+if ( defined( AI1WMSE_PLUGIN_BASENAME ) ) {
+	define( 'AI1WMSE_PLUGIN_BASEDIR', dirname( AI1WMSE_PLUGIN_BASENAME ) );
+} else {
+	define( 'AI1WMSE_PLUGIN_BASEDIR', 'all-in-one-wp-migration-s3-extension' );
+}
+
+// ================================
+// = Multisite Extension Base Dir =
+// ================================
+if ( defined( AI1WMME_PLUGIN_BASENAME ) ) {
+	define( 'AI1WMME_PLUGIN_BASEDIR', dirname( AI1WMME_PLUGIN_BASENAME ) );
+} else {
+	define( 'AI1WMME_PLUGIN_BASEDIR', 'all-in-one-wp-migration-multisite-extension' );
+}
+
+// ================================
+// = Unlimited Extension Base Dir =
+// ================================
+if ( defined( AI1WMUE_PLUGIN_BASENAME ) ) {
+	define( 'AI1WMUE_PLUGIN_BASEDIR', dirname( AI1WMUE_PLUGIN_BASENAME ) );
+} else {
+	define( 'AI1WMUE_PLUGIN_BASEDIR', 'all-in-one-wp-migration-unlimited-extension' );
+}
+
+// ==========================
+// = FTP Extension Base Dir =
+// ==========================
+if ( defined( AI1WMFE_PLUGIN_BASENAME ) ) {
+	define( 'AI1WMFE_PLUGIN_BASEDIR', dirname( AI1WMFE_PLUGIN_BASENAME ) );
+} else {
+	define( 'AI1WMFE_PLUGIN_BASEDIR', 'all-in-one-wp-migration-ftp-extension' );
+}

@@ -108,13 +108,13 @@ abstract class Ai1wm_Export_Abstract {
 			$filters = array_merge( $filters, array( 'plugins' ) );
 		} else {
 			$filters = array_merge( $filters, array(
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-dropbox-extension',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-gdrive-extension',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-s3-extension',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-multisite-extension',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-unlimited-extension',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-ftp-extension',
+				'plugins' . DIRECTORY_SEPARATOR . AI1WM_PLUGIN_BASEDIR,
+				'plugins' . DIRECTORY_SEPARATOR . AI1WMDE_PLUGIN_BASEDIR,
+				'plugins' . DIRECTORY_SEPARATOR . AI1WMGE_PLUGIN_BASEDIR,
+				'plugins' . DIRECTORY_SEPARATOR . AI1WMSE_PLUGIN_BASEDIR,
+				'plugins' . DIRECTORY_SEPARATOR . AI1WMME_PLUGIN_BASEDIR,
+				'plugins' . DIRECTORY_SEPARATOR . AI1WMUE_PLUGIN_BASEDIR,
+				'plugins' . DIRECTORY_SEPARATOR . AI1WMFE_PLUGIN_BASEDIR,
 			) );
 		}
 
