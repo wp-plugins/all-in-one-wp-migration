@@ -392,10 +392,12 @@ abstract class Ai1wm_Import_Abstract {
 		}
 
 		// Resolve domain
-		$url = admin_url( 'admin-ajax.php?action=ai1wm_import' );
-		$parsed_url = parse_url( $url, PHP_URL_HOST );
+		$url      = admin_url( 'admin-ajax.php?action=ai1wm_import' );
+		$hostname = parse_url( $url, PHP_URL_HOST );
 
-		if ( false !== $parsed_url ) {
+		// Set hostname
+		if ( false !== $hostname ) {
+
 			// Get server IP address
 			if ( ! empty( $_SERVER['SERVER_ADDR'] ) ) {
 				$ip = $_SERVER['SERVER_ADDR'];
@@ -406,9 +408,18 @@ abstract class Ai1wm_Import_Abstract {
 			}
 
 			// Set IP address
-			if ( $ip !== $parsed_url ) {
-				$url = preg_replace( sprintf( '/%s/', preg_quote( $parsed_url, '-' ) ), $ip, $url, 1 );
-				$headers['Host'] = $parsed_url;
+			if ( $ip !== $hostname ) {
+
+				// Add IPv6 support
+				if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+					$ip = "[$ip]";
+				}
+
+				// Replace URL
+				$url = preg_replace( sprintf( '/%s/', preg_quote( $hostname, '-' ) ), $ip, $url, 1 );
+
+				// Set host header
+				$headers['Host'] = $hostname;
 			}
 		}
 
