@@ -25,16 +25,21 @@
  */
 class Ai1wm_Extension_Filter extends FilterIterator {
 
-    protected $include = array();
+	protected $include = array();
 
-    public function __construct( Iterator $iterator, $include = array() ) {
-        parent::__construct( $iterator );
+	public function __construct( Iterator $iterator, $include = array() ) {
+		parent::__construct( $iterator );
 
-        // Set include filter
-        $this->include = $include;
-    }
+		// Set include filter
+		$this->include = $include;
+	}
 
-    public function accept() {
-        return in_array( $this->getInnerIterator()->getExtension(), $this->include );
-    }
+	public function accept() {
+		$filename = $this->getInnerIterator()->getFilename();
+		if ( in_array( pathinfo( $filename, PATHINFO_EXTENSION ), $this->include ) ) {
+			return true;
+		}
+
+		return false;
+	}
 }
