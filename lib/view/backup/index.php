@@ -67,24 +67,24 @@
 							<tr>
 								<td class="ai1wm-column-name">
 									<i class="ai1wm-icon-file-zip"></i>
-									<?php echo $backup->getName(); ?>
+									<?php echo $backup['filename']; ?>
 								</td>
 								<td class="ai1wm-column-date">
-									<?php echo human_time_diff( $backup->getCreatedAt() ); ?> <?php _e( 'ago', AI1WM_PLUGIN_NAME ); ?>
+									<?php echo human_time_diff( $backup['mtime'] ); ?> <?php _e( 'ago', AI1WM_PLUGIN_NAME ); ?>
 								</td>
 								<td class="ai1wm-column-size">
-									<?php echo size_format( $backup->getSize(), 2 ); ?>
+									<?php echo size_format( $backup['size'], 2 ); ?>
 								</td>
 								<td class="ai1wm-column-actions ai1wm-backup-actions">
-									<a href="<?php echo AI1WM_BACKUPS_URL . '/' . $backup->getFile(); ?>" class="ai1wm-button-green ai1wm-button-alone ai1wm-backup-download">
+									<a href="<?php echo AI1WM_BACKUPS_URL . '/' . $backup['filename']; ?>" class="ai1wm-button-green ai1wm-button-alone ai1wm-backup-download">
 										<i class="ai1wm-icon-arrow-down ai1wm-icon-alone"></i>
 										<span><?php _e( 'Download', AI1WM_PLUGIN_NAME ); ?></span>
 									</a>
-									<a href="<?php echo network_admin_url( 'admin.php?page=site-migration-import&restore-file=' . $backup->getFile() ); ?>" class="ai1wm-button-gray ai1wm-button-alone ai1wm-backup-restore">
+									<a href="<?php echo network_admin_url( 'admin.php?page=site-migration-import&restore-file=' . $backup['filename'] ); ?>" class="ai1wm-button-gray ai1wm-button-alone ai1wm-backup-restore">
 										<i class="ai1wm-icon-cloud-upload ai1wm-icon-alone"></i>
 										<span><?php _e( 'Restore', AI1WM_PLUGIN_NAME ); ?></span>
 									</a>
-									<a href="#" data-delete-file="<?php echo $backup->getFile(); ?>" class="ai1wm-button-red ai1wm-button-alone ai1wm-backup-delete">
+									<a href="#" data-delete-file="<?php echo $backup['filename']; ?>" class="ai1wm-button-red ai1wm-button-alone ai1wm-backup-delete">
 										<i class="ai1wm-icon-close ai1wm-icon-alone"></i>
 										<span><?php _e( 'Delete', AI1WM_PLUGIN_NAME ); ?></span>
 									</a>

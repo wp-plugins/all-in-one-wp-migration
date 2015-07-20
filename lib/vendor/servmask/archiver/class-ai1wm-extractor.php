@@ -231,30 +231,11 @@ class Ai1wm_Extractor extends Ai1wm_Archiver {
 	}
 
 	private function set_mtime_of_file( $file, $mtime ) {
-		$result = touch( $file, $mtime );
-
-		if ( false === $result ) {
-			throw new Ai1wm_Not_Accesible_Exception(
-				sprintf(
-					__( 'Unable to set last modified date of %s', AI1WM_PLUGIN_NAME ),
-					$file
-				)
-			);
-		}
+		return @touch( $file, $mtime );
 	}
 
 	private function set_file_mode( $file, $mode = 0644 ) {
-		$result = chmod( $file, $mode );
-
-		if ( false === $result ) {
-			throw new Ai1wm_Not_Accesible_Exception(
-				sprintf(
-					__( 'Unable to set mode to %o of %s', AI1WM_PLUGIN_NAME ),
-					$mode,
-					$file
-				)
-			);
-		}
+		return @chmod( $file, $mode );
 	}
 
 	private function get_data_from_block( $block ) {

@@ -31,10 +31,6 @@
 				<label for="ai1wm-no-database"><?php _e( 'Do <strong>not</strong> export database (sql)', AI1WM_PLUGIN_NAME ); ?></label>
 			</li>
 			<li>
-				<input type="checkbox" id="ai1wm-no-table-data" name="options[no-table-data]" />
-				<label for="ai1wm-no-table-data"><?php _e( 'Do <strong>not</strong> export table data', AI1WM_PLUGIN_NAME ); ?></label>
-			</li>
-			<li>
 				<input type="checkbox" id="ai1wm-maintenance-mode" name="options[maintenance-mode]" />
 				<label for="ai1wm-maintenance-mode"><?php _e( 'Put the site in <strong>maintenance mode</strong> while exporting', AI1WM_PLUGIN_NAME ); ?></label>
 			</li>
