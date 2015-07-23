@@ -209,11 +209,15 @@ abstract class Ai1wm_Import_Abstract {
 		$archive->set_file_pointer( null, $this->pointer() );
 
 		while ( $archive->has_not_reached_eof() ) {
-			// Extract a file from archive to wp_content_dir
-			$archive->extract_one_file_to( WP_CONTENT_DIR, array(
-				AI1WM_PACKAGE_NAME,
-				AI1WM_DATABASE_NAME,
-			) );
+			try {
+				// Extract a file from archive to wp_content_dir
+				$archive->extract_one_file_to( WP_CONTENT_DIR, array(
+					AI1WM_PACKAGE_NAME,
+					AI1WM_DATABASE_NAME,
+				) );
+			} catch ( Exception $e ) {
+				// Skip bad file permissions
+			}
 
 			// Increment processed files counter
 			$processed++;

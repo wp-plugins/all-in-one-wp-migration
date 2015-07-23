@@ -189,8 +189,12 @@ abstract class Ai1wm_Export_Abstract {
 			$archive = new Ai1wm_Compressor( $this->storage()->archive() );
 
 			while ( $path = trim( fgets( $filemap ) ) ) {
-				// Add file to archive
-				$archive->add_file( WP_CONTENT_DIR . DIRECTORY_SEPARATOR . $path, $path );
+				try {
+					// Add file to archive
+					$archive->add_file( WP_CONTENT_DIR . DIRECTORY_SEPARATOR . $path, $path );
+				} catch ( Exception $e ) {
+					// Skip bad file permissions
+				}
 
 				$processed++;
 

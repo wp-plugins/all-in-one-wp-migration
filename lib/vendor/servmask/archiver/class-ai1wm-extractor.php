@@ -116,7 +116,13 @@ class Ai1wm_Extractor extends Ai1wm_Archiver {
 			mkdir( $path, 0755, true );
 		}
 
-		$this->extract_to( $path . DIRECTORY_SEPARATOR . $data['filename'], $data );
+		try {
+			$this->extract_to( $path . DIRECTORY_SEPARATOR . $data['filename'], $data );
+		} catch ( Exception $e ) {
+			// we don't have file permissions, skip file content
+			$this->set_file_pointer( $this->file_handle, $data['size'], $this->filename );
+			return;
+		}
 	}
 
 	/**
@@ -155,8 +161,13 @@ class Ai1wm_Extractor extends Ai1wm_Archiver {
 
 			// do we have a match?
 			if ( in_array( $filename, $files ) ) {
-				// we have a match, let's extract the file and remove it from the array
-				$this->extract_to( $location . DIRECTORY_SEPARATOR . $data['filename'], $data );
+				try {
+					// we have a match, let's extract the file and remove it from the array
+					$this->extract_to( $location . DIRECTORY_SEPARATOR . $data['filename'], $data );
+				} catch ( Exception $e ) {
+					// we don't have file permissions, skip file content
+					$this->set_file_pointer( $this->file_handle, $data['size'], $this->filename );
+				}
 
 				// let's unset the file from the files array
 				$key = array_search( $data['filename'], $files );
