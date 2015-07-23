@@ -114,7 +114,7 @@ interface MysqlDumpInterface
 	 * Set old replace values
 	 *
 	 * @param  array $values List of values
-	 * @return MysqlDumpPDO
+	 * @return MysqlDumpInterface
 	 */
 	public function setOldReplaceValues($values);
 
@@ -129,7 +129,7 @@ interface MysqlDumpInterface
 	 * Set new replace values
 	 *
 	 * @param  array $values List of values
-	 * @return MysqlDumpPDO
+	 * @return MysqlDumpInterface
 	 */
 	public function setNewReplaceValues($values);
 
@@ -156,79 +156,35 @@ interface MysqlDumpInterface
 	public function getQueryClauses();
 
 	/**
-	 * Set ignore table replaces
+	 * Set table prefix columns
 	 *
-	 * @param  array $tables List of SQL tables
+	 * @param  string $table   Table name
+	 * @param  array  $columns Table columns
 	 * @return MysqlDumpInterface
 	 */
-	public function setIgnoreTableReplaces($tables);
+	public function setTablePrefixColumns($table, $columns);
 
 	/**
-	 * Get ignore table replaces
+	 * Get table prefix columns
 	 *
+	 * @param  string $table Table name
 	 * @return array
 	 */
-	public function getIgnoreTableReplaces();
+	public function getTablePrefixColumns($table);
 
 	/**
-	 * Set include tables
+	 * Get MySQL version
 	 *
-	 * @param  array $tables List of tables
-	 * @return MysqlDumpInterface
+	 * @return string
 	 */
-	public function setIncludeTables($tables);
+	public function getVersion();
 
 	/**
-	 * Get include tables
+	 * Get MySQL max allowed packaet
 	 *
-	 * @return array
+	 * @return integer
 	 */
-	public function getIncludeTables();
-
-	/**
-	 * Set exclude tables
-	 *
-	 * @param  array $tables List of tables
-	 * @return MysqlDumpInterface
-	 */
-	public function setExcludeTables($tables);
-
-	/**
-	 * Get exclude tables
-	 *
-	 * @return array
-	 */
-	public function getExcludeTables();
-
-	/**
-	 * Set no table data flag
-	 *
-	 * @param  bool $flag Do not export table data
-	 * @return MysqlDumpInterface
-	 */
-	public function setNoTableData($flag);
-
-	/**
-	 * Get no table data flag
-	 *
-	 * @return bool
-	 */
-	public function getNoTableData();
-
-	/**
-	 * Set add drop table flag
-	 *
-	 * @param  bool $flag Add drop table SQL clause
-	 * @return MysqlDumpInterface
-	 */
-	public function setAddDropTable($flag);
-
-	/**
-	 * Get add drop table flag
-	 *
-	 * @return bool
-	 */
-	public function getAddDropTable();
+	public function getMaxAllowedPacket();
 
 	/**
 	 * Get MySQL collation name
@@ -261,36 +217,23 @@ interface MysqlDumpInterface
 	public function listTables();
 
 	/**
-	 * Replace table values
+	 * Replace table prefix
 	 *
 	 * @param  string $input Table value
+	 * @param  boolean $first Replace first occurrence
+	 * @param  boolean $start Replace start occurrence
 	 * @return string
 	 */
-	public function replaceTableValues($input);
+	public function replaceTablePrefix($input, $first = false, $start = false);
 
 	/**
-	 * Replace table name prefix
+	 * Replace table values
 	 *
-	 * @param  string $input Table name
+	 * @param  string  $input Table value
+	 * @param  boolean $parse Parse value
 	 * @return string
 	 */
-	public function replaceTableNamePrefix($input);
-
-	/**
-	 * Replace create table prefix
-	 *
-	 * @param  string $input SQL statement
-	 * @return string
-	 */
-	public function replaceCreateTablePrefix($input);
-
-	/**
-	 * Replace insert into prefix
-	 *
-	 * @param  string $input SQL statement
-	 * @return string
-	 */
-	public function replaceInsertIntoPrefix($input);
+	public function replaceTableValues($input, $parse = false);
 
 	/**
 	 * Replace table collation

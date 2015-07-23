@@ -31,35 +31,23 @@ class Ai1wm_Backup {
 	 * @return array
 	 */
 	public function get_files() {
-		$backups  = array();
+		$backups = array();
 
-		try {
-			$iterator = new RegexIterator(
-				new DirectoryIterator( AI1WM_BACKUPS_PATH ),
-				'/^(.+)-(\d+)-(\d+)-(\d+)\.wpress$/',
-				RegexIterator::GET_MATCH
+		// Get backup files
+		$iterator = new Ai1wm_Extension_Filter(
+			new DirectoryIterator( AI1WM_BACKUPS_PATH ),
+			array( 'wpress', 'bin' )
+		);
+
+		foreach ( $iterator as $item ) {
+			$backups[] = array(
+				'filename' => $item->getFilename(),
+				'mtime'    => $item->getMTime(),
+				'size'     => $item->getSize(),
 			);
-
-			foreach ( $iterator as $item ) {
-				try {
-					$backup = new Ai1wm_File;
-					$backup->setFile( $item[0] );
-					$backup->setName( $item[1] );
-					$backup->setSize( $iterator->getSize() );
-					$backup->setCreatedAt( strtotime( "{$item[2]} {$item[3]}" ) );
-
-					// Add backup file
-					$backups[] = $backup;
-				} catch ( Exception $e ) {
-					// Log the error
-					Ai1wm_Log::error( 'Exception while listing backup file: ' . $e->getMessage() );
-				}
-			}
-		} catch ( Exception $e ) {
-			$backups = array();
 		}
 
-		// Sort backups by most recent first
+		// Sort backups modified date
 		usort( $backups, array( $this, 'compare' ) );
 
 		return $backups;
@@ -105,17 +93,17 @@ class Ai1wm_Backup {
 	}
 
 	/**
-	 * Compare backup files by created at
+	 * Compare backup files by modified time
 	 *
-	 * @param  Ai1wm_File $a File object
-	 * @param  Ai1wm_File $b File object
+	 * @param  array $a File item A
+	 * @param  array $b File item B
 	 * @return integer
 	 */
 	public function compare( $a, $b ) {
-		if ( $a->getCreatedAt() === $b->getCreatedAt() ) {
+		if ( $a['mtime'] === $b['mtime'] ) {
 			return 0;
 		}
 
-		return ( $a->getCreatedAt() > $b->getCreatedAt() ) ? - 1 : 1;
+		return ( $a['mtime'] > $b['mtime'] ) ? - 1 : 1;
 	}
 }
