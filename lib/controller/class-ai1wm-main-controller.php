@@ -657,7 +657,7 @@ class Ai1wm_Main_Controller {
 				'secret_key' => get_site_option( AI1WM_SECRET_KEY, false, false ),
 			),
 			'filters'             => array(
-				'ai1wm_archive_extension' => 'wpress',
+				'ai1wm_archive_extension' => array( 'wpress', 'bin' ),
 				'ai1wm_archive_size'      => apply_filters( 'ai1wm_max_file_size', AI1WM_MAX_FILE_SIZE ),
 			),
 		) );
