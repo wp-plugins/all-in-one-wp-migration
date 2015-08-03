@@ -137,20 +137,7 @@ abstract class Ai1wm_Archiver {
 		// check if we have a handle
 		if ( false === $file_handle ) {
 			// we couldn't open the file
-			throw new Ai1wm_Not_Accesible_Exception(
-				sprintf(
-					__(
-						'Unable to open %s<br /><br />' .
-						'<strong>Possible solutions</strong><br />' .
-						'1. Ensure that you have enough disk space on your server.<br />' .
-						'2. Ensure that file permissions are correctly set-up - 775 or 777 to <strong>%s</strong> ' .
-						'directory and all files and folders that it contains.',
-						AI1WM_PLUGIN_NAME
-					),
-					$file,
-					WP_CONTENT_DIR
-				)
-			);
+			throw new Ai1wm_Not_Accesible_Exception( sprintf( __( 'Unable to open %s' . AI1WM_PLUGIN_NAME ), $file ) );
 		}
 
 		return $file_handle;
@@ -168,13 +155,7 @@ abstract class Ai1wm_Archiver {
 	protected function write_to_handle( $handle, $data, $file ) {
 		$result = @fwrite( $handle, $data );
 		if ( false === $result || ( ! empty( $data ) && 0 === $result ) ) {
-			throw new Ai1wm_Not_Writable_Exception(
-				__(
-					'Unable to write to ' . $file . '<br /><br />' .
-					'<strong>Ensure that you have enough disk space on your server.</strong>',
-					AI1WM_PLUGIN_NAME
-				)
-			);
+			throw new Ai1wm_Not_Writable_Exception( sprintf( __( 'Unable to write %s', AI1WM_PLUGIN_NAME ), $file ) );
 		}
 	}
 
@@ -191,7 +172,7 @@ abstract class Ai1wm_Archiver {
 	protected function read_from_handle( $handle, $size, $file ) {
 		$result = @fread( $handle, $size );
 		if ( false === $result ) {
-			throw new Ai1wm_Not_Readable_Exception( __( 'Unable to read from ' . $file, AI1WM_PLUGIN_NAME ) );
+			throw new Ai1wm_Not_Readable_Exception( sprintf( __( 'Unable to read %s', AI1WM_PLUGIN_NAME ), $file ) );
 		}
 
 		return $result;
@@ -228,7 +209,7 @@ abstract class Ai1wm_Archiver {
 
 		if ( false === $result ) {
 			// unable to close the file
-			throw new Ai1wm_Not_Accesible_Exception( __( 'Unable to close ' . $this->filename, AI1WM_PLUGIN_NAME ) );
+			throw new Ai1wm_Not_Accesible_Exception( sprintf( __( 'Unable to close %s', AI1WM_PLUGIN_NAME ), $this->filename ) );
 		}
 	}
 

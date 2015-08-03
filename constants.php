@@ -38,7 +38,7 @@ if ( function_exists( 'gethostname' ) && in_array( gethostname(), $local ) ) {
 // ==================
 // = Plugin Version =
 // ==================
-define( 'AI1WM_VERSION', '3.3' );
+define( 'AI1WM_VERSION', '4.1' );
 
 // ===============
 // = Plugin Name =
@@ -63,12 +63,7 @@ define( 'AI1WM_LOG_FILE', AI1WM_STORAGE_PATH . DIRECTORY_SEPARATOR . 'error.log'
 // ===============
 // = Status Path =
 // ===============
-define( 'AI1WM_STATUS_FILE', AI1WM_STORAGE_PATH . DIRECTORY_SEPARATOR . 'status.log' );
-
-// ================
-// = Backups Path =
-// ================
-define( 'AI1WM_BACKUPS_PATH', AI1WM_PATH . DIRECTORY_SEPARATOR . 'backups' );
+define( 'AI1WM_STATUS_FILE', AI1WM_STORAGE_PATH . DIRECTORY_SEPARATOR . 'status.html' );
 
 // ============
 // = Lib Path =
@@ -143,7 +138,7 @@ define( 'AI1WM_PACKAGE_NAME', 'package.json' );
 // ========================
 // = Archive Status Name  =
 // ========================
-define( 'AI1WM_STATUS_NAME', 'status.log' );
+define( 'AI1WM_STATUS_NAME', 'status.html' );
 
 // ========================
 // = Archive FileMap Name =
@@ -217,10 +212,80 @@ if ( ! defined( 'WP_CONTENT_DIR' ) ) {
 	define( 'WP_CONTENT_DIR', ABSPATH . 'wp-content' );
 }
 
-// ==========================
-// = WP_PLUGIN_DIR Constant =
-// ==========================
-if ( ! defined( 'WP_PLUGIN_DIR' ) ) {
-	define( 'WP_PLUGIN_DIR', WP_CONTENT_DIR . '/plugins' );
+// ================
+// = Backups Path =
+// ================
+define( 'AI1WM_BACKUPS_PATH', WP_CONTENT_DIR . DIRECTORY_SEPARATOR . 'ai1wm-backups' );
+
+// ======================
+// = Storage Index File =
+// ======================
+define( 'AI1WM_STORAGE_INDEX', AI1WM_STORAGE_PATH . DIRECTORY_SEPARATOR . 'index.php' );
+
+// ======================
+// = Backups Index File =
+// ======================
+define( 'AI1WM_BACKUPS_INDEX', AI1WM_BACKUPS_PATH . DIRECTORY_SEPARATOR . 'index.php' );
+
+// ====================================
+// = WP Migration Plugin Base Dir =
+// ====================================
+if ( defined( 'AI1WM_PLUGIN_BASENAME' ) ) {
+	define( 'AI1WM_PLUGIN_BASEDIR', dirname( AI1WM_PLUGIN_BASENAME ) );
+} else {
+	define( 'AI1WM_PLUGIN_BASEDIR', 'all-in-one-wp-migration' );
 }
 
+// ==============================
+// = Dropbox Extension Base Dir =
+// ==============================
+if ( defined( 'AI1WMDE_PLUGIN_BASENAME' ) ) {
+	define( 'AI1WMDE_PLUGIN_BASEDIR', dirname( AI1WMDE_PLUGIN_BASENAME ) );
+} else {
+	define( 'AI1WMDE_PLUGIN_BASEDIR', 'all-in-one-wp-migration-dropbox-extension' );
+}
+
+// ===================================
+// = Google Drive Extension Base Dir =
+// ===================================
+if ( defined( 'AI1WMGE_PLUGIN_BASENAME' ) ) {
+	define( 'AI1WMGE_PLUGIN_BASEDIR', dirname( AI1WMGE_PLUGIN_BASENAME ) );
+} else {
+	define( 'AI1WMGE_PLUGIN_BASEDIR', 'all-in-one-wp-migration-gdrive-extension' );
+}
+
+// ================================
+// = Amazon S3 Extension Base Dir =
+// ================================
+if ( defined( 'AI1WMSE_PLUGIN_BASENAME' ) ) {
+	define( 'AI1WMSE_PLUGIN_BASEDIR', dirname( AI1WMSE_PLUGIN_BASENAME ) );
+} else {
+	define( 'AI1WMSE_PLUGIN_BASEDIR', 'all-in-one-wp-migration-s3-extension' );
+}
+
+// ================================
+// = Multisite Extension Base Dir =
+// ================================
+if ( defined( 'AI1WMME_PLUGIN_BASENAME' ) ) {
+	define( 'AI1WMME_PLUGIN_BASEDIR', dirname( AI1WMME_PLUGIN_BASENAME ) );
+} else {
+	define( 'AI1WMME_PLUGIN_BASEDIR', 'all-in-one-wp-migration-multisite-extension' );
+}
+
+// ================================
+// = Unlimited Extension Base Dir =
+// ================================
+if ( defined( 'AI1WMUE_PLUGIN_BASENAME' ) ) {
+	define( 'AI1WMUE_PLUGIN_BASEDIR', dirname( AI1WMUE_PLUGIN_BASENAME ) );
+} else {
+	define( 'AI1WMUE_PLUGIN_BASEDIR', 'all-in-one-wp-migration-unlimited-extension' );
+}
+
+// ==========================
+// = FTP Extension Base Dir =
+// ==========================
+if ( defined( 'AI1WMFE_PLUGIN_BASENAME' ) ) {
+	define( 'AI1WMFE_PLUGIN_BASEDIR', dirname( AI1WMFE_PLUGIN_BASENAME ) );
+} else {
+	define( 'AI1WMFE_PLUGIN_BASEDIR', 'all-in-one-wp-migration-ftp-extension' );
+}
