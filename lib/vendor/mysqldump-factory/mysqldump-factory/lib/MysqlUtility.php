@@ -48,52 +48,91 @@
 class MysqlUtility
 {
 	/**
-	 * Find and replace input with pattern
+	 * Replace all occurrences of the search string with the replacement string.
+	 * This function is case-sensitive.
 	 *
-	 * @param  string $input   Value
-	 * @param  string $pattern Pattern
-	 * @return string
+	 * @param  array  $from List of string we're looking to replace.
+	 * @param  array  $to   What we want it to be replaced with.
+	 * @param  string $data Data to replace.
+	 * @return mixed        The original string with all elements replaced as needed.
 	 */
-	public static function pregReplace($input, $pattern) {
-		// PHP doesn't garbage collect functions created by create_function()
-		static $callback = null;
-
-		if ($callback === null) {
-			$callback = create_function(
-				'$matches',
-				"return isset(\$matches[3]) ? 's:' .
-					strlen(MysqlUtility::unescapeMysql(\$matches[3])) .
-					':\"' .
-					MysqlUtility::unescapeQuotes(\$matches[3]) .
-					'\";' : \$matches[0];
-				"
-			);
-		}
-
-		return preg_replace_callback($pattern, $callback, $input);
+	public static function replaceValues($from = array(), $to = array(), $data = '')
+	{
+		return str_replace($from, $to, $data);
 	}
 
 	/**
-	 * Unescape to avoid dump-text issues
+	 * Take a serialized array and unserialize it replacing elements as needed and
+	 * unserializing any subordinate arrays and performing the replace on those too.
+	 * This function is case-sensitive.
 	 *
-	 * @param  string $input Text
+	 * @param  array $from       List of string we're looking to replace.
+	 * @param  array $to         What we want it to be replaced with.
+	 * @param  mixed $data       Used to pass any subordinate arrays back to in.
+	 * @param  bool  $serialized Does the array passed via $data need serializing.
+	 * @return mixed             The original array with all elements replaced as needed.
+	 */
+	public static function replaceSerializedValues($from = array(), $to = array(), $data = '', $serialized = false)
+	{
+		// Some unserialized data cannot be re-serialized eg. SimpleXMLElements
+		try {
+
+			if (is_string($data) && ($unserialized = @unserialize($data)) !== false) {
+				$data = self::replaceSerializedValues($from, $to, $unserialized, true);
+			} else if (is_array($data)) {
+				$tmp = array();
+				foreach ($data as $key => $value) {
+					$tmp[$key] = self::replaceSerializedValues($from, $to, $value, false);
+				}
+
+				$data = $tmp;
+				unset($tmp);
+			} elseif (is_object($data)) {
+				$tmp = $data;
+				$props = get_object_vars($data);
+				foreach ($props as $key => $value) {
+					$tmp->$key = self::replaceSerializedValues($from, $to, $value, false);
+				}
+
+				$data = $tmp;
+				unset($tmp);
+			} else {
+				if (is_string($data)) {
+					$data = str_replace($from, $to, $data);
+				}
+			}
+
+			if ($serialized) {
+				return serialize($data);
+			}
+
+		} catch (Exception $e) {
+			// pass
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Unescape MySQL special characters
+	 *
+	 * @param  string $data Data to replace.
 	 * @return string
 	 */
-	public static function unescapeMysql($input) {
+	public static function unescapeMysql($data) {
 		return str_replace(
 			array('\\\\', '\\0', "\\n", "\\r", '\Z', "\'", '\"'),
 			array('\\', '\0', "\n", "\r", "\x1a", "'", '"'),
-			$input
+			$data
 		);
 	}
-
 	/**
-	 * Fix strange behaviour if you have escaped quotes in your replacement
+	 * Unescape quote characters
 	 *
-	 * @param  string $input Text
+	 * @param  string $data Data to replace.
 	 * @return string
 	 */
-	public static function unescapeQuotes($input) {
-		return str_replace('\"', '"', $input);
+	public static function unescapeQuotes($data) {
+		return str_replace('\"', '"', $data);
 	}
 }

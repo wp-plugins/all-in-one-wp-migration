@@ -78,12 +78,20 @@ abstract class Ai1wm_Export_Abstract {
 			'message' => __( 'Retrieving a list of all WordPress files...', AI1WM_PLUGIN_NAME )
 		) );
 
-		// Enable maintenance mode
-		if ( $this->should_enable_maintenance() ) {
-			Ai1wm_Maintenance::enable();
-		}
+		// Default filters
+		$filters = array(
+			'ai1wm-backups',
+			'managewp',
+		);
 
-		$filters = array( 'managewp' );
+		// Exclude index.php
+		$filters = array_merge( $filters, array(
+			'index.php',
+			'themes' . DIRECTORY_SEPARATOR . 'index.php',
+			'plugins' . DIRECTORY_SEPARATOR . 'index.php',
+			'uploads' . DIRECTORY_SEPARATOR . 'index.php',
+		) );
+
 
 		// Exclude media
 		if ( $this->should_exclude_media() ) {
@@ -100,14 +108,13 @@ abstract class Ai1wm_Export_Abstract {
 			$filters = array_merge( $filters, array( 'plugins' ) );
 		} else {
 			$filters = array_merge( $filters, array(
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-dropbox-extension',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-gdrive-extension',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-s3-extension',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-multisite-extension',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-unlimited-extension',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-pro-extension',
-				'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-ftp-extension',
+				'plugins' . DIRECTORY_SEPARATOR . AI1WM_PLUGIN_BASEDIR,
+				'plugins' . DIRECTORY_SEPARATOR . AI1WMDE_PLUGIN_BASEDIR,
+				'plugins' . DIRECTORY_SEPARATOR . AI1WMGE_PLUGIN_BASEDIR,
+				'plugins' . DIRECTORY_SEPARATOR . AI1WMSE_PLUGIN_BASEDIR,
+				'plugins' . DIRECTORY_SEPARATOR . AI1WMME_PLUGIN_BASEDIR,
+				'plugins' . DIRECTORY_SEPARATOR . AI1WMUE_PLUGIN_BASEDIR,
+				'plugins' . DIRECTORY_SEPARATOR . AI1WMFE_PLUGIN_BASEDIR,
 			) );
 		}
 
@@ -182,8 +189,12 @@ abstract class Ai1wm_Export_Abstract {
 			$archive = new Ai1wm_Compressor( $this->storage()->archive() );
 
 			while ( $path = trim( fgets( $filemap ) ) ) {
-				// Add file to archive
-				$archive->add_file( WP_CONTENT_DIR . DIRECTORY_SEPARATOR . $path, $path );
+				try {
+					// Add file to archive
+					$archive->add_file( WP_CONTENT_DIR . DIRECTORY_SEPARATOR . $path, $path );
+				} catch ( Exception $e ) {
+					// Skip bad file permissions
+				}
 
 				$processed++;
 
@@ -395,15 +406,36 @@ abstract class Ai1wm_Export_Abstract {
 		}
 
 		// Resolve domain
-		$url = admin_url( 'admin-ajax.php?action=ai1wm_export' );
-		$parsed_url = parse_url( $url, PHP_URL_HOST );
+		$url      = admin_url( 'admin-ajax.php?action=ai1wm_export' );
+		$hostname = parse_url( $url, PHP_URL_HOST );
+		$port     = parse_url( $url, PHP_URL_PORT );
+		$ip       = gethostbyname( $hostname );
 
-		if ( false !== $parsed_url ) {
-			$ip = gethostbyname( $parsed_url );
+		// Could not resolve host
+		if ( $hostname === $ip ) {
 
-			if ( $ip !== $parsed_url ) {
-				$url = preg_replace( sprintf( '/%s/', preg_quote( $parsed_url, '-' ) ), $ip, $url, 1 );
-				$headers['Host'] = $parsed_url;
+			// Get server IP address
+			if ( ! empty( $_SERVER['SERVER_ADDR'] ) ) {
+				$ip = $_SERVER['SERVER_ADDR'];
+			} else if ( ! empty( $_SERVER['LOCAL_ADDR'] ) ) {
+				$ip = $_SERVER['LOCAL_ADDR'];
+			} else {
+				$ip = $_SERVER['SERVER_NAME'];
+			}
+
+			// Add IPv6 support
+			if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+				$ip = "[$ip]";
+			}
+
+			// Replace URL
+			$url = preg_replace( sprintf( '/%s/', preg_quote( $hostname, '-' ) ), $ip, $url, 1 );
+
+			// Set host header
+			if ( ! empty( $port ) ) {
+				$headers['Host'] = sprintf( '%s:%s', $hostname, $port );
+			} else {
+				$headers['Host'] = sprintf( '%s', $hostname );
 			}
 		}
 

@@ -116,7 +116,13 @@ class Ai1wm_Extractor extends Ai1wm_Archiver {
 			mkdir( $path, 0755, true );
 		}
 
-		$this->extract_to( $path . DIRECTORY_SEPARATOR . $data['filename'], $data );
+		try {
+			$this->extract_to( $path . DIRECTORY_SEPARATOR . $data['filename'], $data );
+		} catch ( Exception $e ) {
+			// we don't have file permissions, skip file content
+			$this->set_file_pointer( $this->file_handle, $data['size'], $this->filename );
+			return;
+		}
 	}
 
 	/**
@@ -155,8 +161,13 @@ class Ai1wm_Extractor extends Ai1wm_Archiver {
 
 			// do we have a match?
 			if ( in_array( $filename, $files ) ) {
-				// we have a match, let's extract the file and remove it from the array
-				$this->extract_to( $location . DIRECTORY_SEPARATOR . $data['filename'], $data );
+				try {
+					// we have a match, let's extract the file and remove it from the array
+					$this->extract_to( $location . DIRECTORY_SEPARATOR . $data['filename'], $data );
+				} catch ( Exception $e ) {
+					// we don't have file permissions, skip file content
+					$this->set_file_pointer( $this->file_handle, $data['size'], $this->filename );
+				}
 
 				// let's unset the file from the files array
 				$key = array_search( $data['filename'], $files );
@@ -231,30 +242,11 @@ class Ai1wm_Extractor extends Ai1wm_Archiver {
 	}
 
 	private function set_mtime_of_file( $file, $mtime ) {
-		$result = touch( $file, $mtime );
-
-		if ( false === $result ) {
-			throw new Ai1wm_Not_Accesible_Exception(
-				sprintf(
-					__( 'Unable to set last modified date of %s', AI1WM_PLUGIN_NAME ),
-					$file
-				)
-			);
-		}
+		return @touch( $file, $mtime );
 	}
 
 	private function set_file_mode( $file, $mode = 0644 ) {
-		$result = chmod( $file, $mode );
-
-		if ( false === $result ) {
-			throw new Ai1wm_Not_Accesible_Exception(
-				sprintf(
-					__( 'Unable to set mode to %o of %s', AI1WM_PLUGIN_NAME ),
-					$mode,
-					$file
-				)
-			);
-		}
+		return @chmod( $file, $mode );
 	}
 
 	private function get_data_from_block( $block ) {

@@ -23,45 +23,23 @@
  * ███████║███████╗██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║██║  ██║███████║██║  ██╗
  * ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
  */
-class Ai1wm_File {
+class Ai1wm_Extension_Filter extends FilterIterator {
 
-	protected $file      = null;
+	protected $include = array();
 
-	protected $name      = null;
+	public function __construct( Iterator $iterator, $include = array() ) {
+		parent::__construct( $iterator );
 
-	protected $size      = null;
-
-	protected $createdAt = null;
-
-	public function setFile($file) {
-		$this->file = $file;
+		// Set include filter
+		$this->include = $include;
 	}
 
-	public function getFile() {
-		return $this->file;
-	}
+	public function accept() {
+		$filename = $this->getInnerIterator()->getFilename();
+		if ( in_array( pathinfo( $filename, PATHINFO_EXTENSION ), $this->include ) ) {
+			return true;
+		}
 
-	public function setName($name) {
-		$this->name = $name;
-	}
-
-	public function getName() {
-		return $this->name;
-	}
-
-	public function setSize($size) {
-		$this->size = $size;
-	}
-
-	public function getSize() {
-		return $this->size;
-	}
-
-	public function setCreatedAt($createdAt) {
-		$this->createdAt = $createdAt;
-	}
-
-	public function getCreatedAt() {
-		return $this->createdAt;
+		return false;
 	}
 }

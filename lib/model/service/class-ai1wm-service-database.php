@@ -64,7 +64,7 @@ class Ai1wm_Service_Database implements Ai1wm_Service_Interface
 	/**
 	 * Import database
 	 *
-	 * @return string
+	 * @return void
 	 */
 	public function import() {
 		global $wpdb;
@@ -80,24 +80,6 @@ class Ai1wm_Service_Database implements Ai1wm_Service_Interface
 		if ( isset( $config['SiteURL'] ) && ( $config['SiteURL'] !== site_url() ) ) {
 			$old_values[] = $config['SiteURL'];
 			$new_values[] = site_url();
-
-			// Get Domain
-			$old_domain = parse_url( $config['SiteURL'] );
-			$new_domain = parse_url( site_url() );
-
-			// Replace Domain
-			$old_values[] = sprintf( '%s://%s', $old_domain['scheme'], $old_domain['host'] );
-			$new_values[] = sprintf( '%s://%s', $new_domain['scheme'], $new_domain['host'] );
-
-			// Replace Host
-			if ( stripos( site_url(), $old_domain['host'] ) === false && stripos( home_url(), $old_domain['host'] ) === false ) {
-				$old_values[] = $old_domain['host'];
-				$new_values[] = $new_domain['host'];
-			}
-
-			// Replace Path
-			$old_values[] = isset( $old_domain['path'] ) && ( $old_domain['path'] !== '/' ) ? trailingslashit( $old_domain['path'] ) : null;
-			$new_values[] = isset( $new_domain['path'] ) ? trailingslashit( $new_domain['path'] ) : '/';
 		}
 
 		// Get Home URL
@@ -159,6 +141,41 @@ class Ai1wm_Service_Database implements Ai1wm_Service_Interface
 		// Clear WP options cache
 		wp_cache_flush();
 
+		// WP Migration
+		if ( is_plugin_active( AI1WM_PLUGIN_BASENAME ) ) {
+			activate_plugin( AI1WM_PLUGIN_BASENAME );
+		}
+
+		// Dropbox Extension
+		if ( is_plugin_active( AI1WMDE_PLUGIN_BASENAME ) ) {
+			activate_plugin( AI1WMDE_PLUGIN_BASENAME );
+		}
+
+		// Google Drive Extension
+		if ( is_plugin_active( AI1WMGE_PLUGIN_BASENAME ) ) {
+			activate_plugin( AI1WMGE_PLUGIN_BASENAME );
+		}
+
+		// Amazon S3 Extension
+		if ( is_plugin_active( AI1WMSE_PLUGIN_BASENAME ) ) {
+			activate_plugin( AI1WMSE_PLUGIN_BASENAME );
+		}
+
+		// Multisite Extension
+		if ( is_plugin_active( AI1WMME_PLUGIN_BASENAME ) ) {
+			activate_plugin( AI1WMME_PLUGIN_BASENAME );
+		}
+
+		// Unlimited Extension
+		if ( is_plugin_active( AI1WMUE_PLUGIN_BASENAME ) ) {
+			activate_plugin( AI1WMUE_PLUGIN_BASENAME );
+		}
+
+		// FTP Extension
+		if ( is_plugin_active( AI1WMFE_PLUGIN_BASENAME ) ) {
+			activate_plugin( AI1WMFE_PLUGIN_BASENAME );
+		}
+
 		// Set new user identity
 		if ( isset( $config['Export']['User']['Id'] ) && ( $id = $config['Export']['User']['Id'] ) ) {
 
@@ -201,22 +218,10 @@ class Ai1wm_Service_Database implements Ai1wm_Service_Interface
 	/**
 	 * Export database
 	 *
-	 * @return string
+	 * @return void
 	 */
 	public function export() {
 		global $wpdb;
-
-		// Set include tables
-		$include_tables = array();
-		if ( isset( $this->args['options']['include-tables'] ) ) {
-			$include_tables = $this->args['options']['include-tables'];
-		}
-
-		// Set exclude tables
-		$exclude_tables = array();
-		if ( isset( $this->args['options']['exclude-tables' ] ) ) {
-			$exclude_tables = $this->args['options']['exclude-tables'];
-		}
 
 		$clauses = array();
 
@@ -234,20 +239,12 @@ class Ai1wm_Service_Database implements Ai1wm_Service_Interface
 			$clauses[ $wpdb->posts ] = " WHERE post_type != 'revision' ";
 		}
 
-		// No table data, but leave Admin account
-		$no_table_data = isset( $this->args['options']['no-table-data'] );
-		if ( $no_table_data ) {
-			$clauses                    = array();
-			$clauses[ $wpdb->users ]    = ' WHERE id = 1 ';
-			$clauses[ $wpdb->usermeta ] = ' WHERE user_id = 1 ';
-		}
-
 		// Find and replace
 		$old_values = array();
 		$new_values = array();
 		if ( isset( $this->args['options']['replace'] ) && ( $replace = $this->args['options']['replace'] ) ) {
 			for ( $i = 0; $i < count( $replace['old-value'] ); $i++ ) {
-				if ( isset( $replace['old-value'][$i] ) && isset( $replace['new-value'][$i] ) ) {
+				if ( ! empty( $replace['old-value'][$i] ) && ! empty( $replace['new-value'][$i] ) ) {
 					$old_values[] = $replace['old-value'][$i];
 					$new_values[] = $replace['new-value'][$i];
 				}
@@ -256,15 +253,13 @@ class Ai1wm_Service_Database implements Ai1wm_Service_Interface
 
 		// Set dump options
 		$this->connection->setFileName( $this->storage()->database() )
-						 ->setIncludeTables( $include_tables )
-						 ->setExcludeTables( $exclude_tables )
-						 ->setNoTableData( $no_table_data )
 						 ->setOldTablePrefix( $wpdb->prefix )
 						 ->setNewTablePrefix( AI1WM_TABLE_PREFIX )
 						 ->setOldReplaceValues( $old_values )
 						 ->setNewReplaceValues( $new_values )
 						 ->setQueryClauses( $clauses )
-						 ->setIgnoreTableReplaces( array( $wpdb->postmeta => array() ) );
+						 ->setTablePrefixColumns( $wpdb->options, array( 'option_name' ) )
+						 ->setTablePrefixColumns( $wpdb->usermeta, array( 'meta_key' ) );
 
 		// Export database
 		$this->connection->export();
