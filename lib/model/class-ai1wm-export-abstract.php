@@ -355,7 +355,7 @@ abstract class Ai1wm_Export_Abstract {
 		// Add unique identifier
 		$name[] = rand( 100, 999 );
 
-		return sprintf( '%s.wpress.bin', implode( '-', $name ) );
+		return sprintf( '%s.wpress', implode( '-', $name ) );
 	}
 
 	/**
