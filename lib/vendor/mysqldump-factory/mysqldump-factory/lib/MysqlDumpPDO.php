@@ -626,7 +626,7 @@ class MysqlDumpPDO implements MysqlDumpInterface
 	 */
 	public function replaceTableCollation($input)
 	{
-		return str_replace('utf8mb4_general_ci', 'utf8_general_ci', $input);
+		return str_replace('utf8mb4', 'utf8', $input);
 	}
 
 	/**
