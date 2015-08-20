@@ -38,7 +38,7 @@ if ( function_exists( 'gethostname' ) && in_array( gethostname(), $local ) ) {
 // ==================
 // = Plugin Version =
 // ==================
-define( 'AI1WM_VERSION', '4.2' );
+define( 'AI1WM_VERSION', '4.3' );
 
 // ===============
 // = Plugin Name =
@@ -288,4 +288,13 @@ if ( defined( 'AI1WMFE_PLUGIN_BASENAME' ) ) {
 	define( 'AI1WMFE_PLUGIN_BASEDIR', dirname( AI1WMFE_PLUGIN_BASENAME ) );
 } else {
 	define( 'AI1WMFE_PLUGIN_BASEDIR', 'all-in-one-wp-migration-ftp-extension' );
+}
+
+// ==========================
+// = URL Extension Base Dir =
+// ==========================
+if ( defined( 'AI1WMLE_PLUGIN_BASENAME' ) ) {
+	define( 'AI1WMLE_PLUGIN_BASEDIR', dirname( AI1WMLE_PLUGIN_BASENAME ) );
+} else {
+	define( 'AI1WMLE_PLUGIN_BASEDIR', 'all-in-one-wp-migration-url-extension' );
 }

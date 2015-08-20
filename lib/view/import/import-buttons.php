@@ -10,7 +10,7 @@
 							<i class="ai1wm-icon-cloud-upload"></i><br />
 							<?php _e( 'Drag & Drop to upload', AI1WM_PLUGIN_NAME ); ?>
 						</p>
-						<div class="ai1wm-button-group ai1wm-button-group-import ai1wm-expandable">
+						<div class="ai1wm-button-group ai1wm-button-import ai1wm-expandable">
 							<div class="ai1wm-button-main">
 								<span><?php _e( 'Import From', AI1WM_PLUGIN_NAME ); ?></span>
 								<span class="ai1mw-lines">

@@ -1,7 +1,7 @@
 <div class="ai1wm-field-set">
 	<?php if ( is_readable( AI1WM_STORAGE_PATH ) && is_writable( AI1WM_STORAGE_PATH ) ): ?>
 		<div class="ai1wm-buttons">
-			<div class="ai1wm-button-group ai1wm-expandable">
+			<div class="ai1wm-button-group ai1wm-button-export ai1wm-expandable">
 				<div class="ai1wm-button-main">
 					<span><?php _e( 'Export To', AI1WM_PLUGIN_NAME ); ?></span>
 					<span class="ai1mw-lines">

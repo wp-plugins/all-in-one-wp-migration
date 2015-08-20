@@ -105,7 +105,7 @@ abstract class Ai1wm_Export_Abstract {
 
 		// Exclude plugins
 		if ( $this->should_exclude_plugins() ) {
-			$filters = array_merge( $filters, array( 'plugins' ) );
+			$filters = array_merge( $filters, array( 'plugins', 'mu-plugins' ) );
 		} else {
 			$filters = array_merge( $filters, array(
 				'plugins' . DIRECTORY_SEPARATOR . AI1WM_PLUGIN_BASEDIR,
@@ -115,6 +115,7 @@ abstract class Ai1wm_Export_Abstract {
 				'plugins' . DIRECTORY_SEPARATOR . AI1WMME_PLUGIN_BASEDIR,
 				'plugins' . DIRECTORY_SEPARATOR . AI1WMUE_PLUGIN_BASEDIR,
 				'plugins' . DIRECTORY_SEPARATOR . AI1WMFE_PLUGIN_BASEDIR,
+				'plugins' . DIRECTORY_SEPARATOR . AI1WMLE_PLUGIN_BASEDIR,
 			) );
 		}
 

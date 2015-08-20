@@ -383,8 +383,8 @@ class Ai1wm_Main_Controller {
 		// sublevel Export menu
 		$export_page_hook_suffix = add_submenu_page(
 			'site-migration-export',
-			'Export',
-			'Export',
+			__( 'Export', AI1WM_PLUGIN_NAME ),
+			__( 'Export', AI1WM_PLUGIN_NAME ),
 			'export',
 			'site-migration-export',
 			'Ai1wm_Export_Controller::index'
@@ -396,8 +396,8 @@ class Ai1wm_Main_Controller {
 		// sublevel Import menu
 		$import_page_hook_suffix = add_submenu_page(
 			'site-migration-export',
-			'Import',
-			'Import',
+			__( 'Import', AI1WM_PLUGIN_NAME ),
+			__( 'Import', AI1WM_PLUGIN_NAME ),
 			'import',
 			'site-migration-import',
 			'Ai1wm_Import_Controller::index'
@@ -409,8 +409,8 @@ class Ai1wm_Main_Controller {
 		// sublevel Backups menu
 		$backup_page_hook_suffix = add_submenu_page(
 			'site-migration-export',
-			'Backups',
-			'Backups',
+			__( 'Backups', AI1WM_PLUGIN_NAME ),
+			__( 'Backups', AI1WM_PLUGIN_NAME ),
 			'export',
 			'site-migration-backup',
 			'Ai1wm_Backup_Controller::index'
