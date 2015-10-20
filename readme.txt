@@ -3,7 +3,7 @@ Contributors: yani.iliev, bangelov, pimjitsawang
 Tags: db migration, migration, wordpress migration, db backup, db restore, website backup, website restore, website migration, website deploy, wordpress deploy, db backup, database export, database serialization, database find replace
 Requires at least: 3.3
 Tested up to: 4.3
-Stable tag: 4.4
+Stable tag: 4.5
 License: GPLv2 or later
 
 All-in-One WP Migration is the only tool that you will ever need to migrate a WordPress site.
