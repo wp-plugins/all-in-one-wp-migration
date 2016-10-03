@@ -113,7 +113,7 @@ class Ai1wm_Extractor extends Ai1wm_Archiver {
 
 		// check if location doesn't exist, then create it
 		if ( false === file_exists( $path ) ) {
-			mkdir( $path, 0755, true );
+			mkdir( $path, defined('FS_CHMOD_DIR') ? FS_CHMOD_DIR : 0755, true );
 		}
 
 		try {
@@ -238,7 +238,7 @@ class Ai1wm_Extractor extends Ai1wm_Archiver {
 		$this->set_mtime_of_file( $file, $data['mtime'] );
 
 		// all files should chmoded to 755
-		$this->set_file_mode( $file, 0644 );
+		$this->set_file_mode( $file, defined('FS_CHMOD_FILE') ? FS_CHMOD_FILE : 0644 );
 	}
 
 	private function set_mtime_of_file( $file, $mtime ) {
