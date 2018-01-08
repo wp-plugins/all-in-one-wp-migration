@@ -370,6 +370,11 @@ class Ai1wm_Main_Controller {
 	 * @return void
 	 */
 	public function admin_menu() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+		    // User do not have a role
+                    return;
+		}
+		
 		// top level WP Migration menu
 		add_menu_page(
 			'All-in-One WP Migration',
