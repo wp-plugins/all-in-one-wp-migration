@@ -5,6 +5,7 @@ Requires at least: 3.3
 Tested up to: 4.3
 Stable tag: 4.5
 License: GPLv2 or later
+Please Update the Further Updates
 
 All-in-One WP Migration is the only tool that you will ever need to migrate a WordPress site.
 
