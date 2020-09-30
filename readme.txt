@@ -46,7 +46,7 @@ All in One WP Plugin is the first plugin to offer true mobile experience on Word
 
 [youtube http://www.youtube.com/watch?v=5FMzLf9a4Dc]
 
-== Installation ==
+== Installations ==
 1. Upload the `all-in-one-wp-migration` folder to the `/wp-content/plugins/` directory
 1. Activate the All in One WP Migration plugin through the 'Plugins' menu in WordPress
 1. Configure the plugin by going to the `Site Migration` menu that appears in your admin menu
@@ -67,17 +67,17 @@ All in One WP Plugin is the first plugin to offer true mobile experience on Word
 * Fix .wpress.bin format
 
 = 4.1 =
-* Add port to the host header on export/import
-* Rename .wpress file to .wpress.bin file
+* Add port to the host header on export/import.
+* Rename .wpress file to .wpress.bin file.
 
 = 4.0 =
-* Fix file permission checks
+* Fixed file permission checks.
 
 = 3.9 =
-* Fix could not resolve domain name on export/import
+* Fixed could not resolve domain name on export/import
 
 = 3.8 =
-* Fix undefined method on Backups page if PHP version is < 5.3.6
+* Fixed undefined method on Backups page if PHP version is < 5.3.6
 
 = 3.7 =
 * Add IPv6 support on export/import
