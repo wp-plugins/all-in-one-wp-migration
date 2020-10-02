@@ -9,13 +9,13 @@ License: GPLv2 or later
 All-in-One WP Migration is the only tool that you will ever need to migrate a WordPress site.
 
 == Description ==
-The plugin allows you to export your database, media files, plugins, and themes.
+This plugin allows you to export your database, media files, plugins, and themes.
 You can apply unlimited find/replace operations on your database and the plugin will also fix any serialization problems that occur during find/replace operations.
 
-All in One WP Plugin is the first plugin to offer true mobile experience on WordPress versions 3.3 and up.
+All in One WP Plugin is the first plugin that offer true mobile experience on WordPress versions 3.3 and up.
 
 = Works on all hosting providers =
-* The plugin does not depend on any extensions, making it compatible with all PHP hosting providers.
+* This plugin does not depend on any extensions, making it compatible with all PHP hosting providers.
 * The plugin exports and imports data in time chunks of 3 seconds each, which keeps the plugin below the max execution time that most providers set to 30 seconds.
 * We have tested the plugin on the major Linux distributions, Mac OS X, and Microsoft Windows.
 
